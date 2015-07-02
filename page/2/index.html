@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>awm&#39;s blog &middot; awm&#39;s blog</title>
+
+    <meta name="description" content="What did I do today?">
+
+    <meta name="generator" content="Hugo 0.14" />
+    <meta name="twitter:card" content="summary">
+    
+    <meta name="twitter:title" content="awm&#39;s blog &middot; awm&#39;s blog">
+    <meta name="twitter:description" content="What did I do today?">
+
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="awm&#39;s blog &middot; awm&#39;s blog">
+    <meta property="og:description" content="What did I do today?">
+
+    <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Oxygen:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+    <!--[if lte IE 8]>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+    <!--<![endif]-->
+
+    <link rel="stylesheet" href="https://ders.github.io//css/all.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
+
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io//index.xml" />
+</head>
+<body>
+
+
+<div id="layout" class="pure-g">
+    <div class="sidebar pure-u-1 pure-u-md-1-4">
+    <div class="header">
+        <hgroup>
+            <h1 class="brand-title"><a href="https://ders.github.io/">awm&#39;s blog</a></h1>
+            <h2 class="brand-tagline"> What did I do today? </h2>
+        </hgroup>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                
+                
+                <li class="nav-item">
+                    <a class="pure-button" href="https://ders.github.io//index.xml"><i class="fa fa-rss"></i> rss</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+    <div class="content pure-u-1 pure-u-md-3-4">
+        <div>
+            
+            <div class="posts">
+                
+                <h1 class="content-subhead">26 Feb 2013, 15:57</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-02-26-validataing-data-with-mongoid/" class="post-title">Validating data with Mongoid</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>I&rsquo;ve been working with <a href="http://mongoid.org/en/mongoid/">Mongoid</a>, which is an object-document-mapper for <a href="http://mongodb.org/">MongoDB</a> written in Ruby.</p>
+
+<p>Mongo organizes data into collections of documents, just as relational databases such as SQL organize data into tables of records.  Reading and writing of
+documents is done via named classes, one for each collection.</p>
+
+<p>The named class for each collection includes <code>Mongoid::Document</code> to get the database interface methods such as <code>.where</code>, <code>.new</code>, and <code>.save</code>. It also defines the data fields and any custom data handlers.</p>
+
+<p>One very useful feature is the availability of automatic validators which check the format and integrity of your data before allowing it to be saved.  There&rsquo;s a myriad of options, and they are <a href="http://mongoid.org/en/mongoid/docs/validation.html">not very well explained</a> in the documentation.</p>
+
+<p>Since the data validators are shared with <a href="http://api.rubyonrails.org/classes/ActiveModel.html">Active Model</a>, I decided to look for some help there and found <a href="http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates">this pretty good description</a> of what kind of validation could be done.
+Unfortunately, it wasn&rsquo;t clear anywhere how to actually use the validators once they&rsquo;re defined.</p>
+
+<p>After a bit of hair-pulling, I discovered it&rsquo;s actually quite simple.</p>
+
+<p>Let&rsquo;s define a minimal class <code>Iqscore</code>.  (The name of the collection will be <code>iqscores</code>; this is a weird behavior of Mongoid whereby class names must be singular and Mongoid will pluralize them for you when naming the collection.)</p>
+
+<p><div class="highlight"><pre><span class="nb">require</span> <span class="s2">&quot;mongoid&quot;</span>
+
+<span class="k">class</span> <span class="nc">Iqscore</span>
+
+  <span class="kp">include</span> <span class="no">Mongoid</span><span class="o">::</span><span class="no">Document</span>
+
+  <span class="n">field</span> <span class="ss">:kid</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="nb">String</span>
+  <span class="n">field</span> <span class="ss">:iq</span><span class="p">,</span>  <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="nb">Integer</span>
+
+  <span class="n">validates</span> <span class="ss">:kid</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:uniqueness</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+  <span class="n">validates</span> <span class="ss">:iq</span><span class="p">,</span> <span class="ss">:numericality</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+
+<span class="k">end</span>
+</pre></div>
+</p>
+
+<p>Mongoid provides a <code>valid?</code> method on Iqscore objects.  Valid? tells us whether or not the criteria in the <code>validates</code> declarations are met.</p>
+
+<p><div class="highlight"><pre>1.9.3p385 :008 &gt; x = Iqscore.new({kid: &quot;George&quot;, iq: 70})
+ =&gt; #&lt;Iqscore _id: 512c72d5352420234d000003, kid: &quot;George&quot;, iq: 70&gt;
+1.9.3p385 :009 &gt; x.valid?
+ =&gt; true
+</pre></div>
+</p>
+
+<p><div class="highlight"><pre>1.9.3p385 :010 &gt; y = Iqscore.new({kid: &quot;Bill&quot;, iq: &quot;unknown&quot;})
+ =&gt; #&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;
+1.9.3p385 :011 &gt; y.valid?
+ =&gt; false
+</pre></div>
+</p>
+
+<p>If it doesn&rsquo;t validate, we can see what&rsquo;s wrong by looking at the <code>errors</code> property.  In this case it tells us that <code>iq</code> is not a number (and it should be).  Note that the message &ldquo;is not a number&rdquo; is in an array, as it&rsquo;s possible for there to be multiple messages for a single field.</p>
+
+<p><div class="highlight"><pre>1.9.3p385 :012 &gt; y.errors
+ =&gt; #&lt;ActiveModel::Errors:0x98a31cc @base=#&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;, @messages={:iq=&gt;[&quot;is not a number&quot;]}&gt;
+</pre></div>
+</p>
+
+<p>The <code>valid?</code> method is called automatically before any save operation (e.g. <code>save</code> or <code>create</code>), and if it returns false, then the save is not done.  Both <code>save</code> and <code>create</code> return true or false to indicate whether the save was done or not.</p>
+
+<p><div class="highlight"><pre>1.9.3p385 :013 &gt; x.save
+ =&gt; true
+1.9.3p385 :014 &gt; y.save
+ =&gt; false
+</pre></div>
+</p>
+
+<p>At this point George is in our database, but Bill isn&rsquo;t.</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">22 Feb 2013, 18:20</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-02-22-power/" class="post-title">Power</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>Finished a user athentication system today using <a href="http://bcrypt-ruby.rubyforge.org/classes/BCrypt/Password.html">BCrypt::Password</a>.</p>
+
+<p>There was an Aha! moment when I realized that they&rsquo;ve defined the <code>==</code> operator to return true when the password matches, not when the strings are equal (as a novice like me might expect).</p>
+
+<p><div class="highlight"><pre>1.9.3p385 :002 &gt; secret = BCrypt::Password.create(&quot;password&quot;)
+ =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
+</pre></div>
+</p>
+
+<p>The hashed secret is saved in the database.&nbsp; It&rsquo;s later retrieved and checked against the user input using <code>==</code>.</p>
+
+<p><div class="highlight"><pre>1.9.3p385 :005 &gt; secret
+ =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
+1.9.3p385 :006 &gt; q = BCrypt::Password.new(secret)
+ =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
+1.9.3p385 :007 &gt; q == &quot;password&quot;
+ =&gt; true
+</pre></div>
+</p>
+
+<p>This also has the interesting side effect that <code>==</code> is not commutative.</p>
+
+<p><div class="highlight"><pre>1.9.3p385 :008 &gt; &quot;password&quot; == q
+ =&gt; false
+</pre></div>
+</p>
+
+<p>My junior high math teacher would be disturbed by this.&nbsp; Such is the power of Ruby.</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">22 Feb 2013, 10:41</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-02-22-tip-of-the-day/" class="post-title">Tip of the day</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>When running the Mongo shell for the first time, it is necessary to specify the port:</p>
+
+<p><div class="highlight"><pre>$ mongo 127.0.0.1:27017
+</pre></div>
+</p>
+
+<p>Subsequently it is sufficient just to to say <code>mongo</code>.</p>
+
+<p>Learned the hard way, and by reading <a href="http://stackoverflow.com/a/8509918">this answer</a>.</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">20 Feb 2013, 10:58</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-02-20-the-rubymonk-tutorial/" class="post-title">The RubyMonk Tutorial</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>I&rsquo;ve been working my way through the <a href="http://rubymonk.com/learning/books">RubyMonk Tutorials</a>.
+They are very well written and do an excellent job of guiding the user through progressively harder concepts.</p>
+
+<p>Today I found a couple of careless coding errors in the <a href="http://rubymonk.com/learning/books/4/chapters/44-collections/lessons/98-iterate-filtrate-and-transform">section on using Array#inject</a> (subscription required).  The first is an illustration of inject to do a simple sum of array elements.</p>
+
+<p><div class="highlight"><pre><span class="o">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">42</span><span class="o">].</span><span class="n">inject</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">accumulator</span><span class="p">,</span> <span class="n">iterated</span><span class="o">|</span>
+  <span class="n">accumulator</span> <span class="o">+=</span> <span class="n">iterated</span>
+  <span class="n">accumulator</span>
+<span class="k">end</span>
+</pre></div>
+</p>
+
+<p>In fact, the assignment statement here is superfluous, as the inject
+function assigns the return value of the block to the accumulator automatically.
+It would suffice to do:</p>
+
+<p><div class="highlight"><pre><span class="o">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">42</span><span class="o">].</span><span class="n">inject</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">accumulator</span><span class="p">,</span> <span class="n">iterated</span><span class="o">|</span>
+  <span class="n">accumulator</span> <span class="o">+</span> <span class="n">iterated</span>
+<span class="k">end</span>
+</pre></div>
+</p>
+
+<p>The second error is in an illustration of the behavior of inject.
+The function below is supposed to mimic the behavior of the one above.</p>
+
+<p><div class="highlight"><pre><span class="k">def</span> <span class="nf">custom_inject</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">default</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
+  <span class="n">accumulator</span> <span class="o">=</span> <span class="n">default</span> <span class="o">||</span> <span class="n">array</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span>
+
+  <span class="n">array</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">element</span><span class="o">|</span>
+    <span class="n">accumulator</span> <span class="o">=</span> <span class="n">accumulator</span> <span class="o">+</span> <span class="n">element</span>
+  <span class="k">end</span>
+
+  <span class="n">accumulator</span>
+<span class="k">end</span>
+
+<span class="nb">p</span> <span class="n">custom_inject</span><span class="p">(</span><span class="o">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">42</span><span class="o">]</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</p>
+
+<p>The <code>custom_inject</code> function, however, fails for the case where the default value is not given.  It fails by counting the first array element twice.</p>
+
+<p>Native inject begins iterating from the second array element, as the first element has already been used as the starting value.</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">18 Feb 2013, 17:18</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-02-18-hi-there/" class="post-title">Hi there.</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>Day one.</p>
+
+<p>Got a new blog, and I&rsquo;ve learned some Ruby basics on <a href="http://rubymonk.com">Rubymonk</a>.  Also got a helluva cold and pine for the bed.</p>
+
+                    </div>
+                </section>
+                
+            </div>
+            
+<div class="pagination">
+  <nav role="pagination" class="post-list-pagination">
+      
+      <a href="https://ders.github.io/" class="post-list-pagination-item pure-button post-list-pagination-item-prev">
+        <i class="fa fa-angle-double-left"></i>&nbsp;Newer
+      </a>
+      
+    <span class="post-list-pagination-item post-list-pagination-item-current">Page 2 of 2</span>
+    
+  </nav>
+</div>
+
+
+            <div class="footer">
+    <div class="pure-menu pure-menu-horizontal pure-menu-open">
+        <ul>
+            <li>Powered by <a class="hugo" href="http://hugo.spf13.com/" target="_blank">hugo</a></li>
+        </ul>
+    </div>
+</div>
+<script src="https://ders.github.io//js/all.min.js"></script>
+        </div>
+    </div>
+</div>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '', 'auto');
+ga('send', 'pageview');
+
+</script>
+
+</body>
+</html>

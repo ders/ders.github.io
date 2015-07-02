@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>awm&#39;s blog &middot; awm&#39;s blog</title>
+
+    <meta name="description" content="What did I do today?">
+
+    <meta name="generator" content="Hugo 0.14" />
+    <meta name="twitter:card" content="summary">
+    
+    <meta name="twitter:title" content="awm&#39;s blog &middot; awm&#39;s blog">
+    <meta name="twitter:description" content="What did I do today?">
+
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="awm&#39;s blog &middot; awm&#39;s blog">
+    <meta property="og:description" content="What did I do today?">
+
+    <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Oxygen:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+    <!--[if lte IE 8]>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+    <!--<![endif]-->
+
+    <link rel="stylesheet" href="https://ders.github.io//css/all.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
+
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io//index.xml" />
+</head>
+<body>
+
+
+<div id="layout" class="pure-g">
+    <div class="sidebar pure-u-1 pure-u-md-1-4">
+    <div class="header">
+        <hgroup>
+            <h1 class="brand-title"><a href="https://ders.github.io/">awm&#39;s blog</a></h1>
+            <h2 class="brand-tagline"> What did I do today? </h2>
+        </hgroup>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                
+                
+                <li class="nav-item">
+                    <a class="pure-button" href="https://ders.github.io//index.xml"><i class="fa fa-rss"></i> rss</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+    <div class="content pure-u-1 pure-u-md-3-4">
+        <div>
+            
+            <div class="posts">
+                
+                <h1 class="content-subhead">02 Jul 2015, 11:14</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2015-07-02-new-blog-engine/" class="post-title">New blog engine</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>Trying out <a href="http://gohugo.io/">Hugo</a> as a new blog engine.  If you&rsquo;re reading this, then I&rsquo;ve succeeded.</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">27 Jan 2014, 10:07</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2014-01-27-why-you-should-always-understand-whats-going-on-under-the-hood/" class="post-title">Why you should always understand what&#39;s going on under the hood</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        
+
+<p>This is about how I got bitten by <a href="http://datamapper.org/">DataMapper</a>.
+No infection and I didn&rsquo;t get rabies, but it still hurt.</p>
+
+<p>I should mention that overall I think DataMapper is pretty good.
+It has most of the core features that an ORM should have without unneeded complexity.
+It beats the pants off of Active Somethingorother when it comes to making clean, backend-independent models.</p>
+
+<p>Unfortunately <em>most of the core features</em> isn&rsquo;t quite <em>all of the core features</em>, and when you really need that one missing piece, that&rsquo;s when the trouble starts.</p>
+
+<p>What bit me was the combination of two unrelated things:</p>
+
+<ul>
+<li>I needed an atomic update with conditions attached.</li>
+<li>Datamapper has different representations of the Boolean type, even between different SQLs.</li>
+</ul>
+
+<h3 id="the-missing-feature:136baa383e3072f3c5db5b5786002bc4">The Missing Feature</h3>
+
+<p>The glaringly missing feature is the ability to update a value and know
+whether or not we actually changed anything.</p>
+
+<p>In SQL this would look like this:</p>
+
+<p><div class="highlight"><pre><span class="k">UPDATE</span> <span class="ss">&quot;quarks&quot;</span> <span class="k">SET</span> <span class="ss">&quot;seen&quot;</span> <span class="o">=</span> <span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="ss">&quot;whosaw&quot;</span> <span class="o">=</span> <span class="s1">&#39;ders&#39;</span> <span class="k">WHERE</span> <span class="ss">&quot;id&quot;</span> <span class="o">=</span> <span class="mi">42</span> <span class="k">AND</span> <span class="ss">&quot;seen&quot;</span> <span class="o">=</span> <span class="s1">&#39;f&#39;</span>
+</pre></div>
+</p>
+
+<p>Then I would get the number of affected rows to see if a change was made
+(i.e. whether or not the quark had already been seen).</p>
+
+<p>So let&rsquo;s try it with DataMapper:</p>
+
+<p><div class="highlight"><pre><span class="no">Quark</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="ss">:id</span> <span class="o">=&gt;</span> <span class="mi">42</span><span class="p">,</span> <span class="ss">:seen</span> <span class="o">=&gt;</span> <span class="kp">false</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="ss">:seen</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:whosaw</span> <span class="o">=&gt;</span> <span class="s1">&#39;ders&#39;</span><span class="p">)</span>
+</pre></div>
+</p>
+
+<p>Two problems here.
+The first problem is that the return value is always true, and we don&rsquo;t
+get to see how many rows were updated.
+This isn&rsquo;t too big a deal;
+we can work around it by using <code>Quark.first</code> instead of <code>Quark.all</code>,
+generating an exception if no records are found.</p>
+
+<p>The second problem is the dealbreaker.
+Datamapper insists on generating two separate queries for the single
+update statement:</p>
+
+<p><div class="highlight"><pre><span class="k">SELECT</span> <span class="ss">&quot;id&quot;</span><span class="p">,</span> <span class="ss">&quot;size&quot;</span><span class="p">,</span> <span class="ss">&quot;name&quot;</span><span class="p">,</span> <span class="ss">&quot;seen&quot;</span><span class="p">,</span> <span class="ss">&quot;whosaw&quot;</span> <span class="k">FROM</span> <span class="ss">&quot;quarks&quot;</span> <span class="k">WHERE</span> <span class="p">(</span><span class="ss">&quot;id&quot;</span> <span class="o">=</span> <span class="mi">42</span> <span class="k">AND</span> <span class="ss">&quot;seen&quot;</span> <span class="o">=</span> <span class="s1">&#39;f&#39;</span><span class="p">)</span> <span class="k">ORDER</span> <span class="k">BY</span> <span class="ss">&quot;id&quot;</span>
+<span class="k">UPDATE</span> <span class="ss">&quot;quarks&quot;</span> <span class="k">SET</span> <span class="ss">&quot;seen&quot;</span> <span class="o">=</span> <span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="ss">&quot;whosaw&quot;</span> <span class="o">=</span> <span class="s1">&#39;ders&#39;</span> <span class="k">WHERE</span> <span class="ss">&quot;id&quot;</span> <span class="o">=</span> <span class="mi">42</span>
+</pre></div>
+</p>
+
+<p>This obviously won&rsquo;t do, as it&rsquo;s not thread-safe.
+Two users running this code at the same time would both believe that they saw the quark first.</p>
+
+<h3 id="the-solution:136baa383e3072f3c5db5b5786002bc4">The Solution</h3>
+
+<p>The solution was to write the update query in SQL.</p>
+
+<p><div class="highlight"><pre><span class="n">da</span> <span class="o">=</span> <span class="no">DataMapper</span><span class="o">.</span><span class="n">repository</span><span class="p">(</span><span class="ss">:default</span><span class="p">)</span><span class="o">.</span><span class="n">adapter</span>
+<span class="n">r</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE quarks SET seen=&#39;t&#39;, whosaw=&#39;ders&#39; WHERE id=42 AND seen=&#39;f&#39;&quot;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">affected_rows</span> <span class="o">&gt;</span> <span class="mi">0</span>
+   <span class="o">...</span> <span class="c1"># we saw it first</span>
+</pre></div>
+</p>
+
+<p>Kind of defeats the purpose of having an ORM, but it gets the job done.
+And as it turns out, I&rsquo;m
+<a href="http://stackoverflow.com/questions/18650932/how-to-add-a-where-clause-in-update-query-in-datamapper">not the first one</a>
+to run into this issue.</p>
+
+<h3 id="how-i-got-bitten:136baa383e3072f3c5db5b5786002bc4">How I Got Bitten</h3>
+
+<p>Little did I know that the internal mapping of a Boolean field varies
+between SQL implementations.
+For Sqlite and Postgres, it&rsquo;s a character field with <code>'t'</code> and <code>'f'</code> values, whereas for MySQL it&rsquo;s the integers 1 and 0.</p>
+
+<p>In my case the unit tests all passed, but the live server (with a MySQL backend)
+started returning 500s.</p>
+
+<p>It&rsquo;s easy enough to change the query to work with MySQL:</p>
+
+<p><div class="highlight"><pre><span class="n">r</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE quarks SET seen=1, whosaw=&#39;ders&#39; WHERE id=42 AND seen=0&quot;</span><span class="p">)</span>
+</pre></div>
+</p>
+
+<p>But then the unit tests fail.</p>
+
+<p>In the end, I wrote this bit of horrible code to keep the tests passing
+and the live server happy.</p>
+
+<p><div class="highlight"><pre><span class="n">t</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">options</span><span class="o">[</span><span class="s1">&#39;scheme&#39;</span><span class="o">]</span> <span class="o">==</span> <span class="s1">&#39;sqlite&#39;</span>
+  <span class="o">[</span><span class="s2">&quot;&#39;t&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;f&#39;&quot;</span><span class="o">]</span> <span class="c1"># sqlite</span>
+<span class="k">else</span>
+  <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="o">]</span> <span class="c1"># mysql</span>
+<span class="k">end</span>
+
+  <span class="o">...</span>
+
+<span class="n">r</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE quarks SET seen=</span><span class="si">#{</span><span class="n">t</span><span class="si">}</span><span class="s2">, whosaw=&#39;ders&#39; WHERE id=42 AND seen=</span><span class="si">#{</span><span class="n">f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</p>
+
+<p>(There may be a way to extract <code>t</code> and <code>f</code> directly from the
+DataMapper internals, but I&rsquo;m not that good yet.)</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">17 Jan 2014, 12:20</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2014-01-17-try-it/" class="post-title">Python</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p><div class="highlight"><pre>$ python
+&gt;&gt;&gt; import this
+</pre></div>
+</p>
+
+<p>Just try it.</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">10 Jan 2014, 14:55</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2014-01-10-aws-locale/" class="post-title">AWS Locale</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>Every time I start a new EC2 Ubuntu instance, I&rsquo;m confronted with the following
+warning when I ssh in:</p>
+
+<p><div class="highlight"><pre>_____________________________________________________________________
+WARNING! Your environment specifies an invalid locale.
+ This can affect your user experience significantly, including the
+ ability to manage packages. You may install the locales by running:
+
+   sudo apt-get install language-pack-UTF-8
+     or
+   sudo locale-gen UTF-8
+
+To see all available language packs, run:
+   apt-cache search &quot;^language-pack-[a-z][a-z]$&quot;
+To disable this message for all users, run:
+   sudo touch /var/lib/cloud/instance/locale-check.skip
+_____________________________________________________________________
+</pre></div>
+</p>
+
+<p>Furthermore, a variety of package installations fail with some complaint
+related to the locale, the default language, or both.
+And for some reason the advice to install relevant language packs
+is not helpful.</p>
+
+<p>It turns out that there are some of environment variables
+(<code>LANGUAGE</code>, <code>LC_CTYPE</code> and <code>LC_ALL</code> to be specific) that are not
+set properly.</p>
+
+<p>The advice to install language packs assumes that these environment
+variables are set to a language that&rsquo;s not installed.  However, in the
+case of a new EC2 instance, these variables are not set at all.</p>
+
+<p>An easy way to get the warnings to go away is to edit the file
+<code>/etc/default/locale</code> so that these variables always get set. I&rsquo;ve found
+that the default installation only sets <code>LANG</code>.</p>
+
+<p>/etc/default/locale
+<div class="highlight"><pre>LANG=en_US.UTF-8
+LANGUAGE=en_US
+LC_CTYPE=en_US.UTF-8
+LC_ALL=en_US.UTF-8
+</pre></div>
+</p>
+
+<p>As always, it&rsquo;s also a good idea to make sure you have the latest and
+greatest packages:</p>
+
+<p><div class="highlight"><pre>$ sudo apt-get update
+$ sudo apt-get upgrade
+</pre></div>
+</p>
+
+<p>And finally, while we&rsquo;re at it, why not set the timezone?</p>
+
+<p><div class="highlight"><pre>$ sudo dpkg-reconfigure tzdata
+</pre></div>
+</p>
+
+<p>Next time I need to set up a new EC2 instance,
+I&rsquo;ll come read my own blog and know exactly what to do.</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">17 Dec 2013, 11:06</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-12-17-woke-up/" class="post-title">Woke up, fell out of bed</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>Things I learned this year:</p>
+
+<p><strong>Ruby.</strong> Ruby is an interesting language, but I find that the ability to
+open up classes and modify methods on the fly is too easily abused.
+Also not a fan of all the alternate method names (e.g. map and collect) &ndash;
+would prefer just to choose one and stick with it.</p>
+
+<p><strong>Git</strong> and <strong>Github.</strong> Made crystal clear with SourceTree.</p>
+
+<p><strong>Rails.</strong> Learned to hate it. Was going to write a blog post on why I
+hate rails, but someone
+<a href="http://kakubei.blogspot.kr/2012/05/why-i-hate-rails.html">beat me to it</a>.</p>
+
+<p><strong>Rubygems.</strong> Learned to hate them too. I&rsquo;ve wasted a stupid amount of
+time figuring out that my program is broken because the gems I&rsquo;m using
+don&rsquo;t work the way they&rsquo;re supposed to. Better to just write it myself.
+(I actually think the gem system is pretty cool, but quality control,
+ladies and gentlemen, quality control.)
+And if you can do something in two lines of ruby code, you don&rsquo;t need a gem.</p>
+
+<p><strong>Data Mapper.</strong> I wish this were maintained better. It&rsquo;s a handy tool,
+especially when you&rsquo;re dealing with simple, table-friendly data.
+It&rsquo;s not so good at complex queries, though, and I think that the lofty goal
+of making it compatible with all different kinds of database engines
+is hampering its ability to work really well with the most common ones (e.g. SQL).</p>
+
+<p><strong>Python.</strong> Python rocks. My next job will be in a python shop.</p>
+
+<p><strong>Django.</strong> Django rocks along with python. In my next life (when I get
+really good at python and am independently wealthy with a lot of free time)
+I&rsquo;m going to be a regular contributor to the django project.</p>
+
+<p><strong>Unfuddle</strong> and <strong>Pivotal Tracker.</strong> Say what? What is there to learn there?
+In fact there&rsquo;s a lot to learn if you&rsquo;ve never used an issue tracking system before.
+I find the Unfuddle UI to be kind of clunky, especially if you&rsquo;re dealing
+with a large number of tickets, but it&rsquo;s much more thorough than Pivotal
+Tracker in keeping track of comments, ticket disposition, change history,
+and so on.
+Maybe some clever person will invent a PT-style front end for Unfuddle.</p>
+
+<p><strong>Heroku.</strong> Five stars.
+The first time I attempted a heroku deployment, it was all black magic and I was lost.
+Now it&rsquo;s still black magic, but I&rsquo;ve learned that I can use it.
+Deployment is one of those things that gets more and more complicated the more you try to understand it.
+Heroku allows you to remain ignorant and just have your program run.</p>
+
+<p><strong>Android.</strong> On my desktop I have a 2200-page book on how to code for Android.
+I&rsquo;m going to tell you I&rsquo;ve read it all. I&rsquo;ll be lying, and you won&rsquo;t believe me.
+In reality, I&rsquo;ve learned the basics and can make a simple app.
+I&rsquo;m still at the tedious stage where I have to look everything up, and Android programming is already tedious by nature, but I&rsquo;m getting it done.</p>
+
+<p><strong>Amazon AWS.</strong> This probably has the steepest learning curve of all.
+The documentation is complete and thorough and is also written to an
+audience of Sysadmin Ph.Ds.
+So far I&rsquo;ve learned to use S3 buckets and create EC2 instances.</p>
+
+<p>Things I want to learn next year:</p>
+
+<ul>
+<li>advanced Python</li>
+<li>advanced Django</li>
+<li>advanced Git</li>
+<li>Neo4j</li>
+<li>Go</li>
+<li>Sass</li>
+<li>node.js</li>
+<li>backbone.js</li>
+<li>how to deploy stuff (why is this so hard, anyway?)</li>
+<li>Haskell</li>
+</ul>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">02 May 2013, 10:03</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-05-02-which-train-is-that/" class="post-title">Which train is that?</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>Straight out of college, I went on a summer backpacking trip to Europe.
+Well, it wasn&rsquo;t exactly a backpacking trip, as (1) my bag wasn&rsquo;t a backpack, and (2) I actually spent two months in one place attending a language program, but that&rsquo;s another story.</p>
+
+<p>My ticket back home was out of London&rsquo;s Heathrow airport, and since I was in Bavaria at the time, I had a major train + ferry + train journey just to get my flight.
+I had the journey carefully researched and perfectly timed so that I&rsquo;d be on the ferry just as my rail pass expired.
+The journey, though long, was largely without incident, but something that happened on the tube from Liverpool Street to Heathrow left a lasting impression.</p>
+
+<p>I had figured out in advance which train I needed to catch. I&rsquo;ll guess now that it was the Circle Line to South Kensingon, changing to the Piccadilly Line.
+I followed all the signs carefully and got myself to the correct platform.
+I noticed that there were other lines operating on the same track, so I had to make sure that I got on the correct train.</p>
+
+<p>Within a couple of minutes, a train arrived.  I looked to see whether or not it was a Circle Line train, but wait.
+There was no marking whatsoever.  No Circle Line, no Metropolitan Line, nothing.
+And yet, busy Londoners were getting on and off, some were waiting for a different train, and they all obviously knew something about this mystery train that I didn&rsquo;t &ndash;
+namely what line it was running.</p>
+
+<p>I finally asked a woman who was standing nearby if she could tell me what train this was.  Predictably, she looked at me as if I were an idiot.
+She was silent for a few seconds, and then without moving her head she glanced slightly upward and answered me.  &ldquo;Metropolitan.&rdquo;  End of conversation.</p>
+
+<p>You see, in New York, the line number/letter and destination are clearly visible on the outside of every subway car.
+In fact, everywhere I&rsquo;d travelled, every bus, subway, and tram  was labeled in this fasion.
+In New York at the time, looking at the train itself was the <em>only</em> way to know if it was the train you wanted; fancy platform displays were as of yet a thing of the future.  It had simply never occurred to me that there was another way.</p>
+
+<p>The train information signs in the London tube station were large enough to read easily but also small enough to miss completely if you didn&rsquo;t know they were there.
+Had I gone to London with this one simple bit of information &ndash; that there is train information displayed above the platform &ndash; I could have saved myself this small embarrassment and the possibility of getting on the wrong train.</p>
+
+<p>This, my friends, is an exact parallel of what&rsquo;s happening in my workplace nowadays.</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">16 Apr 2013, 14:05</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-04-16-more-data-mapper/" class="post-title">More Data Mapper</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>One of the basic functions of <a href="http://datamapper.org/">Data Mapper</a> is to remember which attributes in the model have been modified so that it&rsquo;s easy to determine what (if anything) needs to be updated in the database.
+Data Mapper checks automatically on a call to <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#save-instance_method"><code>#save</code></a> and only writes what needs to be written.
+It also provides methods <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#dirty%3F-instance_method"><code>#dirty?</code></a> and <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_dirty%3F-instance_method"><code>#attribute_dirty?</code></a>, which tell you whether or not a record or a particular attribute has changed.</p>
+
+<p>Unfortunately, while it&rsquo;s easy to find out whether or not an attribute has changed, there is no easy way to see what the old value was.
+It&rsquo;s obviously keeping the old value somewhere.  We know this because when you change an attribute back to the old value, it recognizes that you&rsquo;ve done so and considers it unchanged.</p>
+
+<p>There is a method called <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#dirty_attributes-instance_method"><code>#dirty_attributes</code></a>, which returns a hash of changed attributes, but the keys to this hash are hashes themselves and in a format that&rsquo;s used only internally in Data Mapper, making it a needlessly inconvenient method to use.
+Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not part of the public API.</p>
+
+<p>There is a possible workaround, suggested by some.  Override the setter for the attribute and save the old value for later use.</p>
+
+<p><div class="highlight"><pre><span class="k">def</span> <span class="nf">thing</span><span class="o">=</span><span class="p">(</span><span class="n">newthing</span><span class="p">)</span>
+  <span class="vi">@oldthing</span> <span class="o">||=</span> <span class="vi">@thing</span>
+  <span class="vi">@thing</span> <span class="o">=</span> <span class="n">newthing</span>
+<span class="k">end</span>
+</pre></div>
+</p>
+
+<p>I&rsquo;m not going to link to the people who suggested this, though, because it&rsquo;s a terrible suggestion.  Since we&rsquo;ve overridden Data Mapper&rsquo;s setter for attribute <code>thing</code>, Data Mapper no longer knows that we&rsquo;ve changed its value.</p>
+
+<p><div class="highlight"><pre><span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">001</span> <span class="o">&gt;</span> <span class="n">record</span> <span class="o">=</span> <span class="no">Record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+ <span class="o">=&gt;</span> <span class="o">...</span>
+<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">002</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">thing</span>
+ <span class="o">=&gt;</span> <span class="s2">&quot;teamaker&quot;</span>
+<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">003</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">thing</span> <span class="o">=</span> <span class="s2">&quot;coffeemaker&quot;</span>
+ <span class="o">=&gt;</span> <span class="s2">&quot;coffeemaker&quot;</span>
+<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">004</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">attribute_dirty?</span><span class="p">(</span><span class="ss">:thing</span><span class="p">)</span>
+ <span class="o">=&gt;</span> <span class="kp">false</span>
+</pre></div>
+</p>
+
+<p>Imagine the insidious bugs that could creep in here.</p>
+
+<p><div class="highlight"><pre><span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">005</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">save</span>
+ <span class="o">=&gt;</span> <span class="kp">true</span>
+<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">006</span> <span class="o">&gt;</span> <span class="n">record</span> <span class="o">=</span> <span class="no">Record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+ <span class="o">=&gt;</span> <span class="o">...</span>
+<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">003</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">thing</span>
+ <span class="o">=&gt;</span> <span class="s2">&quot;teamaker&quot;</span>
+</pre></div>
+</p>
+
+<p>Simply put, our changes are silently ignored because we&rsquo;ve stupidly disabled what is arguably Data Mapper&rsquo;s most important function.</p>
+
+<p>Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&rsquo;s <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method"><code>#attribute_set</code></a>.</p>
+
+<p><div class="highlight"><pre><span class="k">def</span> <span class="nf">thing</span><span class="o">=</span><span class="p">(</span><span class="n">newthing</span><span class="p">)</span>
+  <span class="vi">@oldthing</span> <span class="o">||=</span> <span class="vi">@thing</span>
+  <span class="n">attribute_set</span><span class="p">(</span><span class="ss">:thing</span><span class="p">,</span> <span class="n">newthing</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+</p>
+
+<p>Method <code>#attribute_set</code> keeps track of the changes.  It&rsquo;s what <code>thing=</code> pointed to before we overrode it.</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">16 Apr 2013, 12:19</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-04-16-data-mapper/" class="post-title">Data Mapper</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>I&rsquo;ve been working on a project with <a href="http://www.padrinorb.com/">Padrino</a> and <a href="http://datamapper.org">Data Mapper</a>.
+So far I&rsquo;m quite a fan of the Data Mapper way of doing things.</p>
+
+<p>Unfortunately, I&rsquo;m schooled in the old way &ndash; ugly messes of <code>SELECT</code>, <code>JOIN</code> and <code>ORDER BY</code>,
+intelligible only by SQL gurus and dependent not just on SQL but on a particular variety of such, which in my case would be MySQL.</p>
+
+<p>I label this as unfortunate because my concept of database (e.g. MySQL) heavily influences how I organize the code I write.
+I often find myself with a &ldquo;How do you do this in DataMapper?&rdquo; kind of question, where <em>this</em> is something that I know how to do the old way.
+After all, DataMapper is generating SQL queries from the models I write, so if it&rsquo;s easy in SQL, shouldn&rsquo;t it also be easy in DataMapper?</p>
+
+<p>(Side note: DataMapper doesn&rsquo;t <em>necessarily</em> generate SQL, but in my current project the backend is SQL and I see the generated queries on the debugging console.)</p>
+
+<p>Recently I&rsquo;ve a question of this sort that I haven&rsquo;t been able to solve.</p>
+
+<p>I have a model with an ordering field, which we&rsquo;ll call <code>position</code>.  I want to sort by this field (ascending), except that I want all the zeroes to be at the end.  In addition, I&rsquo;d like the all the records with <code>position=0</code> sorted by <code>id</code> descending.</p>
+
+<p>In MySQL, I would write:</p>
+
+<p><div class="highlight"><pre><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="o">`</span><span class="n">things</span><span class="o">`</span> <span class="k">ORDER</span> <span class="k">BY</span> <span class="o">`</span><span class="k">position</span><span class="o">`=</span><span class="mi">0</span><span class="p">,</span> <span class="o">`</span><span class="k">position</span><span class="o">`</span><span class="p">,</span> <span class="o">`</span><span class="n">id</span><span class="o">`</span> <span class="k">DESC</span>
+</pre></div>
+</p>
+
+<p>Free donuts to the first person who can make a DataMapper version of this.</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">21 Mar 2013, 12:19</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-03-21-rails-for-zombies/" class="post-title">Rails for Zombies</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>I got introduced today to <a href="http://railsforzombies.org">an excellent Ruby on Rails tutorial</a> with an entertaining zombie theme.  It covered a lot of the basic concepts, many of which I&rsquo;d skipped over in my haste to dive into a real-live project.</p>
+
+<p>Being who I am, I noticed a couple of inconsistencies between the tutorial videos and the exercises.  Actually, this only applies to the level 5 video; the rest seemed to be fine.</p>
+
+<p>In the level 5 video at 2:10, the following match example is given:</p>
+
+<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;new_tweet&#39;</span> <span class="o">=&gt;</span> <span class="s2">&quot;Tweets#new&quot;</span>
+</pre></div>
+</p>
+
+<p>Note the uppercase T on Tweets.  This T is uppercase throughout the video.</p>
+
+<p>However, when I tried to do the second exercise for this level, the following answer was rejected:</p>
+
+<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;undead&#39;</span> <span class="o">=&gt;</span> <span class="s2">&quot;Zombies#undead&quot;</span>
+</pre></div>
+</p>
+
+<p>The hints told me to do this:</p>
+
+<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;undead&#39;</span> <span class="o">=&gt;</span> <span class="s2">&quot;zombies#undead&quot;</span>
+</pre></div>
+</p>
+
+<p>with a lower case z, which was accepted.  Now I&rsquo;m confused.  Do we need a capital letter here or not?</p>
+
+<p>In the same video at 3:30, the following match example is given:</p>
+
+<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;all&#39;</span> <span class="o">=&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;/tweets&#39;</span><span class="p">)</span>
+</pre></div>
+</p>
+
+<p>Note that there is no leading slash on &lsquo;all&rsquo;; this format is consistent throughout the video.</p>
+
+<p>However, when I tried to do the third exercise, the following answer was rejected:</p>
+
+<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;undead&#39;</span> <span class="o">=&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;/zombies&#39;</span><span class="p">)</span>
+</pre></div>
+</p>
+
+<p>This time the hints told me to do this:</p>
+
+<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;/undead&#39;</span> <span class="o">=&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;/zombies&#39;</span><span class="p">)</span>
+</pre></div>
+</p>
+
+<p>Again, I&rsquo;m confused. Do we need (or even want) a leading slash here?</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">15 Mar 2013, 16:59</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-03-15-good-tools/" class="post-title">Good Tools</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        
+
+<p>Here are some some tools that I like.</p>
+
+<h2 id="rerun:641fb2fef50bdd606c86780f8eb06737">Rerun</h2>
+
+<blockquote>
+<p>Rerun launches your program, then watches the filesystem. If a relevant file changes, then it restarts your program.</p>
+</blockquote>
+
+<p>I had some trouble getting Shotgun configured probably, and I found <a href="https://github.com/alexch/rerun">Rerun</a> to be a simple alternative.  I like it because it can be used for any process you want, not just restarting your web server.</p>
+
+<h2 id="gitk:641fb2fef50bdd606c86780f8eb06737">Gitk</h2>
+
+<p><a href="http://gitk.sourceforge.net/">Gitk</a> is a graphical interface for Git.  It shows your entire development tree graphically, great for those of us less fluent in pushes and pulls.  It does a lot of other things too that I don&rsquo;t know about.</p>
+
+<p>Debian-based systems can enjoy Gitk with a simple <code>sudo apt-get install gitk</code>.  Then issue a <code>gitk --all</code> to see everything.</p>
+
+<h2 id="irb:641fb2fef50bdd606c86780f8eb06737">Irb</h2>
+
+<p><a href="http://ruby-doc.org/docs/ProgrammingRuby/html/irb.html">Irb</a> is the Ruby console.  I should actually generalize this and include all consoles.  One of the most valuable checks while coding is to paste snippets of code into the console and see that they do what you think they&rsquo;re doing.</p>
+
+<p>Make an <code>.irbrc</code> startup file for a richer experience.  Rails users can get a the console with the full Rails evnironment with <code>rails c</code>.</p>
+
+<p>Here is <a href="http://samuelmullen.com/2012/07/getting-more-out-of-the-rails-console/">an excellent blog post</a> on the topic.</p>
+
+<h2 id="awesome-print:641fb2fef50bdd606c86780f8eb06737">Awesome Print</h2>
+
+<p>A great companion to the Ruby console is <a href="https://github.com/michaeldv/awesome_print">Awesome Print</a>, a Ruby gem which lets you pretty up the output of array, hashes, and the like while in the console.</p>
+
+<p><div class="highlight"><pre><span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">001</span> <span class="o">&gt;</span> <span class="p">{</span><span class="ss">:name</span> <span class="o">=&gt;</span> <span class="s2">&quot;Hong Gildong&quot;</span><span class="p">,</span> <span class="ss">:age</span> <span class="o">=&gt;</span> <span class="mi">10</span><span class="p">,</span> <span class="ss">:interests</span> <span class="o">=&gt;</span> <span class="kp">nil</span><span class="p">}</span>
+ <span class="o">=&gt;</span> <span class="p">{</span><span class="ss">:name</span><span class="o">=&gt;</span><span class="s2">&quot;Hong Gildong&quot;</span><span class="p">,</span> <span class="ss">:age</span><span class="o">=&gt;</span><span class="mi">10</span><span class="p">,</span> <span class="ss">:interests</span><span class="o">=&gt;</span><span class="kp">nil</span><span class="p">}</span>
+<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">002</span> <span class="o">&gt;</span> <span class="n">ap</span> <span class="n">_</span>
+<span class="p">{</span>
+         <span class="ss">:name</span> <span class="o">=&gt;</span> <span class="s2">&quot;Hong Gildong&quot;</span><span class="p">,</span>
+          <span class="ss">:age</span> <span class="o">=&gt;</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="ss">:interests</span> <span class="o">=&gt;</span> <span class="kp">nil</span>
+<span class="p">}</span>
+</pre></div>
+</p>
+
+<h2 id="sass:641fb2fef50bdd606c86780f8eb06737">Sass</h2>
+
+<blockquote>
+<p>Sass makes css fun again.</p>
+</blockquote>
+
+<p><a href="http://sass-lang.com/">Sass</a> is a nifty program that adds some badly-needed css functionality, such as variables, nesting and inheritance.  But the really nifty thing is how it&rsquo;s accomplished.</p>
+
+<p>You make a <code>.scss</code> file and Sass converts it to an equivalent <code>.css</code> that any browser, even IE, can understand.  Sass even has a stealth mode, where it will regenerate the css when your scss is updated.</p>
+
+<p>Sass is packaged as a Ruby gem, but you&rsquo;re not limited to using it on Ruby projects, since in the end all you need on your server (obviously) are the css files it generates locally.</p>
+
+<p>It&rsquo;s likely that a lot of Sass&rsquo;s functionality will eventually become standard css.  But for now, we&rsquo;ve got Sass.</p>
+
+                    </div>
+                </section>
+                
+            </div>
+            
+<div class="pagination">
+  <nav role="pagination" class="post-list-pagination">
+      
+    <span class="post-list-pagination-item post-list-pagination-item-current">Page 1 of 2</span>
+    
+      <a href="https://ders.github.io/page/2/" class="post-list-pagination-item pure-button post-list-pagination-item-next">
+        Older&nbsp;<i class="fa fa-angle-double-right"></i>
+      </a>
+    
+  </nav>
+</div>
+
+
+            <div class="footer">
+    <div class="pure-menu pure-menu-horizontal pure-menu-open">
+        <ul>
+            <li>Powered by <a class="hugo" href="http://hugo.spf13.com/" target="_blank">hugo</a></li>
+        </ul>
+    </div>
+</div>
+<script src="https://ders.github.io//js/all.min.js"></script>
+        </div>
+    </div>
+</div>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '', 'auto');
+ga('send', 'pageview');
+
+</script>
+
+</body>
+</html>

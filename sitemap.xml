@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>https://ders.github.io/</loc>
+    <lastmod>2015-07-02T11:14:56+09:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2015-07-02-new-blog-engine/</loc>
+    <lastmod>2015-07-02T11:14:56+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2014-01-27-why-you-should-always-understand-whats-going-on-under-the-hood/</loc>
+    <lastmod>2014-01-27T10:07:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2014-01-17-try-it/</loc>
+    <lastmod>2014-01-17T12:20:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2014-01-10-aws-locale/</loc>
+    <lastmod>2014-01-10T14:55:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2013-12-17-woke-up/</loc>
+    <lastmod>2013-12-17T11:06:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2013-05-02-which-train-is-that/</loc>
+    <lastmod>2013-05-02T10:03:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2013-04-16-more-data-mapper/</loc>
+    <lastmod>2013-04-16T14:05:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2013-04-16-data-mapper/</loc>
+    <lastmod>2013-04-16T12:19:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2013-03-21-rails-for-zombies/</loc>
+    <lastmod>2013-03-21T12:19:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2013-03-15-good-tools/</loc>
+    <lastmod>2013-03-15T16:59:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2013-02-26-validataing-data-with-mongoid/</loc>
+    <lastmod>2013-02-26T15:57:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2013-02-22-power/</loc>
+    <lastmod>2013-02-22T18:20:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2013-02-22-tip-of-the-day/</loc>
+    <lastmod>2013-02-22T10:41:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2013-02-20-the-rubymonk-tutorial/</loc>
+    <lastmod>2013-02-20T10:58:00+09:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://ders.github.io/post/2013-02-18-hi-there/</loc>
+    <lastmod>2013-02-18T17:18:00+09:00</lastmod>
+  </url>
+  
+</urlset>

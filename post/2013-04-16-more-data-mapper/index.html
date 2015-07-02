@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>More Data Mapper &middot; awm&#39;s blog</title>
+
+    <meta name="description" content="">
+
+    <meta name="generator" content="Hugo 0.14" />
+    <meta name="twitter:card" content="summary">
+    
+    <meta name="twitter:title" content="More Data Mapper &middot; awm&#39;s blog">
+    <meta name="twitter:description" content="">
+
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="More Data Mapper &middot; awm&#39;s blog">
+    <meta property="og:description" content="">
+
+    <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Oxygen:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+    <!--[if lte IE 8]>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+    <!--<![endif]-->
+
+    <link rel="stylesheet" href="https://ders.github.io//css/all.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
+
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io//index.xml" />
+</head>
+<body>
+
+
+<div id="layout" class="pure-g">
+    <div class="sidebar pure-u-1 pure-u-md-1-4">
+    <div class="header">
+        <hgroup>
+            <h1 class="brand-title"><a href="https://ders.github.io/">awm&#39;s blog</a></h1>
+            <h2 class="brand-tagline"> What did I do today? </h2>
+        </hgroup>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                
+                
+                <li class="nav-item">
+                    <a class="pure-button" href="https://ders.github.io//index.xml"><i class="fa fa-rss"></i> rss</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+    <div class="content pure-u-1 pure-u-md-3-4">
+        <div>
+            
+            <div class="posts">
+                <h1 class="content-subhead">16 Apr 2013, 14:05</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-04-16-more-data-mapper/" class="post-title">More Data Mapper</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-share">
+                        <div class="post-share-links">
+                            <h4 style="">Share</h4>
+                            <a href="#" data-type="facebook" data-url="https://ders.github.io/post/2013-04-16-more-data-mapper/" data-title="More Data Mapper" data-description="" data-media="" class="prettySocial fa fa-facebook"></a>
+                            <a href="#" data-type="googleplus" data-url="https://ders.github.io/post/2013-04-16-more-data-mapper/" data-description="" class="prettySocial fa fa-google-plus"></a>
+                            
+                            
+                        </div>
+                    </div>
+                    <div class="post-description">
+                        <p>One of the basic functions of <a href="http://datamapper.org/">Data Mapper</a> is to remember which attributes in the model have been modified so that it&rsquo;s easy to determine what (if anything) needs to be updated in the database.
+Data Mapper checks automatically on a call to <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#save-instance_method"><code>#save</code></a> and only writes what needs to be written.
+It also provides methods <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#dirty%3F-instance_method"><code>#dirty?</code></a> and <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_dirty%3F-instance_method"><code>#attribute_dirty?</code></a>, which tell you whether or not a record or a particular attribute has changed.</p>
+
+<p>Unfortunately, while it&rsquo;s easy to find out whether or not an attribute has changed, there is no easy way to see what the old value was.
+It&rsquo;s obviously keeping the old value somewhere.  We know this because when you change an attribute back to the old value, it recognizes that you&rsquo;ve done so and considers it unchanged.</p>
+
+<p>There is a method called <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#dirty_attributes-instance_method"><code>#dirty_attributes</code></a>, which returns a hash of changed attributes, but the keys to this hash are hashes themselves and in a format that&rsquo;s used only internally in Data Mapper, making it a needlessly inconvenient method to use.
+Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not part of the public API.</p>
+
+<p>There is a possible workaround, suggested by some.  Override the setter for the attribute and save the old value for later use.</p>
+
+<p><div class="highlight"><pre><span class="k">def</span> <span class="nf">thing</span><span class="o">=</span><span class="p">(</span><span class="n">newthing</span><span class="p">)</span>
+  <span class="vi">@oldthing</span> <span class="o">||=</span> <span class="vi">@thing</span>
+  <span class="vi">@thing</span> <span class="o">=</span> <span class="n">newthing</span>
+<span class="k">end</span>
+</pre></div>
+</p>
+
+<p>I&rsquo;m not going to link to the people who suggested this, though, because it&rsquo;s a terrible suggestion.  Since we&rsquo;ve overridden Data Mapper&rsquo;s setter for attribute <code>thing</code>, Data Mapper no longer knows that we&rsquo;ve changed its value.</p>
+
+<p><div class="highlight"><pre><span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">001</span> <span class="o">&gt;</span> <span class="n">record</span> <span class="o">=</span> <span class="no">Record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+ <span class="o">=&gt;</span> <span class="o">...</span>
+<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">002</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">thing</span>
+ <span class="o">=&gt;</span> <span class="s2">&quot;teamaker&quot;</span>
+<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">003</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">thing</span> <span class="o">=</span> <span class="s2">&quot;coffeemaker&quot;</span>
+ <span class="o">=&gt;</span> <span class="s2">&quot;coffeemaker&quot;</span>
+<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">004</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">attribute_dirty?</span><span class="p">(</span><span class="ss">:thing</span><span class="p">)</span>
+ <span class="o">=&gt;</span> <span class="kp">false</span>
+</pre></div>
+</p>
+
+<p>Imagine the insidious bugs that could creep in here.</p>
+
+<p><div class="highlight"><pre><span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">005</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">save</span>
+ <span class="o">=&gt;</span> <span class="kp">true</span>
+<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">006</span> <span class="o">&gt;</span> <span class="n">record</span> <span class="o">=</span> <span class="no">Record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+ <span class="o">=&gt;</span> <span class="o">...</span>
+<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">003</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">thing</span>
+ <span class="o">=&gt;</span> <span class="s2">&quot;teamaker&quot;</span>
+</pre></div>
+</p>
+
+<p>Simply put, our changes are silently ignored because we&rsquo;ve stupidly disabled what is arguably Data Mapper&rsquo;s most important function.</p>
+
+<p>Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&rsquo;s <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method"><code>#attribute_set</code></a>.</p>
+
+<p><div class="highlight"><pre><span class="k">def</span> <span class="nf">thing</span><span class="o">=</span><span class="p">(</span><span class="n">newthing</span><span class="p">)</span>
+  <span class="vi">@oldthing</span> <span class="o">||=</span> <span class="vi">@thing</span>
+  <span class="n">attribute_set</span><span class="p">(</span><span class="ss">:thing</span><span class="p">,</span> <span class="n">newthing</span><span class="p">)</span>
+<span class="k">end</span>
+</pre></div>
+</p>
+
+<p>Method <code>#attribute_set</code> keeps track of the changes.  It&rsquo;s what <code>thing=</code> pointed to before we overrode it.</p>
+
+                    </div>
+                    
+                </section>
+            </div>
+            <div class="footer">
+    <div class="pure-menu pure-menu-horizontal pure-menu-open">
+        <ul>
+            <li>Powered by <a class="hugo" href="http://hugo.spf13.com/" target="_blank">hugo</a></li>
+        </ul>
+    </div>
+</div>
+<script src="https://ders.github.io//js/all.min.js"></script>
+        </div>
+    </div>
+</div>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '', 'auto');
+ga('send', 'pageview');
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,746 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Posts on awm&#39;s blog</title>
+    <link>https://ders.github.io/post/</link>
+    <description>Recent content in Posts on awm&#39;s blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 02 Jul 2015 11:14:56 +0900</lastBuildDate>
+    <atom:link href="https://ders.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>New blog engine</title>
+      <link>https://ders.github.io/post/2015-07-02-new-blog-engine/</link>
+      <pubDate>Thu, 02 Jul 2015 11:14:56 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2015-07-02-new-blog-engine/</guid>
+      <description>&lt;p&gt;Trying out &lt;a href=&#34;http://gohugo.io/&#34;&gt;Hugo&lt;/a&gt; as a new blog engine.  If you&amp;rsquo;re reading this, then I&amp;rsquo;ve succeeded.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Why you should always understand what&#39;s going on under the hood</title>
+      <link>https://ders.github.io/post/2014-01-27-why-you-should-always-understand-whats-going-on-under-the-hood/</link>
+      <pubDate>Mon, 27 Jan 2014 10:07:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2014-01-27-why-you-should-always-understand-whats-going-on-under-the-hood/</guid>
+      <description>
+
+&lt;p&gt;This is about how I got bitten by &lt;a href=&#34;http://datamapper.org/&#34;&gt;DataMapper&lt;/a&gt;.
+No infection and I didn&amp;rsquo;t get rabies, but it still hurt.&lt;/p&gt;
+
+&lt;p&gt;I should mention that overall I think DataMapper is pretty good.
+It has most of the core features that an ORM should have without unneeded complexity.
+It beats the pants off of Active Somethingorother when it comes to making clean, backend-independent models.&lt;/p&gt;
+
+&lt;p&gt;Unfortunately &lt;em&gt;most of the core features&lt;/em&gt; isn&amp;rsquo;t quite &lt;em&gt;all of the core features&lt;/em&gt;, and when you really need that one missing piece, that&amp;rsquo;s when the trouble starts.&lt;/p&gt;
+
+&lt;p&gt;What bit me was the combination of two unrelated things:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;I needed an atomic update with conditions attached.&lt;/li&gt;
+&lt;li&gt;Datamapper has different representations of the Boolean type, even between different SQLs.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;the-missing-feature:136baa383e3072f3c5db5b5786002bc4&#34;&gt;The Missing Feature&lt;/h3&gt;
+
+&lt;p&gt;The glaringly missing feature is the ability to update a value and know
+whether or not we actually changed anything.&lt;/p&gt;
+
+&lt;p&gt;In SQL this would look like this:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;k&#34;&gt;UPDATE&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;quarks&amp;quot;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;SET&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;t&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;whosaw&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;ders&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WHERE&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;42&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;AND&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;f&amp;#39;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Then I would get the number of affected rows to see if a change was made
+(i.e. whether or not the quark had already been seen).&lt;/p&gt;
+
+&lt;p&gt;So let&amp;rsquo;s try it with DataMapper:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;no&#34;&gt;Quark&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;all&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;ss&#34;&gt;:id&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;42&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:seen&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;kp&#34;&gt;false&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;update&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;ss&#34;&gt;:seen&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;kp&#34;&gt;true&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:whosaw&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;ders&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Two problems here.
+The first problem is that the return value is always true, and we don&amp;rsquo;t
+get to see how many rows were updated.
+This isn&amp;rsquo;t too big a deal;
+we can work around it by using &lt;code&gt;Quark.first&lt;/code&gt; instead of &lt;code&gt;Quark.all&lt;/code&gt;,
+generating an exception if no records are found.&lt;/p&gt;
+
+&lt;p&gt;The second problem is the dealbreaker.
+Datamapper insists on generating two separate queries for the single
+update statement:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;size&amp;quot;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;whosaw&amp;quot;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;quarks&amp;quot;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WHERE&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;ss&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;42&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;AND&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;f&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;ORDER&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;BY&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;UPDATE&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;quarks&amp;quot;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;SET&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;t&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;whosaw&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;ders&amp;#39;&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;WHERE&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;42&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;This obviously won&amp;rsquo;t do, as it&amp;rsquo;s not thread-safe.
+Two users running this code at the same time would both believe that they saw the quark first.&lt;/p&gt;
+
+&lt;h3 id=&#34;the-solution:136baa383e3072f3c5db5b5786002bc4&#34;&gt;The Solution&lt;/h3&gt;
+
+&lt;p&gt;The solution was to write the update query in SQL.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;n&#34;&gt;da&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;no&#34;&gt;DataMapper&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;repository&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;ss&#34;&gt;:default&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;adapter&lt;/span&gt;
+&lt;span class=&#34;n&#34;&gt;r&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;da&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;execute&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;quot;UPDATE quarks SET seen=&amp;#39;t&amp;#39;, whosaw=&amp;#39;ders&amp;#39; WHERE id=42 AND seen=&amp;#39;f&amp;#39;&amp;quot;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;r&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;affected_rows&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;
+   &lt;span class=&#34;o&#34;&gt;...&lt;/span&gt; &lt;span class=&#34;c1&#34;&gt;# we saw it first&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Kind of defeats the purpose of having an ORM, but it gets the job done.
+And as it turns out, I&amp;rsquo;m
+&lt;a href=&#34;http://stackoverflow.com/questions/18650932/how-to-add-a-where-clause-in-update-query-in-datamapper&#34;&gt;not the first one&lt;/a&gt;
+to run into this issue.&lt;/p&gt;
+
+&lt;h3 id=&#34;how-i-got-bitten:136baa383e3072f3c5db5b5786002bc4&#34;&gt;How I Got Bitten&lt;/h3&gt;
+
+&lt;p&gt;Little did I know that the internal mapping of a Boolean field varies
+between SQL implementations.
+For Sqlite and Postgres, it&amp;rsquo;s a character field with &lt;code&gt;&#39;t&#39;&lt;/code&gt; and &lt;code&gt;&#39;f&#39;&lt;/code&gt; values, whereas for MySQL it&amp;rsquo;s the integers 1 and 0.&lt;/p&gt;
+
+&lt;p&gt;In my case the unit tests all passed, but the live server (with a MySQL backend)
+started returning 500s.&lt;/p&gt;
+
+&lt;p&gt;It&amp;rsquo;s easy enough to change the query to work with MySQL:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;n&#34;&gt;r&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;da&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;execute&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;quot;UPDATE quarks SET seen=1, whosaw=&amp;#39;ders&amp;#39; WHERE id=42 AND seen=0&amp;quot;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;But then the unit tests fail.&lt;/p&gt;
+
+&lt;p&gt;In the end, I wrote this bit of horrible code to keep the tests passing
+and the live server happy.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;n&#34;&gt;t&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;f&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;if&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;da&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;options&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;s1&#34;&gt;&amp;#39;scheme&amp;#39;&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;]&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;==&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;sqlite&amp;#39;&lt;/span&gt;
+  &lt;span class=&#34;o&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;quot;&amp;#39;t&amp;#39;&amp;quot;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;quot;&amp;#39;f&amp;#39;&amp;quot;&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;]&lt;/span&gt; &lt;span class=&#34;c1&#34;&gt;# sqlite&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;else&lt;/span&gt;
+  &lt;span class=&#34;o&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;]&lt;/span&gt; &lt;span class=&#34;c1&#34;&gt;# mysql&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;end&lt;/span&gt;
+
+  &lt;span class=&#34;o&#34;&gt;...&lt;/span&gt;
+
+&lt;span class=&#34;n&#34;&gt;r&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;da&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;execute&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;quot;UPDATE quarks SET seen=&lt;/span&gt;&lt;span class=&#34;si&#34;&gt;#{&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;t&lt;/span&gt;&lt;span class=&#34;si&#34;&gt;}&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;, whosaw=&amp;#39;ders&amp;#39; WHERE id=42 AND seen=&lt;/span&gt;&lt;span class=&#34;si&#34;&gt;#{&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;f&lt;/span&gt;&lt;span class=&#34;si&#34;&gt;}&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;quot;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;(There may be a way to extract &lt;code&gt;t&lt;/code&gt; and &lt;code&gt;f&lt;/code&gt; directly from the
+DataMapper internals, but I&amp;rsquo;m not that good yet.)&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Python</title>
+      <link>https://ders.github.io/post/2014-01-17-try-it/</link>
+      <pubDate>Fri, 17 Jan 2014 12:20:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2014-01-17-try-it/</guid>
+      <description>&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;$ python
+&amp;gt;&amp;gt;&amp;gt; import this
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Just try it.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>AWS Locale</title>
+      <link>https://ders.github.io/post/2014-01-10-aws-locale/</link>
+      <pubDate>Fri, 10 Jan 2014 14:55:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2014-01-10-aws-locale/</guid>
+      <description>&lt;p&gt;Every time I start a new EC2 Ubuntu instance, I&amp;rsquo;m confronted with the following
+warning when I ssh in:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;_____________________________________________________________________
+WARNING! Your environment specifies an invalid locale.
+ This can affect your user experience significantly, including the
+ ability to manage packages. You may install the locales by running:
+
+   sudo apt-get install language-pack-UTF-8
+     or
+   sudo locale-gen UTF-8
+
+To see all available language packs, run:
+   apt-cache search &amp;quot;^language-pack-[a-z][a-z]$&amp;quot;
+To disable this message for all users, run:
+   sudo touch /var/lib/cloud/instance/locale-check.skip
+_____________________________________________________________________
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Furthermore, a variety of package installations fail with some complaint
+related to the locale, the default language, or both.
+And for some reason the advice to install relevant language packs
+is not helpful.&lt;/p&gt;
+
+&lt;p&gt;It turns out that there are some of environment variables
+(&lt;code&gt;LANGUAGE&lt;/code&gt;, &lt;code&gt;LC_CTYPE&lt;/code&gt; and &lt;code&gt;LC_ALL&lt;/code&gt; to be specific) that are not
+set properly.&lt;/p&gt;
+
+&lt;p&gt;The advice to install language packs assumes that these environment
+variables are set to a language that&amp;rsquo;s not installed.  However, in the
+case of a new EC2 instance, these variables are not set at all.&lt;/p&gt;
+
+&lt;p&gt;An easy way to get the warnings to go away is to edit the file
+&lt;code&gt;/etc/default/locale&lt;/code&gt; so that these variables always get set. I&amp;rsquo;ve found
+that the default installation only sets &lt;code&gt;LANG&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;/etc/default/locale
+&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;LANG=en_US.UTF-8
+LANGUAGE=en_US
+LC_CTYPE=en_US.UTF-8
+LC_ALL=en_US.UTF-8
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;As always, it&amp;rsquo;s also a good idea to make sure you have the latest and
+greatest packages:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;$ sudo apt-get update
+$ sudo apt-get upgrade
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;And finally, while we&amp;rsquo;re at it, why not set the timezone?&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;$ sudo dpkg-reconfigure tzdata
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Next time I need to set up a new EC2 instance,
+I&amp;rsquo;ll come read my own blog and know exactly what to do.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Woke up, fell out of bed</title>
+      <link>https://ders.github.io/post/2013-12-17-woke-up/</link>
+      <pubDate>Tue, 17 Dec 2013 11:06:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2013-12-17-woke-up/</guid>
+      <description>&lt;p&gt;Things I learned this year:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Ruby.&lt;/strong&gt; Ruby is an interesting language, but I find that the ability to
+open up classes and modify methods on the fly is too easily abused.
+Also not a fan of all the alternate method names (e.g. map and collect) &amp;ndash;
+would prefer just to choose one and stick with it.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Git&lt;/strong&gt; and &lt;strong&gt;Github.&lt;/strong&gt; Made crystal clear with SourceTree.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Rails.&lt;/strong&gt; Learned to hate it. Was going to write a blog post on why I
+hate rails, but someone
+&lt;a href=&#34;http://kakubei.blogspot.kr/2012/05/why-i-hate-rails.html&#34;&gt;beat me to it&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Rubygems.&lt;/strong&gt; Learned to hate them too. I&amp;rsquo;ve wasted a stupid amount of
+time figuring out that my program is broken because the gems I&amp;rsquo;m using
+don&amp;rsquo;t work the way they&amp;rsquo;re supposed to. Better to just write it myself.
+(I actually think the gem system is pretty cool, but quality control,
+ladies and gentlemen, quality control.)
+And if you can do something in two lines of ruby code, you don&amp;rsquo;t need a gem.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Data Mapper.&lt;/strong&gt; I wish this were maintained better. It&amp;rsquo;s a handy tool,
+especially when you&amp;rsquo;re dealing with simple, table-friendly data.
+It&amp;rsquo;s not so good at complex queries, though, and I think that the lofty goal
+of making it compatible with all different kinds of database engines
+is hampering its ability to work really well with the most common ones (e.g. SQL).&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Python.&lt;/strong&gt; Python rocks. My next job will be in a python shop.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Django.&lt;/strong&gt; Django rocks along with python. In my next life (when I get
+really good at python and am independently wealthy with a lot of free time)
+I&amp;rsquo;m going to be a regular contributor to the django project.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Unfuddle&lt;/strong&gt; and &lt;strong&gt;Pivotal Tracker.&lt;/strong&gt; Say what? What is there to learn there?
+In fact there&amp;rsquo;s a lot to learn if you&amp;rsquo;ve never used an issue tracking system before.
+I find the Unfuddle UI to be kind of clunky, especially if you&amp;rsquo;re dealing
+with a large number of tickets, but it&amp;rsquo;s much more thorough than Pivotal
+Tracker in keeping track of comments, ticket disposition, change history,
+and so on.
+Maybe some clever person will invent a PT-style front end for Unfuddle.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Heroku.&lt;/strong&gt; Five stars.
+The first time I attempted a heroku deployment, it was all black magic and I was lost.
+Now it&amp;rsquo;s still black magic, but I&amp;rsquo;ve learned that I can use it.
+Deployment is one of those things that gets more and more complicated the more you try to understand it.
+Heroku allows you to remain ignorant and just have your program run.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Android.&lt;/strong&gt; On my desktop I have a 2200-page book on how to code for Android.
+I&amp;rsquo;m going to tell you I&amp;rsquo;ve read it all. I&amp;rsquo;ll be lying, and you won&amp;rsquo;t believe me.
+In reality, I&amp;rsquo;ve learned the basics and can make a simple app.
+I&amp;rsquo;m still at the tedious stage where I have to look everything up, and Android programming is already tedious by nature, but I&amp;rsquo;m getting it done.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Amazon AWS.&lt;/strong&gt; This probably has the steepest learning curve of all.
+The documentation is complete and thorough and is also written to an
+audience of Sysadmin Ph.Ds.
+So far I&amp;rsquo;ve learned to use S3 buckets and create EC2 instances.&lt;/p&gt;
+
+&lt;p&gt;Things I want to learn next year:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;advanced Python&lt;/li&gt;
+&lt;li&gt;advanced Django&lt;/li&gt;
+&lt;li&gt;advanced Git&lt;/li&gt;
+&lt;li&gt;Neo4j&lt;/li&gt;
+&lt;li&gt;Go&lt;/li&gt;
+&lt;li&gt;Sass&lt;/li&gt;
+&lt;li&gt;node.js&lt;/li&gt;
+&lt;li&gt;backbone.js&lt;/li&gt;
+&lt;li&gt;how to deploy stuff (why is this so hard, anyway?)&lt;/li&gt;
+&lt;li&gt;Haskell&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Which train is that?</title>
+      <link>https://ders.github.io/post/2013-05-02-which-train-is-that/</link>
+      <pubDate>Thu, 02 May 2013 10:03:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2013-05-02-which-train-is-that/</guid>
+      <description>&lt;p&gt;Straight out of college, I went on a summer backpacking trip to Europe.
+Well, it wasn&amp;rsquo;t exactly a backpacking trip, as (1) my bag wasn&amp;rsquo;t a backpack, and (2) I actually spent two months in one place attending a language program, but that&amp;rsquo;s another story.&lt;/p&gt;
+
+&lt;p&gt;My ticket back home was out of London&amp;rsquo;s Heathrow airport, and since I was in Bavaria at the time, I had a major train + ferry + train journey just to get my flight.
+I had the journey carefully researched and perfectly timed so that I&amp;rsquo;d be on the ferry just as my rail pass expired.
+The journey, though long, was largely without incident, but something that happened on the tube from Liverpool Street to Heathrow left a lasting impression.&lt;/p&gt;
+
+&lt;p&gt;I had figured out in advance which train I needed to catch. I&amp;rsquo;ll guess now that it was the Circle Line to South Kensingon, changing to the Piccadilly Line.
+I followed all the signs carefully and got myself to the correct platform.
+I noticed that there were other lines operating on the same track, so I had to make sure that I got on the correct train.&lt;/p&gt;
+
+&lt;p&gt;Within a couple of minutes, a train arrived.  I looked to see whether or not it was a Circle Line train, but wait.
+There was no marking whatsoever.  No Circle Line, no Metropolitan Line, nothing.
+And yet, busy Londoners were getting on and off, some were waiting for a different train, and they all obviously knew something about this mystery train that I didn&amp;rsquo;t &amp;ndash;
+namely what line it was running.&lt;/p&gt;
+
+&lt;p&gt;I finally asked a woman who was standing nearby if she could tell me what train this was.  Predictably, she looked at me as if I were an idiot.
+She was silent for a few seconds, and then without moving her head she glanced slightly upward and answered me.  &amp;ldquo;Metropolitan.&amp;rdquo;  End of conversation.&lt;/p&gt;
+
+&lt;p&gt;You see, in New York, the line number/letter and destination are clearly visible on the outside of every subway car.
+In fact, everywhere I&amp;rsquo;d travelled, every bus, subway, and tram  was labeled in this fasion.
+In New York at the time, looking at the train itself was the &lt;em&gt;only&lt;/em&gt; way to know if it was the train you wanted; fancy platform displays were as of yet a thing of the future.  It had simply never occurred to me that there was another way.&lt;/p&gt;
+
+&lt;p&gt;The train information signs in the London tube station were large enough to read easily but also small enough to miss completely if you didn&amp;rsquo;t know they were there.
+Had I gone to London with this one simple bit of information &amp;ndash; that there is train information displayed above the platform &amp;ndash; I could have saved myself this small embarrassment and the possibility of getting on the wrong train.&lt;/p&gt;
+
+&lt;p&gt;This, my friends, is an exact parallel of what&amp;rsquo;s happening in my workplace nowadays.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>More Data Mapper</title>
+      <link>https://ders.github.io/post/2013-04-16-more-data-mapper/</link>
+      <pubDate>Tue, 16 Apr 2013 14:05:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2013-04-16-more-data-mapper/</guid>
+      <description>&lt;p&gt;One of the basic functions of &lt;a href=&#34;http://datamapper.org/&#34;&gt;Data Mapper&lt;/a&gt; is to remember which attributes in the model have been modified so that it&amp;rsquo;s easy to determine what (if anything) needs to be updated in the database.
+Data Mapper checks automatically on a call to &lt;a href=&#34;http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#save-instance_method&#34;&gt;&lt;code&gt;#save&lt;/code&gt;&lt;/a&gt; and only writes what needs to be written.
+It also provides methods &lt;a href=&#34;http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#dirty%3F-instance_method&#34;&gt;&lt;code&gt;#dirty?&lt;/code&gt;&lt;/a&gt; and &lt;a href=&#34;http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_dirty%3F-instance_method&#34;&gt;&lt;code&gt;#attribute_dirty?&lt;/code&gt;&lt;/a&gt;, which tell you whether or not a record or a particular attribute has changed.&lt;/p&gt;
+
+&lt;p&gt;Unfortunately, while it&amp;rsquo;s easy to find out whether or not an attribute has changed, there is no easy way to see what the old value was.
+It&amp;rsquo;s obviously keeping the old value somewhere.  We know this because when you change an attribute back to the old value, it recognizes that you&amp;rsquo;ve done so and considers it unchanged.&lt;/p&gt;
+
+&lt;p&gt;There is a method called &lt;a href=&#34;http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#dirty_attributes-instance_method&#34;&gt;&lt;code&gt;#dirty_attributes&lt;/code&gt;&lt;/a&gt;, which returns a hash of changed attributes, but the keys to this hash are hashes themselves and in a format that&amp;rsquo;s used only internally in Data Mapper, making it a needlessly inconvenient method to use.
+Also, I&amp;rsquo;d like to avoid &lt;code&gt;#dirty_attributes&lt;/code&gt; as it&amp;rsquo;s not part of the public API.&lt;/p&gt;
+
+&lt;p&gt;There is a possible workaround, suggested by some.  Override the setter for the attribute and save the old value for later use.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;k&#34;&gt;def&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;thing&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;newthing&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+  &lt;span class=&#34;vi&#34;&gt;@oldthing&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;||=&lt;/span&gt; &lt;span class=&#34;vi&#34;&gt;@thing&lt;/span&gt;
+  &lt;span class=&#34;vi&#34;&gt;@thing&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;newthing&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;end&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m not going to link to the people who suggested this, though, because it&amp;rsquo;s a terrible suggestion.  Since we&amp;rsquo;ve overridden Data Mapper&amp;rsquo;s setter for attribute &lt;code&gt;thing&lt;/code&gt;, Data Mapper no longer knows that we&amp;rsquo;ve changed its value.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;9&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;p392&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;mo&#34;&gt;001&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;record&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;no&#34;&gt;Record&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;get&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+ &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;...&lt;/span&gt;
+&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;9&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;p392&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;mo&#34;&gt;002&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;record&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;thing&lt;/span&gt;
+ &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;quot;teamaker&amp;quot;&lt;/span&gt;
+&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;9&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;p392&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;mo&#34;&gt;003&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;record&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;thing&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;quot;coffeemaker&amp;quot;&lt;/span&gt;
+ &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;quot;coffeemaker&amp;quot;&lt;/span&gt;
+&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;9&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;p392&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;mo&#34;&gt;004&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;record&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;attribute_dirty?&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;ss&#34;&gt;:thing&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+ &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;kp&#34;&gt;false&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Imagine the insidious bugs that could creep in here.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;9&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;p392&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;mo&#34;&gt;005&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;record&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;save&lt;/span&gt;
+ &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;kp&#34;&gt;true&lt;/span&gt;
+&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;9&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;p392&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;mo&#34;&gt;006&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;record&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;no&#34;&gt;Record&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;get&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+ &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;...&lt;/span&gt;
+&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;9&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;p392&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;mo&#34;&gt;003&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;record&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;thing&lt;/span&gt;
+ &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;quot;teamaker&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Simply put, our changes are silently ignored because we&amp;rsquo;ve stupidly disabled what is arguably Data Mapper&amp;rsquo;s most important function.&lt;/p&gt;
+
+&lt;p&gt;Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&amp;rsquo;s &lt;a href=&#34;http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method&#34;&gt;&lt;code&gt;#attribute_set&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;k&#34;&gt;def&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;thing&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;newthing&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+  &lt;span class=&#34;vi&#34;&gt;@oldthing&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;||=&lt;/span&gt; &lt;span class=&#34;vi&#34;&gt;@thing&lt;/span&gt;
+  &lt;span class=&#34;n&#34;&gt;attribute_set&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;ss&#34;&gt;:thing&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;newthing&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;end&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Method &lt;code&gt;#attribute_set&lt;/code&gt; keeps track of the changes.  It&amp;rsquo;s what &lt;code&gt;thing=&lt;/code&gt; pointed to before we overrode it.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Data Mapper</title>
+      <link>https://ders.github.io/post/2013-04-16-data-mapper/</link>
+      <pubDate>Tue, 16 Apr 2013 12:19:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2013-04-16-data-mapper/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;ve been working on a project with &lt;a href=&#34;http://www.padrinorb.com/&#34;&gt;Padrino&lt;/a&gt; and &lt;a href=&#34;http://datamapper.org&#34;&gt;Data Mapper&lt;/a&gt;.
+So far I&amp;rsquo;m quite a fan of the Data Mapper way of doing things.&lt;/p&gt;
+
+&lt;p&gt;Unfortunately, I&amp;rsquo;m schooled in the old way &amp;ndash; ugly messes of &lt;code&gt;SELECT&lt;/code&gt;, &lt;code&gt;JOIN&lt;/code&gt; and &lt;code&gt;ORDER BY&lt;/code&gt;,
+intelligible only by SQL gurus and dependent not just on SQL but on a particular variety of such, which in my case would be MySQL.&lt;/p&gt;
+
+&lt;p&gt;I label this as unfortunate because my concept of database (e.g. MySQL) heavily influences how I organize the code I write.
+I often find myself with a &amp;ldquo;How do you do this in DataMapper?&amp;rdquo; kind of question, where &lt;em&gt;this&lt;/em&gt; is something that I know how to do the old way.
+After all, DataMapper is generating SQL queries from the models I write, so if it&amp;rsquo;s easy in SQL, shouldn&amp;rsquo;t it also be easy in DataMapper?&lt;/p&gt;
+
+&lt;p&gt;(Side note: DataMapper doesn&amp;rsquo;t &lt;em&gt;necessarily&lt;/em&gt; generate SQL, but in my current project the backend is SQL and I see the generated queries on the debugging console.)&lt;/p&gt;
+
+&lt;p&gt;Recently I&amp;rsquo;ve a question of this sort that I haven&amp;rsquo;t been able to solve.&lt;/p&gt;
+
+&lt;p&gt;I have a model with an ordering field, which we&amp;rsquo;ll call &lt;code&gt;position&lt;/code&gt;.  I want to sort by this field (ascending), except that I want all the zeroes to be at the end.  In addition, I&amp;rsquo;d like the all the records with &lt;code&gt;position=0&lt;/code&gt; sorted by &lt;code&gt;id&lt;/code&gt; descending.&lt;/p&gt;
+
+&lt;p&gt;In MySQL, I would write:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;k&#34;&gt;SELECT&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;*&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;FROM&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;`&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;things&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;`&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;ORDER&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;BY&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;`&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;position&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;`=&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;`&lt;/span&gt;&lt;span class=&#34;k&#34;&gt;position&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;`&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;`&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;id&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;`&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;DESC&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Free donuts to the first person who can make a DataMapper version of this.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Rails for Zombies</title>
+      <link>https://ders.github.io/post/2013-03-21-rails-for-zombies/</link>
+      <pubDate>Thu, 21 Mar 2013 12:19:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2013-03-21-rails-for-zombies/</guid>
+      <description>&lt;p&gt;I got introduced today to &lt;a href=&#34;http://railsforzombies.org&#34;&gt;an excellent Ruby on Rails tutorial&lt;/a&gt; with an entertaining zombie theme.  It covered a lot of the basic concepts, many of which I&amp;rsquo;d skipped over in my haste to dive into a real-live project.&lt;/p&gt;
+
+&lt;p&gt;Being who I am, I noticed a couple of inconsistencies between the tutorial videos and the exercises.  Actually, this only applies to the level 5 video; the rest seemed to be fine.&lt;/p&gt;
+
+&lt;p&gt;In the level 5 video at 2:10, the following match example is given:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;n&#34;&gt;match&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;new_tweet&amp;#39;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;quot;Tweets#new&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Note the uppercase T on Tweets.  This T is uppercase throughout the video.&lt;/p&gt;
+
+&lt;p&gt;However, when I tried to do the second exercise for this level, the following answer was rejected:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;n&#34;&gt;match&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;undead&amp;#39;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;quot;Zombies#undead&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;The hints told me to do this:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;n&#34;&gt;match&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;undead&amp;#39;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;quot;zombies#undead&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;with a lower case z, which was accepted.  Now I&amp;rsquo;m confused.  Do we need a capital letter here or not?&lt;/p&gt;
+
+&lt;p&gt;In the same video at 3:30, the following match example is given:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;n&#34;&gt;match&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;all&amp;#39;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;redirect&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;s1&#34;&gt;&amp;#39;/tweets&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Note that there is no leading slash on &amp;lsquo;all&amp;rsquo;; this format is consistent throughout the video.&lt;/p&gt;
+
+&lt;p&gt;However, when I tried to do the third exercise, the following answer was rejected:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;n&#34;&gt;match&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;undead&amp;#39;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;redirect&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;s1&#34;&gt;&amp;#39;/zombies&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;This time the hints told me to do this:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;n&#34;&gt;match&lt;/span&gt; &lt;span class=&#34;s1&#34;&gt;&amp;#39;/undead&amp;#39;&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;redirect&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;s1&#34;&gt;&amp;#39;/zombies&amp;#39;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Again, I&amp;rsquo;m confused. Do we need (or even want) a leading slash here?&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Good Tools</title>
+      <link>https://ders.github.io/post/2013-03-15-good-tools/</link>
+      <pubDate>Fri, 15 Mar 2013 16:59:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2013-03-15-good-tools/</guid>
+      <description>
+
+&lt;p&gt;Here are some some tools that I like.&lt;/p&gt;
+
+&lt;h2 id=&#34;rerun:641fb2fef50bdd606c86780f8eb06737&#34;&gt;Rerun&lt;/h2&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Rerun launches your program, then watches the filesystem. If a relevant file changes, then it restarts your program.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;I had some trouble getting Shotgun configured probably, and I found &lt;a href=&#34;https://github.com/alexch/rerun&#34;&gt;Rerun&lt;/a&gt; to be a simple alternative.  I like it because it can be used for any process you want, not just restarting your web server.&lt;/p&gt;
+
+&lt;h2 id=&#34;gitk:641fb2fef50bdd606c86780f8eb06737&#34;&gt;Gitk&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://gitk.sourceforge.net/&#34;&gt;Gitk&lt;/a&gt; is a graphical interface for Git.  It shows your entire development tree graphically, great for those of us less fluent in pushes and pulls.  It does a lot of other things too that I don&amp;rsquo;t know about.&lt;/p&gt;
+
+&lt;p&gt;Debian-based systems can enjoy Gitk with a simple &lt;code&gt;sudo apt-get install gitk&lt;/code&gt;.  Then issue a &lt;code&gt;gitk --all&lt;/code&gt; to see everything.&lt;/p&gt;
+
+&lt;h2 id=&#34;irb:641fb2fef50bdd606c86780f8eb06737&#34;&gt;Irb&lt;/h2&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://ruby-doc.org/docs/ProgrammingRuby/html/irb.html&#34;&gt;Irb&lt;/a&gt; is the Ruby console.  I should actually generalize this and include all consoles.  One of the most valuable checks while coding is to paste snippets of code into the console and see that they do what you think they&amp;rsquo;re doing.&lt;/p&gt;
+
+&lt;p&gt;Make an &lt;code&gt;.irbrc&lt;/code&gt; startup file for a richer experience.  Rails users can get a the console with the full Rails evnironment with &lt;code&gt;rails c&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Here is &lt;a href=&#34;http://samuelmullen.com/2012/07/getting-more-out-of-the-rails-console/&#34;&gt;an excellent blog post&lt;/a&gt; on the topic.&lt;/p&gt;
+
+&lt;h2 id=&#34;awesome-print:641fb2fef50bdd606c86780f8eb06737&#34;&gt;Awesome Print&lt;/h2&gt;
+
+&lt;p&gt;A great companion to the Ruby console is &lt;a href=&#34;https://github.com/michaeldv/awesome_print&#34;&gt;Awesome Print&lt;/a&gt;, a Ruby gem which lets you pretty up the output of array, hashes, and the like while in the console.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;9&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;p392&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;mo&#34;&gt;001&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;&lt;span class=&#34;ss&#34;&gt;:name&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;quot;Hong Gildong&amp;quot;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:age&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;10&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:interests&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;kp&#34;&gt;nil&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+ &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;&lt;span class=&#34;ss&#34;&gt;:name&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt;&lt;span class=&#34;s2&#34;&gt;&amp;quot;Hong Gildong&amp;quot;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:age&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;10&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:interests&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt;&lt;span class=&#34;kp&#34;&gt;nil&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;span class=&#34;mi&#34;&gt;1&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;9&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;3&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;-&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;p392&lt;/span&gt; &lt;span class=&#34;p&#34;&gt;:&lt;/span&gt;&lt;span class=&#34;mo&#34;&gt;002&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;ap&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;_&lt;/span&gt;
+&lt;span class=&#34;p&#34;&gt;{&lt;/span&gt;
+         &lt;span class=&#34;ss&#34;&gt;:name&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;quot;Hong Gildong&amp;quot;&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+          &lt;span class=&#34;ss&#34;&gt;:age&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;10&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;
+    &lt;span class=&#34;ss&#34;&gt;:interests&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;kp&#34;&gt;nil&lt;/span&gt;
+&lt;span class=&#34;p&#34;&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;h2 id=&#34;sass:641fb2fef50bdd606c86780f8eb06737&#34;&gt;Sass&lt;/h2&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;Sass makes css fun again.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;a href=&#34;http://sass-lang.com/&#34;&gt;Sass&lt;/a&gt; is a nifty program that adds some badly-needed css functionality, such as variables, nesting and inheritance.  But the really nifty thing is how it&amp;rsquo;s accomplished.&lt;/p&gt;
+
+&lt;p&gt;You make a &lt;code&gt;.scss&lt;/code&gt; file and Sass converts it to an equivalent &lt;code&gt;.css&lt;/code&gt; that any browser, even IE, can understand.  Sass even has a stealth mode, where it will regenerate the css when your scss is updated.&lt;/p&gt;
+
+&lt;p&gt;Sass is packaged as a Ruby gem, but you&amp;rsquo;re not limited to using it on Ruby projects, since in the end all you need on your server (obviously) are the css files it generates locally.&lt;/p&gt;
+
+&lt;p&gt;It&amp;rsquo;s likely that a lot of Sass&amp;rsquo;s functionality will eventually become standard css.  But for now, we&amp;rsquo;ve got Sass.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Validating data with Mongoid</title>
+      <link>https://ders.github.io/post/2013-02-26-validataing-data-with-mongoid/</link>
+      <pubDate>Tue, 26 Feb 2013 15:57:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2013-02-26-validataing-data-with-mongoid/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;ve been working with &lt;a href=&#34;http://mongoid.org/en/mongoid/&#34;&gt;Mongoid&lt;/a&gt;, which is an object-document-mapper for &lt;a href=&#34;http://mongodb.org/&#34;&gt;MongoDB&lt;/a&gt; written in Ruby.&lt;/p&gt;
+
+&lt;p&gt;Mongo organizes data into collections of documents, just as relational databases such as SQL organize data into tables of records.  Reading and writing of
+documents is done via named classes, one for each collection.&lt;/p&gt;
+
+&lt;p&gt;The named class for each collection includes &lt;code&gt;Mongoid::Document&lt;/code&gt; to get the database interface methods such as &lt;code&gt;.where&lt;/code&gt;, &lt;code&gt;.new&lt;/code&gt;, and &lt;code&gt;.save&lt;/code&gt;. It also defines the data fields and any custom data handlers.&lt;/p&gt;
+
+&lt;p&gt;One very useful feature is the availability of automatic validators which check the format and integrity of your data before allowing it to be saved.  There&amp;rsquo;s a myriad of options, and they are &lt;a href=&#34;http://mongoid.org/en/mongoid/docs/validation.html&#34;&gt;not very well explained&lt;/a&gt; in the documentation.&lt;/p&gt;
+
+&lt;p&gt;Since the data validators are shared with &lt;a href=&#34;http://api.rubyonrails.org/classes/ActiveModel.html&#34;&gt;Active Model&lt;/a&gt;, I decided to look for some help there and found &lt;a href=&#34;http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates&#34;&gt;this pretty good description&lt;/a&gt; of what kind of validation could be done.
+Unfortunately, it wasn&amp;rsquo;t clear anywhere how to actually use the validators once they&amp;rsquo;re defined.&lt;/p&gt;
+
+&lt;p&gt;After a bit of hair-pulling, I discovered it&amp;rsquo;s actually quite simple.&lt;/p&gt;
+
+&lt;p&gt;Let&amp;rsquo;s define a minimal class &lt;code&gt;Iqscore&lt;/code&gt;.  (The name of the collection will be &lt;code&gt;iqscores&lt;/code&gt;; this is a weird behavior of Mongoid whereby class names must be singular and Mongoid will pluralize them for you when naming the collection.)&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;nb&#34;&gt;require&lt;/span&gt; &lt;span class=&#34;s2&#34;&gt;&amp;quot;mongoid&amp;quot;&lt;/span&gt;
+
+&lt;span class=&#34;k&#34;&gt;class&lt;/span&gt; &lt;span class=&#34;nc&#34;&gt;Iqscore&lt;/span&gt;
+
+  &lt;span class=&#34;kp&#34;&gt;include&lt;/span&gt; &lt;span class=&#34;no&#34;&gt;Mongoid&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;::&lt;/span&gt;&lt;span class=&#34;no&#34;&gt;Document&lt;/span&gt;
+
+  &lt;span class=&#34;n&#34;&gt;field&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:kid&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:type&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;String&lt;/span&gt;
+  &lt;span class=&#34;n&#34;&gt;field&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:iq&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt;  &lt;span class=&#34;ss&#34;&gt;:type&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;nb&#34;&gt;Integer&lt;/span&gt;
+
+  &lt;span class=&#34;n&#34;&gt;validates&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:kid&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:presence&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;kp&#34;&gt;true&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:uniqueness&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;kp&#34;&gt;true&lt;/span&gt;
+  &lt;span class=&#34;n&#34;&gt;validates&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:iq&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;ss&#34;&gt;:numericality&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span class=&#34;kp&#34;&gt;true&lt;/span&gt;
+
+&lt;span class=&#34;k&#34;&gt;end&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Mongoid provides a &lt;code&gt;valid?&lt;/code&gt; method on Iqscore objects.  Valid? tells us whether or not the criteria in the &lt;code&gt;validates&lt;/code&gt; declarations are met.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;1.9.3p385 :008 &amp;gt; x = Iqscore.new({kid: &amp;quot;George&amp;quot;, iq: 70})
+ =&amp;gt; #&amp;lt;Iqscore _id: 512c72d5352420234d000003, kid: &amp;quot;George&amp;quot;, iq: 70&amp;gt;
+1.9.3p385 :009 &amp;gt; x.valid?
+ =&amp;gt; true
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;1.9.3p385 :010 &amp;gt; y = Iqscore.new({kid: &amp;quot;Bill&amp;quot;, iq: &amp;quot;unknown&amp;quot;})
+ =&amp;gt; #&amp;lt;Iqscore _id: 512c736e352420234d000004, kid: &amp;quot;Bill&amp;quot;, iq: 0&amp;gt;
+1.9.3p385 :011 &amp;gt; y.valid?
+ =&amp;gt; false
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;If it doesn&amp;rsquo;t validate, we can see what&amp;rsquo;s wrong by looking at the &lt;code&gt;errors&lt;/code&gt; property.  In this case it tells us that &lt;code&gt;iq&lt;/code&gt; is not a number (and it should be).  Note that the message &amp;ldquo;is not a number&amp;rdquo; is in an array, as it&amp;rsquo;s possible for there to be multiple messages for a single field.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;1.9.3p385 :012 &amp;gt; y.errors
+ =&amp;gt; #&amp;lt;ActiveModel::Errors:0x98a31cc @base=#&amp;lt;Iqscore _id: 512c736e352420234d000004, kid: &amp;quot;Bill&amp;quot;, iq: 0&amp;gt;, @messages={:iq=&amp;gt;[&amp;quot;is not a number&amp;quot;]}&amp;gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;valid?&lt;/code&gt; method is called automatically before any save operation (e.g. &lt;code&gt;save&lt;/code&gt; or &lt;code&gt;create&lt;/code&gt;), and if it returns false, then the save is not done.  Both &lt;code&gt;save&lt;/code&gt; and &lt;code&gt;create&lt;/code&gt; return true or false to indicate whether the save was done or not.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;1.9.3p385 :013 &amp;gt; x.save
+ =&amp;gt; true
+1.9.3p385 :014 &amp;gt; y.save
+ =&amp;gt; false
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;At this point George is in our database, but Bill isn&amp;rsquo;t.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Power</title>
+      <link>https://ders.github.io/post/2013-02-22-power/</link>
+      <pubDate>Fri, 22 Feb 2013 18:20:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2013-02-22-power/</guid>
+      <description>&lt;p&gt;Finished a user athentication system today using &lt;a href=&#34;http://bcrypt-ruby.rubyforge.org/classes/BCrypt/Password.html&#34;&gt;BCrypt::Password&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;There was an Aha! moment when I realized that they&amp;rsquo;ve defined the &lt;code&gt;==&lt;/code&gt; operator to return true when the password matches, not when the strings are equal (as a novice like me might expect).&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;1.9.3p385 :002 &amp;gt; secret = BCrypt::Password.create(&amp;quot;password&amp;quot;)
+ =&amp;gt; &amp;quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&amp;quot;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;The hashed secret is saved in the database.&amp;nbsp; It&amp;rsquo;s later retrieved and checked against the user input using &lt;code&gt;==&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;1.9.3p385 :005 &amp;gt; secret
+ =&amp;gt; &amp;quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&amp;quot;
+1.9.3p385 :006 &amp;gt; q = BCrypt::Password.new(secret)
+ =&amp;gt; &amp;quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&amp;quot;
+1.9.3p385 :007 &amp;gt; q == &amp;quot;password&amp;quot;
+ =&amp;gt; true
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;This also has the interesting side effect that &lt;code&gt;==&lt;/code&gt; is not commutative.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;1.9.3p385 :008 &amp;gt; &amp;quot;password&amp;quot; == q
+ =&amp;gt; false
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;My junior high math teacher would be disturbed by this.&amp;nbsp; Such is the power of Ruby.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Tip of the day</title>
+      <link>https://ders.github.io/post/2013-02-22-tip-of-the-day/</link>
+      <pubDate>Fri, 22 Feb 2013 10:41:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2013-02-22-tip-of-the-day/</guid>
+      <description>&lt;p&gt;When running the Mongo shell for the first time, it is necessary to specify the port:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;$ mongo 127.0.0.1:27017
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;Subsequently it is sufficient just to to say &lt;code&gt;mongo&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Learned the hard way, and by reading &lt;a href=&#34;http://stackoverflow.com/a/8509918&#34;&gt;this answer&lt;/a&gt;.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>The RubyMonk Tutorial</title>
+      <link>https://ders.github.io/post/2013-02-20-the-rubymonk-tutorial/</link>
+      <pubDate>Wed, 20 Feb 2013 10:58:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2013-02-20-the-rubymonk-tutorial/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;ve been working my way through the &lt;a href=&#34;http://rubymonk.com/learning/books&#34;&gt;RubyMonk Tutorials&lt;/a&gt;.
+They are very well written and do an excellent job of guiding the user through progressively harder concepts.&lt;/p&gt;
+
+&lt;p&gt;Today I found a couple of careless coding errors in the &lt;a href=&#34;http://rubymonk.com/learning/books/4/chapters/44-collections/lessons/98-iterate-filtrate-and-transform&#34;&gt;section on using Array#inject&lt;/a&gt; (subscription required).  The first is an illustration of inject to do a simple sum of array elements.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;o&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;4&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;8&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;15&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;16&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;23&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;42&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;].&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;inject&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;do&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;|&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;accumulator&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;iterated&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;|&lt;/span&gt;
+  &lt;span class=&#34;n&#34;&gt;accumulator&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;+=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;iterated&lt;/span&gt;
+  &lt;span class=&#34;n&#34;&gt;accumulator&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;end&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;In fact, the assignment statement here is superfluous, as the inject
+function assigns the return value of the block to the accumulator automatically.
+It would suffice to do:&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;o&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;4&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;8&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;15&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;16&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;23&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;42&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;].&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;inject&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;do&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;|&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;accumulator&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;iterated&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;|&lt;/span&gt;
+  &lt;span class=&#34;n&#34;&gt;accumulator&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;+&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;iterated&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;end&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;The second error is in an illustration of the behavior of inject.
+The function below is supposed to mimic the behavior of the one above.&lt;/p&gt;
+
+&lt;p&gt;&lt;div class=&#34;highlight&#34;&gt;&lt;pre&gt;&lt;span class=&#34;k&#34;&gt;def&lt;/span&gt; &lt;span class=&#34;nf&#34;&gt;custom_inject&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;array&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;default&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;kp&#34;&gt;nil&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+  &lt;span class=&#34;n&#34;&gt;accumulator&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;default&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;||&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;array&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;]&lt;/span&gt;
+
+  &lt;span class=&#34;n&#34;&gt;array&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;.&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;each&lt;/span&gt; &lt;span class=&#34;k&#34;&gt;do&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;|&lt;/span&gt;&lt;span class=&#34;n&#34;&gt;element&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;|&lt;/span&gt;
+    &lt;span class=&#34;n&#34;&gt;accumulator&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;=&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;accumulator&lt;/span&gt; &lt;span class=&#34;o&#34;&gt;+&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;element&lt;/span&gt;
+  &lt;span class=&#34;k&#34;&gt;end&lt;/span&gt;
+
+  &lt;span class=&#34;n&#34;&gt;accumulator&lt;/span&gt;
+&lt;span class=&#34;k&#34;&gt;end&lt;/span&gt;
+
+&lt;span class=&#34;nb&#34;&gt;p&lt;/span&gt; &lt;span class=&#34;n&#34;&gt;custom_inject&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;(&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;[&lt;/span&gt;&lt;span class=&#34;mi&#34;&gt;4&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;8&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;15&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;16&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;23&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;42&lt;/span&gt;&lt;span class=&#34;o&#34;&gt;]&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;,&lt;/span&gt; &lt;span class=&#34;mi&#34;&gt;0&lt;/span&gt;&lt;span class=&#34;p&#34;&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;custom_inject&lt;/code&gt; function, however, fails for the case where the default value is not given.  It fails by counting the first array element twice.&lt;/p&gt;
+
+&lt;p&gt;Native inject begins iterating from the second array element, as the first element has already been used as the starting value.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
+      <title>Hi there.</title>
+      <link>https://ders.github.io/post/2013-02-18-hi-there/</link>
+      <pubDate>Mon, 18 Feb 2013 17:18:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2013-02-18-hi-there/</guid>
+      <description>&lt;p&gt;Day one.&lt;/p&gt;
+
+&lt;p&gt;Got a new blog, and I&amp;rsquo;ve learned some Ruby basics on &lt;a href=&#34;http://rubymonk.com&#34;&gt;Rubymonk&lt;/a&gt;.  Also got a helluva cold and pine for the bed.&lt;/p&gt;
+</description>
+    </item>
+    
+  </channel>
+</rss>
