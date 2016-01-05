@@ -3,18 +3,18 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Power &middot; awm&#39;s blog</title>
+    <title>Happy new year 11111100000 &middot; awm&#39;s blog</title>
 
     <meta name="description" content="">
 
     <meta name="generator" content="Hugo 0.15" />
     <meta name="twitter:card" content="summary">
     
-    <meta name="twitter:title" content="Power &middot; awm&#39;s blog">
+    <meta name="twitter:title" content="Happy new year 11111100000 &middot; awm&#39;s blog">
     <meta name="twitter:description" content="">
 
     <meta property="og:type" content="article">
-    <meta property="og:title" content="Power &middot; awm&#39;s blog">
+    <meta property="og:title" content="Happy new year 11111100000 &middot; awm&#39;s blog">
     <meta property="og:description" content="">
 
     <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Oxygen:400,700' rel='stylesheet' type='text/css'>
@@ -59,11 +59,11 @@
         <div>
             
             <div class="posts">
-                <h1 class="content-subhead">22 Feb 2013, 18:20</h1>
+                <h1 class="content-subhead">05 Jan 2016, 11:45</h1>
                 <section class="post">
                     <header class="post-header">
 
-                        <a href="https://ders.github.io/post/2013-02-22-power/" class="post-title">Power</a>
+                        <a href="https://ders.github.io/post/2016-01-05-happy-new-year-11111100000/" class="post-title">Happy new year 11111100000</a>
 
                         <p class="post-meta">
                             
@@ -74,41 +74,28 @@
                     <div class="post-share">
                         <div class="post-share-links">
                             <h4 style="">Share</h4>
-                            <a href="#" data-type="facebook" data-url="https://ders.github.io/post/2013-02-22-power/" data-title="Power" data-description="" data-media="" class="prettySocial fa fa-facebook"></a>
-                            <a href="#" data-type="googleplus" data-url="https://ders.github.io/post/2013-02-22-power/" data-description="" class="prettySocial fa fa-google-plus"></a>
+                            <a href="#" data-type="facebook" data-url="https://ders.github.io/post/2016-01-05-happy-new-year-11111100000/" data-title="Happy new year 11111100000" data-description="" data-media="" class="prettySocial fa fa-facebook"></a>
+                            <a href="#" data-type="googleplus" data-url="https://ders.github.io/post/2016-01-05-happy-new-year-11111100000/" data-description="" class="prettySocial fa fa-google-plus"></a>
                             
                             
                         </div>
                     </div>
                     <div class="post-description">
-                        <p>Finished a user athentication system today using <a href="http://bcrypt-ruby.rubyforge.org/classes/BCrypt/Password.html">BCrypt::Password</a>.</p>
+                        <p>Or, happy new year (2<sup>6−1</sup>)(2<sup>6</sup>−1).</p>
 
-<p>There was an Aha! moment when I realized that they&rsquo;ve defined the <code>==</code> operator to return true when the password matches, not when the strings are equal (as a novice like me might expect).</p>
+<p>We just wrapped up a long-running big data project.  While I didn&rsquo;t find the
+project itself particularly interesting, I learned quite a bit of interesting
+stuff doing it.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :002 &gt; secret = BCrypt::Password.create(&quot;password&quot;)
- =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
-</pre></div>
+<p>On the skills side, I learned <a href="https://golang.org">Go</a>,
+learned how to navigate AWS,
+and gained a good understanding of how cluster data stores work.</p>
 
-
-<p>The hashed secret is saved in the database.&nbsp; It&rsquo;s later retrieved and checked against the user input using <code>==</code>.</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :005 &gt; secret
- =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
-1.9.3p385 :006 &gt; q = BCrypt::Password.new(secret)
- =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
-1.9.3p385 :007 &gt; q == &quot;password&quot;
- =&gt; true
-</pre></div>
-
-
-<p>This also has the interesting side effect that <code>==</code> is not commutative.</p>
-
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :008 &gt; &quot;password&quot; == q
- =&gt; false
-</pre></div>
-</p>
-
-<p>My junior high math teacher would be disturbed by this.&nbsp; Such is the power of Ruby.</p>
+<p>But probably the most important takeaway from last year is summarized
+neatly in <a href="http://widgetsandshit.com/teddziuba/2010/10/taco-bell-programming.html">this blog post</a> from 2010, recently sent to me by a coworker.
+In a nutshell, there are a lot of big data systems that are far
+larger and more complicated than they need to be for the data that
+they are designed to process.</p>
 
                     </div>
                     

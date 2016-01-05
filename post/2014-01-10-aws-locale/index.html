@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.14" />
+    <meta name="generator" content="Hugo 0.15" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="AWS Locale &middot; awm&#39;s blog">
@@ -26,11 +26,11 @@
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
     <!--<![endif]-->
 
-    <link rel="stylesheet" href="https://ders.github.io//css/all.min.css">
+    <link rel="stylesheet" href="https://ders.github.io/css/all.min.css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
 
-    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io//index.xml" />
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io/index.xml" />
 </head>
 <body>
 
@@ -39,7 +39,7 @@
     <div class="sidebar pure-u-1 pure-u-md-1-4">
     <div class="header">
         <hgroup>
-            <h1 class="brand-title"><a href="https://ders.github.io/">awm&#39;s blog</a></h1>
+            <h1 class="brand-title"><a href="https://ders.github.io">awm&#39;s blog</a></h1>
             <h2 class="brand-tagline"> What did I do today? </h2>
         </hgroup>
 
@@ -48,7 +48,7 @@
                 
                 
                 <li class="nav-item">
-                    <a class="pure-button" href="https://ders.github.io//index.xml"><i class="fa fa-rss"></i> rss</a>
+                    <a class="pure-button" href="https://ders.github.io/index.xml"><i class="fa fa-rss"></i> rss</a>
                 </li>
             </ul>
         </nav>
@@ -84,7 +84,7 @@
                         <p>Every time I start a new EC2 Ubuntu instance, I&rsquo;m confronted with the following
 warning when I ssh in:</p>
 
-<p><div class="highlight"><pre>_____________________________________________________________________
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">_____________________________________________________________________
 WARNING! Your environment specifies an invalid locale.
  This can affect your user experience significantly, including the
  ability to manage packages. You may install the locales by running:
@@ -99,7 +99,7 @@ To disable this message for all users, run:
    sudo touch /var/lib/cloud/instance/locale-check.skip
 _____________________________________________________________________
 </pre></div>
-</p>
+
 
 <p>Furthermore, a variety of package installations fail with some complaint
 related to the locale, the default language, or both.
@@ -119,7 +119,7 @@ case of a new EC2 instance, these variables are not set at all.</p>
 that the default installation only sets <code>LANG</code>.</p>
 
 <p>/etc/default/locale
-<div class="highlight"><pre>LANG=en_US.UTF-8
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">LANG=en_US.UTF-8
 LANGUAGE=en_US
 LC_CTYPE=en_US.UTF-8
 LC_ALL=en_US.UTF-8
@@ -129,14 +129,14 @@ LC_ALL=en_US.UTF-8
 <p>As always, it&rsquo;s also a good idea to make sure you have the latest and
 greatest packages:</p>
 
-<p><div class="highlight"><pre>$ sudo apt-get update
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo apt-get update
 $ sudo apt-get upgrade
 </pre></div>
 </p>
 
 <p>And finally, while we&rsquo;re at it, why not set the timezone?</p>
 
-<p><div class="highlight"><pre>$ sudo dpkg-reconfigure tzdata
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo dpkg-reconfigure tzdata
 </pre></div>
 </p>
 
@@ -154,7 +154,7 @@ I&rsquo;ll come read my own blog and know exactly what to do.</p>
         </ul>
     </div>
 </div>
-<script src="https://ders.github.io//js/all.min.js"></script>
+<script src="https://ders.github.io/js/all.min.js"></script>
         </div>
     </div>
 </div>

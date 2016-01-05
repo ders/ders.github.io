@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.14" />
+    <meta name="generator" content="Hugo 0.15" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="More Data Mapper &middot; awm&#39;s blog">
@@ -26,11 +26,11 @@
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
     <!--<![endif]-->
 
-    <link rel="stylesheet" href="https://ders.github.io//css/all.min.css">
+    <link rel="stylesheet" href="https://ders.github.io/css/all.min.css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
 
-    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io//index.xml" />
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io/index.xml" />
 </head>
 <body>
 
@@ -39,7 +39,7 @@
     <div class="sidebar pure-u-1 pure-u-md-1-4">
     <div class="header">
         <hgroup>
-            <h1 class="brand-title"><a href="https://ders.github.io/">awm&#39;s blog</a></h1>
+            <h1 class="brand-title"><a href="https://ders.github.io">awm&#39;s blog</a></h1>
             <h2 class="brand-tagline"> What did I do today? </h2>
         </hgroup>
 
@@ -48,7 +48,7 @@
                 
                 
                 <li class="nav-item">
-                    <a class="pure-button" href="https://ders.github.io//index.xml"><i class="fa fa-rss"></i> rss</a>
+                    <a class="pure-button" href="https://ders.github.io/index.xml"><i class="fa fa-rss"></i> rss</a>
                 </li>
             </ul>
         </nav>
@@ -93,34 +93,34 @@ Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not p
 
 <p>There is a possible workaround, suggested by some.  Override the setter for the attribute and save the old value for later use.</p>
 
-<p><div class="highlight"><pre><span class="k">def</span> <span class="nf">thing</span><span class="o">=</span><span class="p">(</span><span class="n">newthing</span><span class="p">)</span>
-  <span class="vi">@oldthing</span> <span class="o">||=</span> <span class="vi">@thing</span>
-  <span class="vi">@thing</span> <span class="o">=</span> <span class="n">newthing</span>
-<span class="k">end</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">thing</span><span style="color: #f92672">=</span><span style="color: #f8f8f2">(newthing)</span>
+  <span style="color: #f8f8f2">@oldthing</span> <span style="color: #f92672">||=</span> <span style="color: #f8f8f2">@thing</span>
+  <span style="color: #f8f8f2">@thing</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">newthing</span>
+<span style="color: #66d9ef">end</span>
 </pre></div>
-</p>
+
 
 <p>I&rsquo;m not going to link to the people who suggested this, though, because it&rsquo;s a terrible suggestion.  Since we&rsquo;ve overridden Data Mapper&rsquo;s setter for attribute <code>thing</code>, Data Mapper no longer knows that we&rsquo;ve changed its value.</p>
 
-<p><div class="highlight"><pre><span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">001</span> <span class="o">&gt;</span> <span class="n">record</span> <span class="o">=</span> <span class="no">Record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
- <span class="o">=&gt;</span> <span class="o">...</span>
-<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">002</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">thing</span>
- <span class="o">=&gt;</span> <span class="s2">&quot;teamaker&quot;</span>
-<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">003</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">thing</span> <span class="o">=</span> <span class="s2">&quot;coffeemaker&quot;</span>
- <span class="o">=&gt;</span> <span class="s2">&quot;coffeemaker&quot;</span>
-<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">004</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">attribute_dirty?</span><span class="p">(</span><span class="ss">:thing</span><span class="p">)</span>
- <span class="o">=&gt;</span> <span class="kp">false</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">001</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">Record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">get(</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">)</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #f92672">...</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">002</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;teamaker&quot;</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">003</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&quot;coffeemaker&quot;</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;coffeemaker&quot;</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">004</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">attribute_dirty?(</span><span style="color: #e6db74">:thing</span><span style="color: #f8f8f2">)</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">false</span>
 </pre></div>
-</p>
+
 
 <p>Imagine the insidious bugs that could creep in here.</p>
 
-<p><div class="highlight"><pre><span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">005</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">save</span>
- <span class="o">=&gt;</span> <span class="kp">true</span>
-<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">006</span> <span class="o">&gt;</span> <span class="n">record</span> <span class="o">=</span> <span class="no">Record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
- <span class="o">=&gt;</span> <span class="o">...</span>
-<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">003</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">thing</span>
- <span class="o">=&gt;</span> <span class="s2">&quot;teamaker&quot;</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">005</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">save</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">006</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">Record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">get(</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">)</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #f92672">...</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">003</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;teamaker&quot;</span>
 </pre></div>
 </p>
 
@@ -128,10 +128,10 @@ Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not p
 
 <p>Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&rsquo;s <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method"><code>#attribute_set</code></a>.</p>
 
-<p><div class="highlight"><pre><span class="k">def</span> <span class="nf">thing</span><span class="o">=</span><span class="p">(</span><span class="n">newthing</span><span class="p">)</span>
-  <span class="vi">@oldthing</span> <span class="o">||=</span> <span class="vi">@thing</span>
-  <span class="n">attribute_set</span><span class="p">(</span><span class="ss">:thing</span><span class="p">,</span> <span class="n">newthing</span><span class="p">)</span>
-<span class="k">end</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">thing</span><span style="color: #f92672">=</span><span style="color: #f8f8f2">(newthing)</span>
+  <span style="color: #f8f8f2">@oldthing</span> <span style="color: #f92672">||=</span> <span style="color: #f8f8f2">@thing</span>
+  <span style="color: #f8f8f2">attribute_set(</span><span style="color: #e6db74">:thing</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">newthing)</span>
+<span style="color: #66d9ef">end</span>
 </pre></div>
 </p>
 
@@ -148,7 +148,7 @@ Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not p
         </ul>
     </div>
 </div>
-<script src="https://ders.github.io//js/all.min.js"></script>
+<script src="https://ders.github.io/js/all.min.js"></script>
         </div>
     </div>
 </div>

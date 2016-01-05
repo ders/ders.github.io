@@ -7,7 +7,7 @@
 
     <meta name="description" content="What did I do today?">
 
-    <meta name="generator" content="Hugo 0.14" />
+    <meta name="generator" content="Hugo 0.15" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Posts &middot; awm&#39;s blog">
@@ -26,11 +26,11 @@
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
     <!--<![endif]-->
 
-    <link rel="stylesheet" href="https://ders.github.io//css/all.min.css">
+    <link rel="stylesheet" href="https://ders.github.io/css/all.min.css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
 
-    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io//index.xml" />
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io/index.xml" />
 </head>
 <body>
 
@@ -39,7 +39,7 @@
     <div class="sidebar pure-u-1 pure-u-md-1-4">
     <div class="header">
         <hgroup>
-            <h1 class="brand-title"><a href="https://ders.github.io/">awm&#39;s blog</a></h1>
+            <h1 class="brand-title"><a href="https://ders.github.io">awm&#39;s blog</a></h1>
             <h2 class="brand-tagline"> What did I do today? </h2>
         </hgroup>
 
@@ -48,7 +48,7 @@
                 
                 
                 <li class="nav-item">
-                    <a class="pure-button" href="https://ders.github.io//index.xml"><i class="fa fa-rss"></i> rss</a>
+                    <a class="pure-button" href="https://ders.github.io/index.xml"><i class="fa fa-rss"></i> rss</a>
                 </li>
             </ul>
         </nav>
@@ -59,6 +59,77 @@
         <div>
             
             <div class="posts">
+                
+                <h1 class="content-subhead">15 Mar 2013, 16:59</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-03-15-good-tools/" class="post-title">Good Tools</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        
+
+<p>Here are some some tools that I like.</p>
+
+<h2 id="rerun:641fb2fef50bdd606c86780f8eb06737">Rerun</h2>
+
+<blockquote>
+<p>Rerun launches your program, then watches the filesystem. If a relevant file changes, then it restarts your program.</p>
+</blockquote>
+
+<p>I had some trouble getting Shotgun configured probably, and I found <a href="https://github.com/alexch/rerun">Rerun</a> to be a simple alternative.  I like it because it can be used for any process you want, not just restarting your web server.</p>
+
+<h2 id="gitk:641fb2fef50bdd606c86780f8eb06737">Gitk</h2>
+
+<p><a href="http://gitk.sourceforge.net/">Gitk</a> is a graphical interface for Git.  It shows your entire development tree graphically, great for those of us less fluent in pushes and pulls.  It does a lot of other things too that I don&rsquo;t know about.</p>
+
+<p>Debian-based systems can enjoy Gitk with a simple <code>sudo apt-get install gitk</code>.  Then issue a <code>gitk --all</code> to see everything.</p>
+
+<h2 id="irb:641fb2fef50bdd606c86780f8eb06737">Irb</h2>
+
+<p><a href="http://ruby-doc.org/docs/ProgrammingRuby/html/irb.html">Irb</a> is the Ruby console.  I should actually generalize this and include all consoles.  One of the most valuable checks while coding is to paste snippets of code into the console and see that they do what you think they&rsquo;re doing.</p>
+
+<p>Make an <code>.irbrc</code> startup file for a richer experience.  Rails users can get a the console with the full Rails evnironment with <code>rails c</code>.</p>
+
+<p>Here is <a href="http://samuelmullen.com/2012/07/getting-more-out-of-the-rails-console/">an excellent blog post</a> on the topic.</p>
+
+<h2 id="awesome-print:641fb2fef50bdd606c86780f8eb06737">Awesome Print</h2>
+
+<p>A great companion to the Ruby console is <a href="https://github.com/michaeldv/awesome_print">Awesome Print</a>, a Ruby gem which lets you pretty up the output of array, hashes, and the like while in the console.</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">001</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">{</span><span style="color: #e6db74">:name</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;Hong Gildong&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:age</span> <span style="color: #f92672">=&gt;</span> <span style="color: #ae81ff">10</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:interests</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">nil</span><span style="color: #f8f8f2">}</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">{</span><span style="color: #e6db74">:name</span><span style="color: #f92672">=&gt;</span><span style="color: #e6db74">&quot;Hong Gildong&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:age</span><span style="color: #f92672">=&gt;</span><span style="color: #ae81ff">10</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:interests</span><span style="color: #f92672">=&gt;</span><span style="color: #66d9ef">nil</span><span style="color: #f8f8f2">}</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">002</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">ap</span> <span style="color: #f8f8f2">_</span>
+<span style="color: #f8f8f2">{</span>
+         <span style="color: #e6db74">:name</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;Hong Gildong&quot;</span><span style="color: #f8f8f2">,</span>
+          <span style="color: #e6db74">:age</span> <span style="color: #f92672">=&gt;</span> <span style="color: #ae81ff">10</span><span style="color: #f8f8f2">,</span>
+    <span style="color: #e6db74">:interests</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">nil</span>
+<span style="color: #f8f8f2">}</span>
+</pre></div>
+
+
+<h2 id="sass:641fb2fef50bdd606c86780f8eb06737">Sass</h2>
+
+<blockquote>
+<p>Sass makes css fun again.</p>
+</blockquote>
+
+<p><a href="http://sass-lang.com/">Sass</a> is a nifty program that adds some badly-needed css functionality, such as variables, nesting and inheritance.  But the really nifty thing is how it&rsquo;s accomplished.</p>
+
+<p>You make a <code>.scss</code> file and Sass converts it to an equivalent <code>.css</code> that any browser, even IE, can understand.  Sass even has a stealth mode, where it will regenerate the css when your scss is updated.</p>
+
+<p>Sass is packaged as a Ruby gem, but you&rsquo;re not limited to using it on Ruby projects, since in the end all you need on your server (obviously) are the css files it generates locally.</p>
+
+<p>It&rsquo;s likely that a lot of Sass&rsquo;s functionality will eventually become standard css.  But for now, we&rsquo;ve got Sass.</p>
+
+                    </div>
+                </section>
                 
                 <h1 class="content-subhead">26 Feb 2013, 15:57</h1>
                 <section class="post">
@@ -89,32 +160,32 @@ Unfortunately, it wasn&rsquo;t clear anywhere how to actually use the validators
 
 <p>Let&rsquo;s define a minimal class <code>Iqscore</code>.  (The name of the collection will be <code>iqscores</code>; this is a weird behavior of Mongoid whereby class names must be singular and Mongoid will pluralize them for you when naming the collection.)</p>
 
-<p><div class="highlight"><pre><span class="nb">require</span> <span class="s2">&quot;mongoid&quot;</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">require</span> <span style="color: #e6db74">&quot;mongoid&quot;</span>
 
-<span class="k">class</span> <span class="nc">Iqscore</span>
+<span style="color: #66d9ef">class</span> <span style="color: #a6e22e">Iqscore</span>
 
-  <span class="kp">include</span> <span class="no">Mongoid</span><span class="o">::</span><span class="no">Document</span>
+  <span style="color: #66d9ef">include</span> <span style="color: #66d9ef">Mongoid</span><span style="color: #f92672">::</span><span style="color: #66d9ef">Document</span>
 
-  <span class="n">field</span> <span class="ss">:kid</span><span class="p">,</span> <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="nb">String</span>
-  <span class="n">field</span> <span class="ss">:iq</span><span class="p">,</span>  <span class="ss">:type</span> <span class="o">=&gt;</span> <span class="nb">Integer</span>
+  <span style="color: #f8f8f2">field</span> <span style="color: #e6db74">:kid</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:type</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">String</span>
+  <span style="color: #f8f8f2">field</span> <span style="color: #e6db74">:iq</span><span style="color: #f8f8f2">,</span>  <span style="color: #e6db74">:type</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">Integer</span>
 
-  <span class="n">validates</span> <span class="ss">:kid</span><span class="p">,</span> <span class="ss">:presence</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:uniqueness</span> <span class="o">=&gt;</span> <span class="kp">true</span>
-  <span class="n">validates</span> <span class="ss">:iq</span><span class="p">,</span> <span class="ss">:numericality</span> <span class="o">=&gt;</span> <span class="kp">true</span>
+  <span style="color: #f8f8f2">validates</span> <span style="color: #e6db74">:kid</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:presence</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:uniqueness</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span>
+  <span style="color: #f8f8f2">validates</span> <span style="color: #e6db74">:iq</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:numericality</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span>
 
-<span class="k">end</span>
+<span style="color: #66d9ef">end</span>
 </pre></div>
-</p>
+
 
 <p>Mongoid provides a <code>valid?</code> method on Iqscore objects.  Valid? tells us whether or not the criteria in the <code>validates</code> declarations are met.</p>
 
-<p><div class="highlight"><pre>1.9.3p385 :008 &gt; x = Iqscore.new({kid: &quot;George&quot;, iq: 70})
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :008 &gt; x = Iqscore.new({kid: &quot;George&quot;, iq: 70})
  =&gt; #&lt;Iqscore _id: 512c72d5352420234d000003, kid: &quot;George&quot;, iq: 70&gt;
 1.9.3p385 :009 &gt; x.valid?
  =&gt; true
 </pre></div>
 </p>
 
-<p><div class="highlight"><pre>1.9.3p385 :010 &gt; y = Iqscore.new({kid: &quot;Bill&quot;, iq: &quot;unknown&quot;})
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :010 &gt; y = Iqscore.new({kid: &quot;Bill&quot;, iq: &quot;unknown&quot;})
  =&gt; #&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;
 1.9.3p385 :011 &gt; y.valid?
  =&gt; false
@@ -123,14 +194,14 @@ Unfortunately, it wasn&rsquo;t clear anywhere how to actually use the validators
 
 <p>If it doesn&rsquo;t validate, we can see what&rsquo;s wrong by looking at the <code>errors</code> property.  In this case it tells us that <code>iq</code> is not a number (and it should be).  Note that the message &ldquo;is not a number&rdquo; is in an array, as it&rsquo;s possible for there to be multiple messages for a single field.</p>
 
-<p><div class="highlight"><pre>1.9.3p385 :012 &gt; y.errors
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :012 &gt; y.errors
  =&gt; #&lt;ActiveModel::Errors:0x98a31cc @base=#&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;, @messages={:iq=&gt;[&quot;is not a number&quot;]}&gt;
 </pre></div>
 </p>
 
 <p>The <code>valid?</code> method is called automatically before any save operation (e.g. <code>save</code> or <code>create</code>), and if it returns false, then the save is not done.  Both <code>save</code> and <code>create</code> return true or false to indicate whether the save was done or not.</p>
 
-<p><div class="highlight"><pre>1.9.3p385 :013 &gt; x.save
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :013 &gt; x.save
  =&gt; true
 1.9.3p385 :014 &gt; y.save
  =&gt; false
@@ -159,25 +230,25 @@ Unfortunately, it wasn&rsquo;t clear anywhere how to actually use the validators
 
 <p>There was an Aha! moment when I realized that they&rsquo;ve defined the <code>==</code> operator to return true when the password matches, not when the strings are equal (as a novice like me might expect).</p>
 
-<p><div class="highlight"><pre>1.9.3p385 :002 &gt; secret = BCrypt::Password.create(&quot;password&quot;)
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :002 &gt; secret = BCrypt::Password.create(&quot;password&quot;)
  =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
 </pre></div>
-</p>
+
 
 <p>The hashed secret is saved in the database.&nbsp; It&rsquo;s later retrieved and checked against the user input using <code>==</code>.</p>
 
-<p><div class="highlight"><pre>1.9.3p385 :005 &gt; secret
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :005 &gt; secret
  =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
 1.9.3p385 :006 &gt; q = BCrypt::Password.new(secret)
  =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
 1.9.3p385 :007 &gt; q == &quot;password&quot;
  =&gt; true
 </pre></div>
-</p>
+
 
 <p>This also has the interesting side effect that <code>==</code> is not commutative.</p>
 
-<p><div class="highlight"><pre>1.9.3p385 :008 &gt; &quot;password&quot; == q
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :008 &gt; &quot;password&quot; == q
  =&gt; false
 </pre></div>
 </p>
@@ -202,9 +273,9 @@ Unfortunately, it wasn&rsquo;t clear anywhere how to actually use the validators
                     <div class="post-description">
                         <p>When running the Mongo shell for the first time, it is necessary to specify the port:</p>
 
-<p><div class="highlight"><pre>$ mongo 127.0.0.1:27017
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ mongo 127.0.0.1:27017
 </pre></div>
-</p>
+
 
 <p>Subsequently it is sufficient just to to say <code>mongo</code>.</p>
 
@@ -231,37 +302,37 @@ They are very well written and do an excellent job of guiding the user through p
 
 <p>Today I found a couple of careless coding errors in the <a href="http://rubymonk.com/learning/books/4/chapters/44-collections/lessons/98-iterate-filtrate-and-transform">section on using Array#inject</a> (subscription required).  The first is an illustration of inject to do a simple sum of array elements.</p>
 
-<p><div class="highlight"><pre><span class="o">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">42</span><span class="o">].</span><span class="n">inject</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">accumulator</span><span class="p">,</span> <span class="n">iterated</span><span class="o">|</span>
-  <span class="n">accumulator</span> <span class="o">+=</span> <span class="n">iterated</span>
-  <span class="n">accumulator</span>
-<span class="k">end</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f92672">[</span><span style="color: #ae81ff">4</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">8</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">15</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">16</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">23</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">42</span><span style="color: #f92672">].</span><span style="color: #f8f8f2">inject(</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">do</span> <span style="color: #f92672">|</span><span style="color: #f8f8f2">accumulator,</span> <span style="color: #f8f8f2">iterated</span><span style="color: #f92672">|</span>
+  <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">+=</span> <span style="color: #f8f8f2">iterated</span>
+  <span style="color: #f8f8f2">accumulator</span>
+<span style="color: #66d9ef">end</span>
 </pre></div>
-</p>
+
 
 <p>In fact, the assignment statement here is superfluous, as the inject
 function assigns the return value of the block to the accumulator automatically.
 It would suffice to do:</p>
 
-<p><div class="highlight"><pre><span class="o">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">42</span><span class="o">].</span><span class="n">inject</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">accumulator</span><span class="p">,</span> <span class="n">iterated</span><span class="o">|</span>
-  <span class="n">accumulator</span> <span class="o">+</span> <span class="n">iterated</span>
-<span class="k">end</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f92672">[</span><span style="color: #ae81ff">4</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">8</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">15</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">16</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">23</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">42</span><span style="color: #f92672">].</span><span style="color: #f8f8f2">inject(</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">do</span> <span style="color: #f92672">|</span><span style="color: #f8f8f2">accumulator,</span> <span style="color: #f8f8f2">iterated</span><span style="color: #f92672">|</span>
+  <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">+</span> <span style="color: #f8f8f2">iterated</span>
+<span style="color: #66d9ef">end</span>
 </pre></div>
 </p>
 
 <p>The second error is in an illustration of the behavior of inject.
 The function below is supposed to mimic the behavior of the one above.</p>
 
-<p><div class="highlight"><pre><span class="k">def</span> <span class="nf">custom_inject</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">default</span> <span class="o">=</span> <span class="kp">nil</span><span class="p">)</span>
-  <span class="n">accumulator</span> <span class="o">=</span> <span class="n">default</span> <span class="o">||</span> <span class="n">array</span><span class="o">[</span><span class="mi">0</span><span class="o">]</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">custom_inject</span><span style="color: #f8f8f2">(array,</span> <span style="color: #f8f8f2">default</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">nil</span><span style="color: #f8f8f2">)</span>
+  <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">default</span> <span style="color: #f92672">||</span> <span style="color: #f8f8f2">array</span><span style="color: #f92672">[</span><span style="color: #ae81ff">0</span><span style="color: #f92672">]</span>
 
-  <span class="n">array</span><span class="o">.</span><span class="n">each</span> <span class="k">do</span> <span class="o">|</span><span class="n">element</span><span class="o">|</span>
-    <span class="n">accumulator</span> <span class="o">=</span> <span class="n">accumulator</span> <span class="o">+</span> <span class="n">element</span>
-  <span class="k">end</span>
+  <span style="color: #f8f8f2">array</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">each</span> <span style="color: #66d9ef">do</span> <span style="color: #f92672">|</span><span style="color: #f8f8f2">element</span><span style="color: #f92672">|</span>
+    <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">+</span> <span style="color: #f8f8f2">element</span>
+  <span style="color: #66d9ef">end</span>
 
-  <span class="n">accumulator</span>
-<span class="k">end</span>
+  <span style="color: #f8f8f2">accumulator</span>
+<span style="color: #66d9ef">end</span>
 
-<span class="nb">p</span> <span class="n">custom_inject</span><span class="p">(</span><span class="o">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">23</span><span class="p">,</span> <span class="mi">42</span><span class="o">]</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span style="color: #f8f8f2">p</span> <span style="color: #f8f8f2">custom_inject(</span><span style="color: #f92672">[</span><span style="color: #ae81ff">4</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">8</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">15</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">16</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">23</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">42</span><span style="color: #f92672">]</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span>
 </pre></div>
 </p>
 
@@ -314,7 +385,7 @@ The function below is supposed to mimic the behavior of the one above.</p>
         </ul>
     </div>
 </div>
-<script src="https://ders.github.io//js/all.min.js"></script>
+<script src="https://ders.github.io/js/all.min.js"></script>
         </div>
     </div>
 </div>

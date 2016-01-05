@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.14" />
+    <meta name="generator" content="Hugo 0.15" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Rails for Zombies &middot; awm&#39;s blog">
@@ -26,11 +26,11 @@
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
     <!--<![endif]-->
 
-    <link rel="stylesheet" href="https://ders.github.io//css/all.min.css">
+    <link rel="stylesheet" href="https://ders.github.io/css/all.min.css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
 
-    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io//index.xml" />
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io/index.xml" />
 </head>
 <body>
 
@@ -39,7 +39,7 @@
     <div class="sidebar pure-u-1 pure-u-md-1-4">
     <div class="header">
         <hgroup>
-            <h1 class="brand-title"><a href="https://ders.github.io/">awm&#39;s blog</a></h1>
+            <h1 class="brand-title"><a href="https://ders.github.io">awm&#39;s blog</a></h1>
             <h2 class="brand-tagline"> What did I do today? </h2>
         </hgroup>
 
@@ -48,7 +48,7 @@
                 
                 
                 <li class="nav-item">
-                    <a class="pure-button" href="https://ders.github.io//index.xml"><i class="fa fa-rss"></i> rss</a>
+                    <a class="pure-button" href="https://ders.github.io/index.xml"><i class="fa fa-rss"></i> rss</a>
                 </li>
             </ul>
         </nav>
@@ -87,29 +87,29 @@
 
 <p>In the level 5 video at 2:10, the following match example is given:</p>
 
-<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;new_tweet&#39;</span> <span class="o">=&gt;</span> <span class="s2">&quot;Tweets#new&quot;</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;new_tweet&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;Tweets#new&quot;</span>
 </pre></div>
-</p>
+
 
 <p>Note the uppercase T on Tweets.  This T is uppercase throughout the video.</p>
 
 <p>However, when I tried to do the second exercise for this level, the following answer was rejected:</p>
 
-<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;undead&#39;</span> <span class="o">=&gt;</span> <span class="s2">&quot;Zombies#undead&quot;</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;Zombies#undead&quot;</span>
 </pre></div>
-</p>
+
 
 <p>The hints told me to do this:</p>
 
-<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;undead&#39;</span> <span class="o">=&gt;</span> <span class="s2">&quot;zombies#undead&quot;</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;zombies#undead&quot;</span>
 </pre></div>
-</p>
+
 
 <p>with a lower case z, which was accepted.  Now I&rsquo;m confused.  Do we need a capital letter here or not?</p>
 
 <p>In the same video at 3:30, the following match example is given:</p>
 
-<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;all&#39;</span> <span class="o">=&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;/tweets&#39;</span><span class="p">)</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;all&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/tweets&#39;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
 </p>
 
@@ -117,13 +117,13 @@
 
 <p>However, when I tried to do the third exercise, the following answer was rejected:</p>
 
-<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;undead&#39;</span> <span class="o">=&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;/zombies&#39;</span><span class="p">)</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/zombies&#39;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
 </p>
 
 <p>This time the hints told me to do this:</p>
 
-<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;/undead&#39;</span> <span class="o">=&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;/zombies&#39;</span><span class="p">)</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;/undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/zombies&#39;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
 </p>
 
@@ -140,7 +140,7 @@
         </ul>
     </div>
 </div>
-<script src="https://ders.github.io//js/all.min.js"></script>
+<script src="https://ders.github.io/js/all.min.js"></script>
         </div>
     </div>
 </div>

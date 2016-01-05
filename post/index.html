@@ -7,7 +7,7 @@
 
     <meta name="description" content="What did I do today?">
 
-    <meta name="generator" content="Hugo 0.14" />
+    <meta name="generator" content="Hugo 0.15" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Posts &middot; awm&#39;s blog">
@@ -26,11 +26,11 @@
         <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
     <!--<![endif]-->
 
-    <link rel="stylesheet" href="https://ders.github.io//css/all.min.css">
+    <link rel="stylesheet" href="https://ders.github.io/css/all.min.css">
     <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
 
-    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io//index.xml" />
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io/index.xml" />
 </head>
 <body>
 
@@ -39,7 +39,7 @@
     <div class="sidebar pure-u-1 pure-u-md-1-4">
     <div class="header">
         <hgroup>
-            <h1 class="brand-title"><a href="https://ders.github.io/">awm&#39;s blog</a></h1>
+            <h1 class="brand-title"><a href="https://ders.github.io">awm&#39;s blog</a></h1>
             <h2 class="brand-tagline"> What did I do today? </h2>
         </hgroup>
 
@@ -48,7 +48,7 @@
                 
                 
                 <li class="nav-item">
-                    <a class="pure-button" href="https://ders.github.io//index.xml"><i class="fa fa-rss"></i> rss</a>
+                    <a class="pure-button" href="https://ders.github.io/index.xml"><i class="fa fa-rss"></i> rss</a>
                 </li>
             </ul>
         </nav>
@@ -59,6 +59,38 @@
         <div>
             
             <div class="posts">
+                
+                <h1 class="content-subhead">05 Jan 2016, 11:45</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2016-01-05-happy-new-year-11111100000/" class="post-title">Happy new year 11111100000</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>Or, happy new year (2<sup>6−1</sup>)(2<sup>6</sup>−1).</p>
+
+<p>We just wrapped up a long-running big data project.  While I didn&rsquo;t find the
+project itself particularly interesting, I learned quite a bit of interesting
+stuff doing it.</p>
+
+<p>On the skills side, I learned <a href="https://golang.org">Go</a>,
+learned how to navigate AWS,
+and gained a good understanding of how cluster data stores work.</p>
+
+<p>But probably the most important takeaway from last year is summarized
+neatly in <a href="http://widgetsandshit.com/teddziuba/2010/10/taco-bell-programming.html">this blog post</a> from 2010, recently sent to me by a coworker.
+In a nutshell, there are a lot of big data systems that are far
+larger and more complicated than they need to be for the data that
+they are designed to process.</p>
+
+                    </div>
+                </section>
                 
                 <h1 class="content-subhead">02 Jul 2015, 11:14</h1>
                 <section class="post">
@@ -116,18 +148,18 @@ whether or not we actually changed anything.</p>
 
 <p>In SQL this would look like this:</p>
 
-<p><div class="highlight"><pre><span class="k">UPDATE</span> <span class="ss">&quot;quarks&quot;</span> <span class="k">SET</span> <span class="ss">&quot;seen&quot;</span> <span class="o">=</span> <span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="ss">&quot;whosaw&quot;</span> <span class="o">=</span> <span class="s1">&#39;ders&#39;</span> <span class="k">WHERE</span> <span class="ss">&quot;id&quot;</span> <span class="o">=</span> <span class="mi">42</span> <span class="k">AND</span> <span class="ss">&quot;seen&quot;</span> <span class="o">=</span> <span class="s1">&#39;f&#39;</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">UPDATE</span> <span style="color: #e6db74">&quot;quarks&quot;</span> <span style="color: #66d9ef">SET</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;t&#39;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;whosaw&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;ders&#39;</span> <span style="color: #66d9ef">WHERE</span> <span style="color: #e6db74">&quot;id&quot;</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">42</span> <span style="color: #66d9ef">AND</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;f&#39;</span>
 </pre></div>
-</p>
+
 
 <p>Then I would get the number of affected rows to see if a change was made
 (i.e. whether or not the quark had already been seen).</p>
 
 <p>So let&rsquo;s try it with DataMapper:</p>
 
-<p><div class="highlight"><pre><span class="no">Quark</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="ss">:id</span> <span class="o">=&gt;</span> <span class="mi">42</span><span class="p">,</span> <span class="ss">:seen</span> <span class="o">=&gt;</span> <span class="kp">false</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="ss">:seen</span> <span class="o">=&gt;</span> <span class="kp">true</span><span class="p">,</span> <span class="ss">:whosaw</span> <span class="o">=&gt;</span> <span class="s1">&#39;ders&#39;</span><span class="p">)</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">Quark</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">all(</span><span style="color: #e6db74">:id</span> <span style="color: #f92672">=&gt;</span> <span style="color: #ae81ff">42</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:seen</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">false</span><span style="color: #f8f8f2">)</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">update(</span><span style="color: #e6db74">:seen</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:whosaw</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&#39;ders&#39;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
-</p>
+
 
 <p>Two problems here.
 The first problem is that the return value is always true, and we don&rsquo;t
@@ -140,8 +172,8 @@ generating an exception if no records are found.</p>
 Datamapper insists on generating two separate queries for the single
 update statement:</p>
 
-<p><div class="highlight"><pre><span class="k">SELECT</span> <span class="ss">&quot;id&quot;</span><span class="p">,</span> <span class="ss">&quot;size&quot;</span><span class="p">,</span> <span class="ss">&quot;name&quot;</span><span class="p">,</span> <span class="ss">&quot;seen&quot;</span><span class="p">,</span> <span class="ss">&quot;whosaw&quot;</span> <span class="k">FROM</span> <span class="ss">&quot;quarks&quot;</span> <span class="k">WHERE</span> <span class="p">(</span><span class="ss">&quot;id&quot;</span> <span class="o">=</span> <span class="mi">42</span> <span class="k">AND</span> <span class="ss">&quot;seen&quot;</span> <span class="o">=</span> <span class="s1">&#39;f&#39;</span><span class="p">)</span> <span class="k">ORDER</span> <span class="k">BY</span> <span class="ss">&quot;id&quot;</span>
-<span class="k">UPDATE</span> <span class="ss">&quot;quarks&quot;</span> <span class="k">SET</span> <span class="ss">&quot;seen&quot;</span> <span class="o">=</span> <span class="s1">&#39;t&#39;</span><span class="p">,</span> <span class="ss">&quot;whosaw&quot;</span> <span class="o">=</span> <span class="s1">&#39;ders&#39;</span> <span class="k">WHERE</span> <span class="ss">&quot;id&quot;</span> <span class="o">=</span> <span class="mi">42</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">SELECT</span> <span style="color: #e6db74">&quot;id&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;size&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;name&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;seen&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;whosaw&quot;</span> <span style="color: #66d9ef">FROM</span> <span style="color: #e6db74">&quot;quarks&quot;</span> <span style="color: #66d9ef">WHERE</span> <span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;id&quot;</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">42</span> <span style="color: #66d9ef">AND</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;f&#39;</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">ORDER</span> <span style="color: #66d9ef">BY</span> <span style="color: #e6db74">&quot;id&quot;</span>
+<span style="color: #66d9ef">UPDATE</span> <span style="color: #e6db74">&quot;quarks&quot;</span> <span style="color: #66d9ef">SET</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;t&#39;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;whosaw&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;ders&#39;</span> <span style="color: #66d9ef">WHERE</span> <span style="color: #e6db74">&quot;id&quot;</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">42</span>
 </pre></div>
 </p>
 
@@ -152,10 +184,10 @@ Two users running this code at the same time would both believe that they saw th
 
 <p>The solution was to write the update query in SQL.</p>
 
-<p><div class="highlight"><pre><span class="n">da</span> <span class="o">=</span> <span class="no">DataMapper</span><span class="o">.</span><span class="n">repository</span><span class="p">(</span><span class="ss">:default</span><span class="p">)</span><span class="o">.</span><span class="n">adapter</span>
-<span class="n">r</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE quarks SET seen=&#39;t&#39;, whosaw=&#39;ders&#39; WHERE id=42 AND seen=&#39;f&#39;&quot;</span><span class="p">)</span>
-<span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">affected_rows</span> <span class="o">&gt;</span> <span class="mi">0</span>
-   <span class="o">...</span> <span class="c1"># we saw it first</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">da</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">DataMapper</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">repository(</span><span style="color: #e6db74">:default</span><span style="color: #f8f8f2">)</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">adapter</span>
+<span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=&#39;t&#39;, whosaw=&#39;ders&#39; WHERE id=42 AND seen=&#39;f&#39;&quot;</span><span style="color: #f8f8f2">)</span>
+<span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">r</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">affected_rows</span> <span style="color: #f92672">&gt;</span> <span style="color: #ae81ff">0</span>
+   <span style="color: #f92672">...</span> <span style="color: #75715e"># we saw it first</span>
 </pre></div>
 </p>
 
@@ -175,7 +207,7 @@ started returning 500s.</p>
 
 <p>It&rsquo;s easy enough to change the query to work with MySQL:</p>
 
-<p><div class="highlight"><pre><span class="n">r</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE quarks SET seen=1, whosaw=&#39;ders&#39; WHERE id=42 AND seen=0&quot;</span><span class="p">)</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=1, whosaw=&#39;ders&#39; WHERE id=42 AND seen=0&quot;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
 </p>
 
@@ -184,15 +216,15 @@ started returning 500s.</p>
 <p>In the end, I wrote this bit of horrible code to keep the tests passing
 and the live server happy.</p>
 
-<p><div class="highlight"><pre><span class="n">t</span><span class="p">,</span> <span class="n">f</span> <span class="o">=</span> <span class="k">if</span> <span class="n">da</span><span class="o">.</span><span class="n">options</span><span class="o">[</span><span class="s1">&#39;scheme&#39;</span><span class="o">]</span> <span class="o">==</span> <span class="s1">&#39;sqlite&#39;</span>
-  <span class="o">[</span><span class="s2">&quot;&#39;t&#39;&quot;</span><span class="p">,</span> <span class="s2">&quot;&#39;f&#39;&quot;</span><span class="o">]</span> <span class="c1"># sqlite</span>
-<span class="k">else</span>
-  <span class="o">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="o">]</span> <span class="c1"># mysql</span>
-<span class="k">end</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">t,</span> <span style="color: #f8f8f2">f</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">options</span><span style="color: #f92672">[</span><span style="color: #e6db74">&#39;scheme&#39;</span><span style="color: #f92672">]</span> <span style="color: #f92672">==</span> <span style="color: #e6db74">&#39;sqlite&#39;</span>
+  <span style="color: #f92672">[</span><span style="color: #e6db74">&quot;&#39;t&#39;&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;&#39;f&#39;&quot;</span><span style="color: #f92672">]</span> <span style="color: #75715e"># sqlite</span>
+<span style="color: #66d9ef">else</span>
+  <span style="color: #f92672">[</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">0</span><span style="color: #f92672">]</span> <span style="color: #75715e"># mysql</span>
+<span style="color: #66d9ef">end</span>
 
-  <span class="o">...</span>
+  <span style="color: #f92672">...</span>
 
-<span class="n">r</span> <span class="o">=</span> <span class="n">da</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s2">&quot;UPDATE quarks SET seen=</span><span class="si">#{</span><span class="n">t</span><span class="si">}</span><span class="s2">, whosaw=&#39;ders&#39; WHERE id=42 AND seen=</span><span class="si">#{</span><span class="n">f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=#{</span><span style="color: #f8f8f2">t</span><span style="color: #e6db74">}, whosaw=&#39;ders&#39; WHERE id=42 AND seen=#{</span><span style="color: #f8f8f2">f</span><span style="color: #e6db74">}&quot;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
 </p>
 
@@ -215,10 +247,10 @@ DataMapper internals, but I&rsquo;m not that good yet.)</p>
                     </header>
 
                     <div class="post-description">
-                        <p><div class="highlight"><pre>$ python
+                        <div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ python
 &gt;&gt;&gt; import this
 </pre></div>
-</p>
+
 
 <p>Just try it.</p>
 
@@ -241,7 +273,7 @@ DataMapper internals, but I&rsquo;m not that good yet.)</p>
                         <p>Every time I start a new EC2 Ubuntu instance, I&rsquo;m confronted with the following
 warning when I ssh in:</p>
 
-<p><div class="highlight"><pre>_____________________________________________________________________
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">_____________________________________________________________________
 WARNING! Your environment specifies an invalid locale.
  This can affect your user experience significantly, including the
  ability to manage packages. You may install the locales by running:
@@ -256,7 +288,7 @@ To disable this message for all users, run:
    sudo touch /var/lib/cloud/instance/locale-check.skip
 _____________________________________________________________________
 </pre></div>
-</p>
+
 
 <p>Furthermore, a variety of package installations fail with some complaint
 related to the locale, the default language, or both.
@@ -276,7 +308,7 @@ case of a new EC2 instance, these variables are not set at all.</p>
 that the default installation only sets <code>LANG</code>.</p>
 
 <p>/etc/default/locale
-<div class="highlight"><pre>LANG=en_US.UTF-8
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">LANG=en_US.UTF-8
 LANGUAGE=en_US
 LC_CTYPE=en_US.UTF-8
 LC_ALL=en_US.UTF-8
@@ -286,14 +318,14 @@ LC_ALL=en_US.UTF-8
 <p>As always, it&rsquo;s also a good idea to make sure you have the latest and
 greatest packages:</p>
 
-<p><div class="highlight"><pre>$ sudo apt-get update
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo apt-get update
 $ sudo apt-get upgrade
 </pre></div>
 </p>
 
 <p>And finally, while we&rsquo;re at it, why not set the timezone?</p>
 
-<p><div class="highlight"><pre>$ sudo dpkg-reconfigure tzdata
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo dpkg-reconfigure tzdata
 </pre></div>
 </p>
 
@@ -459,34 +491,34 @@ Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not p
 
 <p>There is a possible workaround, suggested by some.  Override the setter for the attribute and save the old value for later use.</p>
 
-<p><div class="highlight"><pre><span class="k">def</span> <span class="nf">thing</span><span class="o">=</span><span class="p">(</span><span class="n">newthing</span><span class="p">)</span>
-  <span class="vi">@oldthing</span> <span class="o">||=</span> <span class="vi">@thing</span>
-  <span class="vi">@thing</span> <span class="o">=</span> <span class="n">newthing</span>
-<span class="k">end</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">thing</span><span style="color: #f92672">=</span><span style="color: #f8f8f2">(newthing)</span>
+  <span style="color: #f8f8f2">@oldthing</span> <span style="color: #f92672">||=</span> <span style="color: #f8f8f2">@thing</span>
+  <span style="color: #f8f8f2">@thing</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">newthing</span>
+<span style="color: #66d9ef">end</span>
 </pre></div>
-</p>
+
 
 <p>I&rsquo;m not going to link to the people who suggested this, though, because it&rsquo;s a terrible suggestion.  Since we&rsquo;ve overridden Data Mapper&rsquo;s setter for attribute <code>thing</code>, Data Mapper no longer knows that we&rsquo;ve changed its value.</p>
 
-<p><div class="highlight"><pre><span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">001</span> <span class="o">&gt;</span> <span class="n">record</span> <span class="o">=</span> <span class="no">Record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
- <span class="o">=&gt;</span> <span class="o">...</span>
-<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">002</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">thing</span>
- <span class="o">=&gt;</span> <span class="s2">&quot;teamaker&quot;</span>
-<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">003</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">thing</span> <span class="o">=</span> <span class="s2">&quot;coffeemaker&quot;</span>
- <span class="o">=&gt;</span> <span class="s2">&quot;coffeemaker&quot;</span>
-<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">004</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">attribute_dirty?</span><span class="p">(</span><span class="ss">:thing</span><span class="p">)</span>
- <span class="o">=&gt;</span> <span class="kp">false</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">001</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">Record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">get(</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">)</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #f92672">...</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">002</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;teamaker&quot;</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">003</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&quot;coffeemaker&quot;</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;coffeemaker&quot;</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">004</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">attribute_dirty?(</span><span style="color: #e6db74">:thing</span><span style="color: #f8f8f2">)</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">false</span>
 </pre></div>
-</p>
+
 
 <p>Imagine the insidious bugs that could creep in here.</p>
 
-<p><div class="highlight"><pre><span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">005</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">save</span>
- <span class="o">=&gt;</span> <span class="kp">true</span>
-<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">006</span> <span class="o">&gt;</span> <span class="n">record</span> <span class="o">=</span> <span class="no">Record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
- <span class="o">=&gt;</span> <span class="o">...</span>
-<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">003</span> <span class="o">&gt;</span> <span class="n">record</span><span class="o">.</span><span class="n">thing</span>
- <span class="o">=&gt;</span> <span class="s2">&quot;teamaker&quot;</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">005</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">save</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">006</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">Record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">get(</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">)</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #f92672">...</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">003</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;teamaker&quot;</span>
 </pre></div>
 </p>
 
@@ -494,10 +526,10 @@ Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not p
 
 <p>Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&rsquo;s <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method"><code>#attribute_set</code></a>.</p>
 
-<p><div class="highlight"><pre><span class="k">def</span> <span class="nf">thing</span><span class="o">=</span><span class="p">(</span><span class="n">newthing</span><span class="p">)</span>
-  <span class="vi">@oldthing</span> <span class="o">||=</span> <span class="vi">@thing</span>
-  <span class="n">attribute_set</span><span class="p">(</span><span class="ss">:thing</span><span class="p">,</span> <span class="n">newthing</span><span class="p">)</span>
-<span class="k">end</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">thing</span><span style="color: #f92672">=</span><span style="color: #f8f8f2">(newthing)</span>
+  <span style="color: #f8f8f2">@oldthing</span> <span style="color: #f92672">||=</span> <span style="color: #f8f8f2">@thing</span>
+  <span style="color: #f8f8f2">attribute_set(</span><span style="color: #e6db74">:thing</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">newthing)</span>
+<span style="color: #66d9ef">end</span>
 </pre></div>
 </p>
 
@@ -537,9 +569,9 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>In MySQL, I would write:</p>
 
-<p><div class="highlight"><pre><span class="k">SELECT</span> <span class="o">*</span> <span class="k">FROM</span> <span class="o">`</span><span class="n">things</span><span class="o">`</span> <span class="k">ORDER</span> <span class="k">BY</span> <span class="o">`</span><span class="k">position</span><span class="o">`=</span><span class="mi">0</span><span class="p">,</span> <span class="o">`</span><span class="k">position</span><span class="o">`</span><span class="p">,</span> <span class="o">`</span><span class="n">id</span><span class="o">`</span> <span class="k">DESC</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">SELECT</span> <span style="color: #f92672">*</span> <span style="color: #66d9ef">FROM</span> <span style="color: #f92672">`</span><span style="color: #f8f8f2">things</span><span style="color: #f92672">`</span> <span style="color: #66d9ef">ORDER</span> <span style="color: #66d9ef">BY</span> <span style="color: #f92672">`</span><span style="color: #66d9ef">position</span><span style="color: #f92672">`=</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">`</span><span style="color: #66d9ef">position</span><span style="color: #f92672">`</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">`</span><span style="color: #f8f8f2">id</span><span style="color: #f92672">`</span> <span style="color: #66d9ef">DESC</span>
 </pre></div>
-</p>
+
 
 <p>Free donuts to the first person who can make a DataMapper version of this.</p>
 
@@ -565,29 +597,29 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>In the level 5 video at 2:10, the following match example is given:</p>
 
-<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;new_tweet&#39;</span> <span class="o">=&gt;</span> <span class="s2">&quot;Tweets#new&quot;</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;new_tweet&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;Tweets#new&quot;</span>
 </pre></div>
-</p>
+
 
 <p>Note the uppercase T on Tweets.  This T is uppercase throughout the video.</p>
 
 <p>However, when I tried to do the second exercise for this level, the following answer was rejected:</p>
 
-<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;undead&#39;</span> <span class="o">=&gt;</span> <span class="s2">&quot;Zombies#undead&quot;</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;Zombies#undead&quot;</span>
 </pre></div>
-</p>
+
 
 <p>The hints told me to do this:</p>
 
-<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;undead&#39;</span> <span class="o">=&gt;</span> <span class="s2">&quot;zombies#undead&quot;</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;zombies#undead&quot;</span>
 </pre></div>
-</p>
+
 
 <p>with a lower case z, which was accepted.  Now I&rsquo;m confused.  Do we need a capital letter here or not?</p>
 
 <p>In the same video at 3:30, the following match example is given:</p>
 
-<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;all&#39;</span> <span class="o">=&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;/tweets&#39;</span><span class="p">)</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;all&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/tweets&#39;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
 </p>
 
@@ -595,88 +627,17 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>However, when I tried to do the third exercise, the following answer was rejected:</p>
 
-<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;undead&#39;</span> <span class="o">=&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;/zombies&#39;</span><span class="p">)</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/zombies&#39;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
 </p>
 
 <p>This time the hints told me to do this:</p>
 
-<p><div class="highlight"><pre><span class="n">match</span> <span class="s1">&#39;/undead&#39;</span> <span class="o">=&gt;</span> <span class="n">redirect</span><span class="p">(</span><span class="s1">&#39;/zombies&#39;</span><span class="p">)</span>
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;/undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/zombies&#39;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
 </p>
 
 <p>Again, I&rsquo;m confused. Do we need (or even want) a leading slash here?</p>
-
-                    </div>
-                </section>
-                
-                <h1 class="content-subhead">15 Mar 2013, 16:59</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2013-03-15-good-tools/" class="post-title">Good Tools</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        
-
-<p>Here are some some tools that I like.</p>
-
-<h2 id="rerun:641fb2fef50bdd606c86780f8eb06737">Rerun</h2>
-
-<blockquote>
-<p>Rerun launches your program, then watches the filesystem. If a relevant file changes, then it restarts your program.</p>
-</blockquote>
-
-<p>I had some trouble getting Shotgun configured probably, and I found <a href="https://github.com/alexch/rerun">Rerun</a> to be a simple alternative.  I like it because it can be used for any process you want, not just restarting your web server.</p>
-
-<h2 id="gitk:641fb2fef50bdd606c86780f8eb06737">Gitk</h2>
-
-<p><a href="http://gitk.sourceforge.net/">Gitk</a> is a graphical interface for Git.  It shows your entire development tree graphically, great for those of us less fluent in pushes and pulls.  It does a lot of other things too that I don&rsquo;t know about.</p>
-
-<p>Debian-based systems can enjoy Gitk with a simple <code>sudo apt-get install gitk</code>.  Then issue a <code>gitk --all</code> to see everything.</p>
-
-<h2 id="irb:641fb2fef50bdd606c86780f8eb06737">Irb</h2>
-
-<p><a href="http://ruby-doc.org/docs/ProgrammingRuby/html/irb.html">Irb</a> is the Ruby console.  I should actually generalize this and include all consoles.  One of the most valuable checks while coding is to paste snippets of code into the console and see that they do what you think they&rsquo;re doing.</p>
-
-<p>Make an <code>.irbrc</code> startup file for a richer experience.  Rails users can get a the console with the full Rails evnironment with <code>rails c</code>.</p>
-
-<p>Here is <a href="http://samuelmullen.com/2012/07/getting-more-out-of-the-rails-console/">an excellent blog post</a> on the topic.</p>
-
-<h2 id="awesome-print:641fb2fef50bdd606c86780f8eb06737">Awesome Print</h2>
-
-<p>A great companion to the Ruby console is <a href="https://github.com/michaeldv/awesome_print">Awesome Print</a>, a Ruby gem which lets you pretty up the output of array, hashes, and the like while in the console.</p>
-
-<p><div class="highlight"><pre><span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">001</span> <span class="o">&gt;</span> <span class="p">{</span><span class="ss">:name</span> <span class="o">=&gt;</span> <span class="s2">&quot;Hong Gildong&quot;</span><span class="p">,</span> <span class="ss">:age</span> <span class="o">=&gt;</span> <span class="mi">10</span><span class="p">,</span> <span class="ss">:interests</span> <span class="o">=&gt;</span> <span class="kp">nil</span><span class="p">}</span>
- <span class="o">=&gt;</span> <span class="p">{</span><span class="ss">:name</span><span class="o">=&gt;</span><span class="s2">&quot;Hong Gildong&quot;</span><span class="p">,</span> <span class="ss">:age</span><span class="o">=&gt;</span><span class="mi">10</span><span class="p">,</span> <span class="ss">:interests</span><span class="o">=&gt;</span><span class="kp">nil</span><span class="p">}</span>
-<span class="mi">1</span><span class="o">.</span><span class="mi">9</span><span class="o">.</span><span class="mi">3</span><span class="o">-</span><span class="n">p392</span> <span class="p">:</span><span class="mo">002</span> <span class="o">&gt;</span> <span class="n">ap</span> <span class="n">_</span>
-<span class="p">{</span>
-         <span class="ss">:name</span> <span class="o">=&gt;</span> <span class="s2">&quot;Hong Gildong&quot;</span><span class="p">,</span>
-          <span class="ss">:age</span> <span class="o">=&gt;</span> <span class="mi">10</span><span class="p">,</span>
-    <span class="ss">:interests</span> <span class="o">=&gt;</span> <span class="kp">nil</span>
-<span class="p">}</span>
-</pre></div>
-</p>
-
-<h2 id="sass:641fb2fef50bdd606c86780f8eb06737">Sass</h2>
-
-<blockquote>
-<p>Sass makes css fun again.</p>
-</blockquote>
-
-<p><a href="http://sass-lang.com/">Sass</a> is a nifty program that adds some badly-needed css functionality, such as variables, nesting and inheritance.  But the really nifty thing is how it&rsquo;s accomplished.</p>
-
-<p>You make a <code>.scss</code> file and Sass converts it to an equivalent <code>.css</code> that any browser, even IE, can understand.  Sass even has a stealth mode, where it will regenerate the css when your scss is updated.</p>
-
-<p>Sass is packaged as a Ruby gem, but you&rsquo;re not limited to using it on Ruby projects, since in the end all you need on your server (obviously) are the css files it generates locally.</p>
-
-<p>It&rsquo;s likely that a lot of Sass&rsquo;s functionality will eventually become standard css.  But for now, we&rsquo;ve got Sass.</p>
 
                     </div>
                 </section>
@@ -703,7 +664,7 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
         </ul>
     </div>
 </div>
-<script src="https://ders.github.io//js/all.min.js"></script>
+<script src="https://ders.github.io/js/all.min.js"></script>
         </div>
     </div>
 </div>
