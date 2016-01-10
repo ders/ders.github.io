@@ -6,8 +6,165 @@
     <description>Recent content on awm&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 05 Jan 2016 11:45:00 +0900</lastBuildDate>
+    <lastBuildDate>Fri, 08 Jan 2016 15:50:00 +0900</lastBuildDate>
     <atom:link href="https://ders.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Google Sign-in</title>
+      <link>https://ders.github.io/post/2016-01-08-google-signin/</link>
+      <pubDate>Fri, 08 Jan 2016 15:50:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2016-01-08-google-signin/</guid>
+      <description>
+
+&lt;h2 id=&#34;using-google-sign-in-on-website-x:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;Using Google Sign-in on Website X&lt;/h2&gt;
+
+&lt;p&gt;&lt;strong&gt;Disclaimer:&lt;/strong&gt;  &lt;a href=&#34;https://developers.google.com/identity/sign-in/web/sign-in&#34;&gt;Read the docs&lt;/a&gt; too.  This post doesn&amp;rsquo;t cover everything.&lt;/p&gt;
+
+&lt;p&gt;A week ago I was completely clueless as to how Google sign-in works.  I set out to write about it and learned a few things.&lt;/p&gt;
+
+&lt;h3 id=&#34;overview:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;Overview&lt;/h3&gt;
+
+&lt;p&gt;Using Google sign-in on a website requires first doing the following in the &lt;a href=&#34;https://console.developers.google.com/home/dashboard&#34;&gt;Google developer&amp;rsquo;s console&lt;/a&gt;:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;creating a project&lt;/li&gt;
+&lt;li&gt;creating a sign-in client ID for that project&lt;/li&gt;
+&lt;li&gt;associating the domain(s) of the website with the sign-in client ID&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Sign-in is done using javascript on the web page to talk directly to Google&amp;rsquo;s servers.  The javascript is loaded from Google&amp;rsquo;s servers.  It is not necessary to involve the server for website X at all.&lt;/p&gt;
+
+&lt;p&gt;When Joe the Hacker attempts to sign in to website X, a popup dialog appears.  The contents of the dialog depend on Joe&amp;rsquo;s current signed-in state.&lt;/p&gt;
+
+&lt;p&gt;If Joe is not signed in to Google at all, then a sign-in dialog appears.  If he&amp;rsquo;s signed in to more than one account, then an account chooser dialog appears.  If he&amp;rsquo;s signed into exactly one account, then the sign-in part is skipped.&lt;/p&gt;
+
+&lt;p&gt;If this is the first time he&amp;rsquo;s attempted to sign in to website X, then he&amp;rsquo;ll be asked to give permission for website X to have access to his profile information (name, picture) and email address.&lt;/p&gt;
+
+&lt;p&gt;In the case that Joe needs neither the sign-in dialog nor the permissions dialog (i.e. he&amp;rsquo;s already signed in to exactly one account and is a returning user), then the pop-up closes itself immediately without any user action.&lt;/p&gt;
+
+&lt;p&gt;The browser remembers that Joe is signed in to website X using Google sign-in.  He can sign out of website X and still be signed into Google.  However, if he signs out of Google, then he&amp;rsquo;ll automatically be signed out of website X as well.  He can&amp;rsquo;t be signed in to website X using his Google ID and not also be signed in to Google.&lt;/p&gt;
+
+&lt;p&gt;If the webpage making the sign-in call is served from a domain that has not been registered in the console, then Joe will see a 400 error (redirect_uri_mismatch) and a picture of a broken robot when trying to sign in.  The error page also exposes the email address of the account that the project is made under.&lt;/p&gt;
+
+&lt;h3 id=&#34;javascript-details:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;Javascript details&lt;/h3&gt;
+
+&lt;p&gt;The file platform.js provides the global Google API object called &lt;code&gt;gapi&lt;/code&gt; and the auth2 module.  The auth2 module must be explicitly loaded into gapi with the &lt;code&gt;gapi.load&lt;/code&gt; method before it&amp;rsquo;s used.  This method provides an optional callback for when/if the module is loaded successfully.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;gapi.load(&amp;quot;auth2&amp;quot;, callback);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Once the module is loaded, it must be initialized with the sign-in client ID (see above).  The client ID may either be provided as &lt;a href=&#34;https://developers.google.com/identity/sign-in/web/reference#gapiauth2initwzxhzdk20paramswzxhzdk21&#34;&gt;an option to the init method&lt;/a&gt; or in &lt;a href=&#34;https://developers.google.com/identity/sign-in/web/sign-in#specify_your_apps_client_id&#34;&gt;a meta tag in the document&lt;/a&gt;.  The init function returns a GoogleAuth object.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;gauth = gapi.auth2.init(options);
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;A logical initialization flow would be to have the initialization in the load callback.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;gapi.load(&amp;quot;auth2&amp;quot;, function() { gapi.auth2.init(); });
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The GoogleAuth object may also be obtained any time after it&amp;rsquo;s initialized using the &lt;a href=&#34;https://developers.google.com/identity/sign-in/web/reference#gapiauth2getauthinstance&#34;&gt;&lt;code&gt;getAuthInstance&lt;/code&gt;&lt;/a&gt; method.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;gauth = gapi.auth2.getAuthInstance();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;At this point we can find out whether Joe is or isn&amp;rsquo;t signed in to website X.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;if (gauth.isSignedIn.get()) { alert(&amp;quot;User is signed in, and I debug with alerts.&amp;quot;); }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;If he isn&amp;rsquo;t signed in, we can try to sign him in.  This is done with &lt;code&gt;GoogleAuth.signIn&lt;/code&gt;.  In most cases, we should wait for him to click a button (e.g. &amp;ldquo;Sign In with Google&amp;rdquo;) before doing so.  There are &lt;a href=&#34;https://developers.google.com/identity/sign-in/web/reference#googleauthsigninwzxhzdk72optionswzxhzdk73&#34;&gt;a few options&lt;/a&gt; that we can ignore for now.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;gauth.SignIn(options)
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This function returns &lt;a href=&#34;https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise&#34;&gt;a Promise&lt;/a&gt;, making it easy to do stuff when it finishes.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;gauth.SignIn().then(function() {
+    alert(&amp;quot;We&#39;re in!&amp;quot;);
+}, function() {
+    alert(&amp;quot;You FAILED!&amp;quot;);
+});
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;There is also this thing called a GoogleUser object, which we can get after Joe has signed in.  (We can also get it before he&amp;rsquo;s signed in, but it would be useless.)  The GoogleUser object reveals Joe&amp;rsquo;s name, email address and profile picture if he has one.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;user = gauth.currentUser.get();
+profile = user.getBasicProfile();
+alert(profile.getName() + &amp;quot; &amp;quot; + profile.getEmail());
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Finally, use can use &lt;code&gt;GoogleAuth.signOut&lt;/code&gt; to sign Joe out of website X.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;gauth.signOut();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Although this signs him out, it doesn&amp;rsquo;t forget about him.  The GoogleUser object is still available and still has his ID.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;user = gauth.currentUser.get();
+alert(user.getId());
+alert(user.isSignedIn());    // false
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And we can sign him in again using the grant method.  This behaves slightly differently from &lt;code&gt;GoogleAuth.signIn&lt;/code&gt; in that it doesn&amp;rsquo;t give Joe a chance to choose a different account.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;user.grant();
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;According to the documentation, &lt;code&gt;GoogleUser.signIn&lt;/code&gt; is equivalent to &lt;code&gt;GoogleUser.grant&lt;/code&gt;, but my Firebug tells me that there&amp;rsquo;s in fact no method called signIn on the GoogleUser object.  Bad documentation.&lt;/p&gt;
+
+&lt;h3 id=&#34;what-usually-happens-in-practice:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;What usually happens in practice&lt;/h3&gt;
+
+&lt;p&gt;Google provides &lt;a href=&#34;https://developers.google.com/identity/sign-in/web/sign-in#add_a_google_sign-in_button&#34;&gt;a handy shortcut&lt;/a&gt; so that anyone can add Google sign-in to their page without knowing any javascript.  As soon as platform.js is loaded, it checks for the existence of a &lt;code&gt;div.g-signin2&lt;/code&gt; (&amp;lt;div class=&amp;ldquo;g-signin2&amp;rdquo;&amp;gt;) and springs into action if found.&lt;/p&gt;
+
+&lt;p&gt;It loads the auth2 module and puts a standard sign-in button in the div (clobbering what was there, watch out), and wires up the button so that when you press it, it logs you in.  It can also call a function of your choosing on sign-in, passing in Joe&amp;rsquo;s GoogleUser object.&lt;/p&gt;
+
+&lt;p&gt;The button appears to be rendered with &lt;a href=&#34;https://developers.google.com/identity/sign-in/web/reference#gapisignin2renderwzxhzdk114idwzxhzdk115_wzxhzdk116optionswzxhzdk117&#34;&gt;&lt;code&gt;gapi.signin2.render&lt;/code&gt;&lt;/a&gt;, and specifying options like this works as expected:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;lt;div class=&amp;quot;g-signin2&amp;quot; data-onsuccess=&amp;quot;onSignIn&amp;quot; data-longtitle=&amp;quot;true&amp;quot; data-width=&amp;quot;200&amp;quot;&amp;gt;&amp;lt;/div&amp;gt;
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;One caution here is that data-longtitle is a string value that gets cast to a boolean, and, as such, the string &amp;ldquo;false&amp;rdquo; will get cast to true.  The way to make longtitle false is set data-longtitle=&amp;quot;&amp;quot; (or to omit it entirely, as false is the default).&lt;/p&gt;
+
+&lt;h3 id=&#34;involving-the-server-for-website-x:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;Involving the server for website X&lt;/h3&gt;
+
+&lt;p&gt;Chances are website X will want to know about Joe&amp;rsquo;s sign-in on the server side.  This will require some javascript to send a token to the server, which the server can then decode to get Joe&amp;rsquo;s information.&lt;/p&gt;
+
+&lt;p&gt;The token can be obtained from the GoogleUser object.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;token = user.getAuthResponse().id_token
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The token is signed to prevent spoofing, and it&amp;rsquo;s up to the server code to &lt;a href=&#34;https://developers.google.com/identity/sign-in/web/backend-auth#verify-the-integrity-of-the-id-token&#34;&gt;verify its integrity&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;scopes:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;Scopes&lt;/h3&gt;
+
+&lt;p&gt;Scopes are the permissions that we&amp;rsquo;re asking Joe to give to website X.  The default for sign-in is scopes profile and email, and we get Joe&amp;rsquo;s name, email, and picture if available.  &lt;em&gt;(Nerdy detail: the name and picture are not part of any scope; see below.)&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;With the default settings, Joe will see the a request for the following permissions the first time he attempts to sign in to website X:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;Know who you are on Google&lt;/li&gt;
+&lt;li&gt;View your email address&lt;/li&gt;
+&lt;li&gt;View your basic profile info&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;If other permissions (e.g. calendar) are needed, they can be added with the &lt;code&gt;scope&lt;/code&gt; option in GoogleAuth.init, the &lt;code&gt;scope&lt;/code&gt; option in GoogleAuth.signIn, or the &lt;code&gt;data-scope&lt;/code&gt; tag on div.g-signin2.  Most scopes are expressed as urls, e.g. &amp;quot;https:&amp;#47;&amp;#47;www.googleapis.com/auth/calendar.readonly&amp;rdquo;.&lt;/p&gt;
+
+&lt;p&gt;Here is &lt;a href=&#34;https://developers.google.com/identity/protocols/googlescopes&#34;&gt;a list of all known scopes&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;fewer-scopes:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;Fewer Scopes&lt;/h3&gt;
+
+&lt;p&gt;The default scopes can be turned off with by sending &lt;code&gt;fetch_basic_profile: false&lt;/code&gt; as one of the options to GoogleAuth.init.  (Note that this precludes using the auto magic button.)  In this case, at least one scope must be explicitly specified with the scope parameter.&lt;/p&gt;
+
+&lt;p&gt;The two scopes that are included by default are &lt;code&gt;profile&lt;/code&gt; and &lt;code&gt;email&lt;/code&gt;.  Adding the &lt;code&gt;profile&lt;/code&gt; scope does nothing.  It only provides Joe&amp;rsquo;s 21-digit ID, which we get anyway.  Adding the &lt;code&gt;email&lt;/code&gt; scope gives us Joe&amp;rsquo;s email address, but the only way to get it is to decode &lt;code&gt;id_token&lt;/code&gt;, as &lt;code&gt;GoogleUser.getBasicProfile&lt;/code&gt; only works when &lt;code&gt;fetch_basic_profile&lt;/code&gt; is true.&lt;/p&gt;
+
+&lt;p&gt;Strangely, requesting only the &lt;code&gt;email&lt;/code&gt; scope causes permission requests #1 and #2 to be displayed, even though we only get the email access.  Requesting only the &lt;code&gt;profile&lt;/code&gt; scope causes only #3 to be displayed.  Requesting both &lt;code&gt;email&lt;/code&gt; and &lt;code&gt;profile&lt;/code&gt; displays #2 and #3 but not #1.  I have yet to understand the logic behind this behavior.&lt;/p&gt;
+
+&lt;p&gt;Also strange is the fact that neither the &lt;code&gt;profile&lt;/code&gt; nor &lt;code&gt;email&lt;/code&gt; scope provides Joe&amp;rsquo;s name and picture.  As far as I can tell, the only way to get his name and picture is to stick to the default &lt;code&gt;fetch_basic_profile: true&lt;/code&gt;.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Happy new year 11111100000</title>
@@ -700,57 +857,6 @@ Unfortunately, it wasn&amp;rsquo;t clear anywhere how to actually use the valida
 &lt;p&gt;Subsequently it is sufficient just to to say &lt;code&gt;mongo&lt;/code&gt;.&lt;/p&gt;
 
 &lt;p&gt;Learned the hard way, and by reading &lt;a href=&#34;http://stackoverflow.com/a/8509918&#34;&gt;this answer&lt;/a&gt;.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>The RubyMonk Tutorial</title>
-      <link>https://ders.github.io/post/2013-02-20-the-rubymonk-tutorial/</link>
-      <pubDate>Wed, 20 Feb 2013 10:58:00 +0900</pubDate>
-      
-      <guid>https://ders.github.io/post/2013-02-20-the-rubymonk-tutorial/</guid>
-      <description>&lt;p&gt;I&amp;rsquo;ve been working my way through the &lt;a href=&#34;http://rubymonk.com/learning/books&#34;&gt;RubyMonk Tutorials&lt;/a&gt;.
-They are very well written and do an excellent job of guiding the user through progressively harder concepts.&lt;/p&gt;
-
-&lt;p&gt;Today I found a couple of careless coding errors in the &lt;a href=&#34;http://rubymonk.com/learning/books/4/chapters/44-collections/lessons/98-iterate-filtrate-and-transform&#34;&gt;section on using Array#inject&lt;/a&gt; (subscription required).  The first is an illustration of inject to do a simple sum of array elements.&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;4&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;8&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;15&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;16&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;23&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;42&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;].&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;inject(&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;do&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;accumulator,&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;iterated&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;|&lt;/span&gt;
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;accumulator&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;+=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;iterated&lt;/span&gt;
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;accumulator&lt;/span&gt;
-&lt;span style=&#34;color: #66d9ef&#34;&gt;end&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;In fact, the assignment statement here is superfluous, as the inject
-function assigns the return value of the block to the accumulator automatically.
-It would suffice to do:&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;4&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;8&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;15&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;16&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;23&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;42&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;].&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;inject(&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;do&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;accumulator,&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;iterated&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;|&lt;/span&gt;
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;accumulator&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;iterated&lt;/span&gt;
-&lt;span style=&#34;color: #66d9ef&#34;&gt;end&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
-
-&lt;p&gt;The second error is in an illustration of the behavior of inject.
-The function below is supposed to mimic the behavior of the one above.&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;def&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;custom_inject&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(array,&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;default&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;nil&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;accumulator&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;default&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;||&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;array&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;]&lt;/span&gt;
-
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;array&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;each&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;do&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;|&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;element&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;|&lt;/span&gt;
-    &lt;span style=&#34;color: #f8f8f2&#34;&gt;accumulator&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;accumulator&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;+&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;element&lt;/span&gt;
-  &lt;span style=&#34;color: #66d9ef&#34;&gt;end&lt;/span&gt;
-
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;accumulator&lt;/span&gt;
-&lt;span style=&#34;color: #66d9ef&#34;&gt;end&lt;/span&gt;
-
-&lt;span style=&#34;color: #f8f8f2&#34;&gt;p&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;custom_inject(&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;4&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;8&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;15&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;16&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;23&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;42&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;]&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
-
-&lt;p&gt;The &lt;code&gt;custom_inject&lt;/code&gt; function, however, fails for the case where the default value is not given.  It fails by counting the first array element twice.&lt;/p&gt;
-
-&lt;p&gt;Native inject begins iterating from the second array element, as the first element has already been used as the starting value.&lt;/p&gt;
 </description>
     </item>
     

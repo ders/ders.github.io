@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sign-in &middot; awm&#39;s blog</title>
+
+    <meta name="description" content="">
+
+    <meta name="generator" content="Hugo 0.15" />
+    <meta name="twitter:card" content="summary">
+    
+    <meta name="twitter:title" content="Google Sign-in &middot; awm&#39;s blog">
+    <meta name="twitter:description" content="">
+
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Google Sign-in &middot; awm&#39;s blog">
+    <meta property="og:description" content="">
+
+    <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Oxygen:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+    <!--[if lte IE 8]>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+    <!--<![endif]-->
+
+    <link rel="stylesheet" href="https://ders.github.io/css/all.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
+
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io/index.xml" />
+</head>
+<body>
+
+
+<div id="layout" class="pure-g">
+    <div class="sidebar pure-u-1 pure-u-md-1-4">
+    <div class="header">
+        <hgroup>
+            <h1 class="brand-title"><a href="https://ders.github.io">awm&#39;s blog</a></h1>
+            <h2 class="brand-tagline"> What did I do today? </h2>
+        </hgroup>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                
+                
+                <li class="nav-item">
+                    <a class="pure-button" href="https://ders.github.io/index.xml"><i class="fa fa-rss"></i> rss</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+    <div class="content pure-u-1 pure-u-md-3-4">
+        <div>
+            
+            <div class="posts">
+                <h1 class="content-subhead">08 Jan 2016, 15:50</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2016-01-08-google-signin/" class="post-title">Google Sign-in</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-share">
+                        <div class="post-share-links">
+                            <h4 style="">Share</h4>
+                            <a href="#" data-type="facebook" data-url="https://ders.github.io/post/2016-01-08-google-signin/" data-title="Google Sign-in" data-description="" data-media="" class="prettySocial fa fa-facebook"></a>
+                            <a href="#" data-type="googleplus" data-url="https://ders.github.io/post/2016-01-08-google-signin/" data-description="" class="prettySocial fa fa-google-plus"></a>
+                            
+                            
+                        </div>
+                    </div>
+                    <div class="post-description">
+                        
+
+<h2 id="using-google-sign-in-on-website-x:a9bc523f98a05ffe7a400551ba7208e4">Using Google Sign-in on Website X</h2>
+
+<p><strong>Disclaimer:</strong>  <a href="https://developers.google.com/identity/sign-in/web/sign-in">Read the docs</a> too.  This post doesn&rsquo;t cover everything.</p>
+
+<p>A week ago I was completely clueless as to how Google sign-in works.  I set out to write about it and learned a few things.</p>
+
+<h3 id="overview:a9bc523f98a05ffe7a400551ba7208e4">Overview</h3>
+
+<p>Using Google sign-in on a website requires first doing the following in the <a href="https://console.developers.google.com/home/dashboard">Google developer&rsquo;s console</a>:</p>
+
+<ul>
+<li>creating a project</li>
+<li>creating a sign-in client ID for that project</li>
+<li>associating the domain(s) of the website with the sign-in client ID</li>
+</ul>
+
+<p>Sign-in is done using javascript on the web page to talk directly to Google&rsquo;s servers.  The javascript is loaded from Google&rsquo;s servers.  It is not necessary to involve the server for website X at all.</p>
+
+<p>When Joe the Hacker attempts to sign in to website X, a popup dialog appears.  The contents of the dialog depend on Joe&rsquo;s current signed-in state.</p>
+
+<p>If Joe is not signed in to Google at all, then a sign-in dialog appears.  If he&rsquo;s signed in to more than one account, then an account chooser dialog appears.  If he&rsquo;s signed into exactly one account, then the sign-in part is skipped.</p>
+
+<p>If this is the first time he&rsquo;s attempted to sign in to website X, then he&rsquo;ll be asked to give permission for website X to have access to his profile information (name, picture) and email address.</p>
+
+<p>In the case that Joe needs neither the sign-in dialog nor the permissions dialog (i.e. he&rsquo;s already signed in to exactly one account and is a returning user), then the pop-up closes itself immediately without any user action.</p>
+
+<p>The browser remembers that Joe is signed in to website X using Google sign-in.  He can sign out of website X and still be signed into Google.  However, if he signs out of Google, then he&rsquo;ll automatically be signed out of website X as well.  He can&rsquo;t be signed in to website X using his Google ID and not also be signed in to Google.</p>
+
+<p>If the webpage making the sign-in call is served from a domain that has not been registered in the console, then Joe will see a 400 error (redirect_uri_mismatch) and a picture of a broken robot when trying to sign in.  The error page also exposes the email address of the account that the project is made under.</p>
+
+<h3 id="javascript-details:a9bc523f98a05ffe7a400551ba7208e4">Javascript details</h3>
+
+<p>The file platform.js provides the global Google API object called <code>gapi</code> and the auth2 module.  The auth2 module must be explicitly loaded into gapi with the <code>gapi.load</code> method before it&rsquo;s used.  This method provides an optional callback for when/if the module is loaded successfully.</p>
+
+<pre><code>gapi.load(&quot;auth2&quot;, callback);
+</code></pre>
+
+<p>Once the module is loaded, it must be initialized with the sign-in client ID (see above).  The client ID may either be provided as <a href="https://developers.google.com/identity/sign-in/web/reference#gapiauth2initwzxhzdk20paramswzxhzdk21">an option to the init method</a> or in <a href="https://developers.google.com/identity/sign-in/web/sign-in#specify_your_apps_client_id">a meta tag in the document</a>.  The init function returns a GoogleAuth object.</p>
+
+<pre><code>gauth = gapi.auth2.init(options);
+</code></pre>
+
+<p>A logical initialization flow would be to have the initialization in the load callback.</p>
+
+<pre><code>gapi.load(&quot;auth2&quot;, function() { gapi.auth2.init(); });
+</code></pre>
+
+<p>The GoogleAuth object may also be obtained any time after it&rsquo;s initialized using the <a href="https://developers.google.com/identity/sign-in/web/reference#gapiauth2getauthinstance"><code>getAuthInstance</code></a> method.</p>
+
+<pre><code>gauth = gapi.auth2.getAuthInstance();
+</code></pre>
+
+<p>At this point we can find out whether Joe is or isn&rsquo;t signed in to website X.</p>
+
+<pre><code>if (gauth.isSignedIn.get()) { alert(&quot;User is signed in, and I debug with alerts.&quot;); }
+</code></pre>
+
+<p>If he isn&rsquo;t signed in, we can try to sign him in.  This is done with <code>GoogleAuth.signIn</code>.  In most cases, we should wait for him to click a button (e.g. &ldquo;Sign In with Google&rdquo;) before doing so.  There are <a href="https://developers.google.com/identity/sign-in/web/reference#googleauthsigninwzxhzdk72optionswzxhzdk73">a few options</a> that we can ignore for now.</p>
+
+<pre><code>gauth.SignIn(options)
+</code></pre>
+
+<p>This function returns <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise">a Promise</a>, making it easy to do stuff when it finishes.</p>
+
+<pre><code>gauth.SignIn().then(function() {
+    alert(&quot;We're in!&quot;);
+}, function() {
+    alert(&quot;You FAILED!&quot;);
+});
+</code></pre>
+
+<p>There is also this thing called a GoogleUser object, which we can get after Joe has signed in.  (We can also get it before he&rsquo;s signed in, but it would be useless.)  The GoogleUser object reveals Joe&rsquo;s name, email address and profile picture if he has one.</p>
+
+<pre><code>user = gauth.currentUser.get();
+profile = user.getBasicProfile();
+alert(profile.getName() + &quot; &quot; + profile.getEmail());
+</code></pre>
+
+<p>Finally, use can use <code>GoogleAuth.signOut</code> to sign Joe out of website X.</p>
+
+<pre><code>gauth.signOut();
+</code></pre>
+
+<p>Although this signs him out, it doesn&rsquo;t forget about him.  The GoogleUser object is still available and still has his ID.</p>
+
+<pre><code>user = gauth.currentUser.get();
+alert(user.getId());
+alert(user.isSignedIn());    // false
+</code></pre>
+
+<p>And we can sign him in again using the grant method.  This behaves slightly differently from <code>GoogleAuth.signIn</code> in that it doesn&rsquo;t give Joe a chance to choose a different account.</p>
+
+<pre><code>user.grant();
+</code></pre>
+
+<p>According to the documentation, <code>GoogleUser.signIn</code> is equivalent to <code>GoogleUser.grant</code>, but my Firebug tells me that there&rsquo;s in fact no method called signIn on the GoogleUser object.  Bad documentation.</p>
+
+<h3 id="what-usually-happens-in-practice:a9bc523f98a05ffe7a400551ba7208e4">What usually happens in practice</h3>
+
+<p>Google provides <a href="https://developers.google.com/identity/sign-in/web/sign-in#add_a_google_sign-in_button">a handy shortcut</a> so that anyone can add Google sign-in to their page without knowing any javascript.  As soon as platform.js is loaded, it checks for the existence of a <code>div.g-signin2</code> (&lt;div class=&ldquo;g-signin2&rdquo;&gt;) and springs into action if found.</p>
+
+<p>It loads the auth2 module and puts a standard sign-in button in the div (clobbering what was there, watch out), and wires up the button so that when you press it, it logs you in.  It can also call a function of your choosing on sign-in, passing in Joe&rsquo;s GoogleUser object.</p>
+
+<p>The button appears to be rendered with <a href="https://developers.google.com/identity/sign-in/web/reference#gapisignin2renderwzxhzdk114idwzxhzdk115_wzxhzdk116optionswzxhzdk117"><code>gapi.signin2.render</code></a>, and specifying options like this works as expected:</p>
+
+<pre><code>&lt;div class=&quot;g-signin2&quot; data-onsuccess=&quot;onSignIn&quot; data-longtitle=&quot;true&quot; data-width=&quot;200&quot;&gt;&lt;/div&gt;
+</code></pre>
+
+<p>One caution here is that data-longtitle is a string value that gets cast to a boolean, and, as such, the string &ldquo;false&rdquo; will get cast to true.  The way to make longtitle false is set data-longtitle=&quot;&quot; (or to omit it entirely, as false is the default).</p>
+
+<h3 id="involving-the-server-for-website-x:a9bc523f98a05ffe7a400551ba7208e4">Involving the server for website X</h3>
+
+<p>Chances are website X will want to know about Joe&rsquo;s sign-in on the server side.  This will require some javascript to send a token to the server, which the server can then decode to get Joe&rsquo;s information.</p>
+
+<p>The token can be obtained from the GoogleUser object.</p>
+
+<pre><code>token = user.getAuthResponse().id_token
+</code></pre>
+
+<p>The token is signed to prevent spoofing, and it&rsquo;s up to the server code to <a href="https://developers.google.com/identity/sign-in/web/backend-auth#verify-the-integrity-of-the-id-token">verify its integrity</a>.</p>
+
+<h3 id="scopes:a9bc523f98a05ffe7a400551ba7208e4">Scopes</h3>
+
+<p>Scopes are the permissions that we&rsquo;re asking Joe to give to website X.  The default for sign-in is scopes profile and email, and we get Joe&rsquo;s name, email, and picture if available.  <em>(Nerdy detail: the name and picture are not part of any scope; see below.)</em></p>
+
+<p>With the default settings, Joe will see the a request for the following permissions the first time he attempts to sign in to website X:</p>
+
+<ol>
+<li>Know who you are on Google</li>
+<li>View your email address</li>
+<li>View your basic profile info</li>
+</ol>
+
+<p>If other permissions (e.g. calendar) are needed, they can be added with the <code>scope</code> option in GoogleAuth.init, the <code>scope</code> option in GoogleAuth.signIn, or the <code>data-scope</code> tag on div.g-signin2.  Most scopes are expressed as urls, e.g. &quot;https:&#47;&#47;www.googleapis.com/auth/calendar.readonly&rdquo;.</p>
+
+<p>Here is <a href="https://developers.google.com/identity/protocols/googlescopes">a list of all known scopes</a>.</p>
+
+<h3 id="fewer-scopes:a9bc523f98a05ffe7a400551ba7208e4">Fewer Scopes</h3>
+
+<p>The default scopes can be turned off with by sending <code>fetch_basic_profile: false</code> as one of the options to GoogleAuth.init.  (Note that this precludes using the auto magic button.)  In this case, at least one scope must be explicitly specified with the scope parameter.</p>
+
+<p>The two scopes that are included by default are <code>profile</code> and <code>email</code>.  Adding the <code>profile</code> scope does nothing.  It only provides Joe&rsquo;s 21-digit ID, which we get anyway.  Adding the <code>email</code> scope gives us Joe&rsquo;s email address, but the only way to get it is to decode <code>id_token</code>, as <code>GoogleUser.getBasicProfile</code> only works when <code>fetch_basic_profile</code> is true.</p>
+
+<p>Strangely, requesting only the <code>email</code> scope causes permission requests #1 and #2 to be displayed, even though we only get the email access.  Requesting only the <code>profile</code> scope causes only #3 to be displayed.  Requesting both <code>email</code> and <code>profile</code> displays #2 and #3 but not #1.  I have yet to understand the logic behind this behavior.</p>
+
+<p>Also strange is the fact that neither the <code>profile</code> nor <code>email</code> scope provides Joe&rsquo;s name and picture.  As far as I can tell, the only way to get his name and picture is to stick to the default <code>fetch_basic_profile: true</code>.</p>
+
+                    </div>
+                    
+                </section>
+            </div>
+            <div class="footer">
+    <div class="pure-menu pure-menu-horizontal pure-menu-open">
+        <ul>
+            <li>Powered by <a class="hugo" href="http://hugo.spf13.com/" target="_blank">hugo</a></li>
+        </ul>
+    </div>
+</div>
+<script src="https://ders.github.io/js/all.min.js"></script>
+        </div>
+    </div>
+</div>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '', 'auto');
+ga('send', 'pageview');
+
+</script>
+
+</body>
+</html>
