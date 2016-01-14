@@ -6,8 +6,172 @@
     <description>Recent content on awm&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 08 Jan 2016 15:50:00 +0900</lastBuildDate>
+    <lastBuildDate>Thu, 14 Jan 2016 14:22:00 +0900</lastBuildDate>
     <atom:link href="https://ders.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Static assets for websites</title>
+      <link>https://ders.github.io/post/2016-01-14-static-assets-for-websites/</link>
+      <pubDate>Thu, 14 Jan 2016 14:22:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2016-01-14-static-assets-for-websites/</guid>
+      <description>
+
+&lt;p&gt;Count me in on the developers who believe that &lt;a href=&#34;http://www.gnu.org/software/make/manual/make.html&#34;&gt;GNU make&lt;/a&gt; is the best tool for assembling static assets.&lt;/p&gt;
+
+&lt;h3 id=&#34;the-general-problem:19cc05a9058f195db3905e6197b7999f&#34;&gt;The general problem&lt;/h3&gt;
+
+&lt;p&gt;We need to maintain a set of files B that is derived from another set of files A through some known (and possibly complicated) transformation.  We edit the files in set A but not in set B.  We would like a simple way to (1) create B from A, and (2) update B when A changes, only recreating the parts that are necessary.&lt;/p&gt;
+
+&lt;h3 id=&#34;the-more-specific-problem:19cc05a9058f195db3905e6197b7999f&#34;&gt;The more specific problem&lt;/h3&gt;
+
+&lt;p&gt;B is the set of static assets for a web service, and A is the set of source files used to make them.  Only A will be checked into source control, and only B will be uploaded to the web server.&lt;/p&gt;
+
+&lt;p&gt;There are different kinds of assets in A that need to be treated differently.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Javascript&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;p&gt;My Javascript source files are formatted nicely and full of meaningful, well-thought-out comments.  I would like the js files sent with the web pages to be devoid of comments and mashed together so as to be almost unreadable.  This can be accomplished by piping the files through &lt;a href=&#34;http://www.crockford.com/javascript/jsmin.html&#34;&gt;JSMin&lt;/a&gt; on the way from A to B.&lt;/p&gt;&lt;/li&gt;
+
+&lt;li&gt;&lt;p&gt;My Javascript source files are modular, and one page may need several files.  These are best combined into one file for faster loading.  Also, any source file could be included in several combination files.  I would like the ability to have each js file in B created from an arbitrary combination of source files from A.&lt;/p&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;CSS&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;All my css is written as scss and needs to be processed with an scss compiler such as  &lt;a href=&#34;http://sass-lang.com/&#34;&gt;Sass&lt;/a&gt;.  Scss files may import other sccs files, a fact we need to be aware of when detecting changes.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Other assets such as images and precompiled libraries can be copied from A to B without modification.&lt;/p&gt;
+
+&lt;h3 id=&#34;what-to-do:19cc05a9058f195db3905e6197b7999f&#34;&gt;What to do&lt;/h3&gt;
+
+&lt;p&gt;The first thing is to define a directory structure.&lt;/p&gt;
+
+&lt;p&gt;For set A we&amp;rsquo;ll make a subdirectory &lt;code&gt;src&lt;/code&gt; in project root with four subdirectories: &lt;code&gt;js&lt;/code&gt; for Javascript sources, &lt;code&gt;css&lt;/code&gt; for scss sources, &lt;code&gt;i&lt;/code&gt; for image files, and &lt;code&gt;lib&lt;/code&gt; for precompiled libraries.&lt;/p&gt;
+
+&lt;p&gt;For set B we&amp;rsquo;ll make a subdirectory &lt;code&gt;pub&lt;/code&gt; in project root.  Compiled js and css files will go directly in &lt;code&gt;pub&lt;/code&gt;, and the two subdirectories &lt;code&gt;i&lt;/code&gt; and &lt;code&gt;lib&lt;/code&gt; will mirror &lt;code&gt;src/i&lt;/code&gt; and &lt;code&gt;src/lib&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;.
+├── src
+│   ├── js
+│   ├── css
+│   ├── i
+│   └── lib
+└── pub
+    ├── i
+    └── lib
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Next we need to make a list of the js and css files we would like generated and placed into &lt;code&gt;pub&lt;/code&gt;.  We&amp;rsquo;ll do that by defining variables &lt;code&gt;JSFILES&lt;/code&gt; and &lt;code&gt;CSSFILES&lt;/code&gt;, e.g.:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;JSFILES := main.js eggs.js pancake.js
+CSSFILES := blueberry.css yogurt.css
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;After that, we need to define the dependencies for each of these files, e.g.:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;pub/main.js: src/js/main.js
+pub/eggs.js: src/js/eggs.js src/js/milk.js
+pub/pancake.js: src/js/milk.js src/js/flour.js src/js/eggs.js
+
+pub/blueberry.css: src/css/blueberry.scss src/css/fruit.scss
+pub/yogurt.css: src/css/yogurt.scss
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;To simplify things, we&amp;rsquo;ll define the default dependeny to be one source file of the same name, so we can omit dependency definitions for &lt;code&gt;main.js&lt;/code&gt; and &lt;code&gt;yogurt.css&lt;/code&gt;.  We&amp;rsquo;ll also define &lt;code&gt;JS := src/js&lt;/code&gt;, &lt;code&gt;CSS := src/css&lt;/code&gt; and &lt;code&gt;PUB := pub&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;$(PUB)/eggs.js: $(JS)/eggs.js $(JS)/milk.js
+$(PUB)/pancake.js: $(JS)/milk.js $(JS)/flour.js $(JS)/eggs.js
+$(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Finally, we need to make a list of directories to be copied directly from &lt;code&gt;src&lt;/code&gt; to &lt;code&gt;pub&lt;/code&gt;.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;COPYDIRS := lib i
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This is now enough information for us to build a simple makefile, giving us (at least) the following commands:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;make&lt;/code&gt; does a clean build, deleting &lt;code&gt;pub&lt;/code&gt; if it exists and building everything from src.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;make build&lt;/code&gt; does an incremental build of js and css files, updating only those files whose source has changed.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;make copy&lt;/code&gt; syncs the directories &lt;code&gt;i&lt;/code&gt; and &lt;code&gt;lib&lt;/code&gt; from &lt;code&gt;src&lt;/code&gt; to &lt;code&gt;pub&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;make watch&lt;/code&gt; runs until you kill it, watching for changes in &lt;code&gt;src&lt;/code&gt; and updating &lt;code&gt;pub&lt;/code&gt; as necessary.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Note that &lt;code&gt;make&lt;/code&gt; is short for &lt;code&gt;make all&lt;/code&gt;, which does &lt;code&gt;make clean&lt;/code&gt; + &lt;code&gt;make copy&lt;/code&gt; + &lt;code&gt;make build&lt;/code&gt;.&lt;/p&gt;
+
+&lt;script src=&#34;https://gist.github.com/ders/627147bf67544c96f8be.js&#34;&gt;&lt;/script&gt;
+
+&lt;h3 id=&#34;how-it-works:19cc05a9058f195db3905e6197b7999f&#34;&gt;How it works&lt;/h3&gt;
+
+&lt;p&gt;The meat of this makefile is in the pattern rules (lines 43-55).  Quick cheat sheet:  &lt;code&gt;$@&lt;/code&gt; = target, &lt;code&gt;$^&lt;/code&gt; = all dependencies, &lt;code&gt;$&amp;lt;&lt;/code&gt; = the first dependency.  &lt;a href=&#34;http://www.gnu.org/software/make/manual/make.html#Automatic-Variables&#34;&gt;Details are here.&lt;/a&gt;&lt;/p&gt;
+
+&lt;p&gt;The first rule takes care of &lt;code&gt;main.js&lt;/code&gt; and &lt;code&gt;eggs.js&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;The second rule takes care of &lt;code&gt;pancake.js&lt;/code&gt;.  Note that &lt;code&gt;pancake.js&lt;/code&gt; doesn&amp;rsquo;t match the first rule because there is no source file called pancake.&lt;/p&gt;
+
+&lt;p&gt;The third rule takes care of &lt;code&gt;blueberry.css&lt;/code&gt; and &lt;code&gt;yogurt.css&lt;/code&gt;.  Note that on line 55 &lt;code&gt;fruit.scss&lt;/code&gt; is &lt;strong&gt;not&lt;/strong&gt; supplied as an argument to sass.  It&amp;rsquo;s only listed as a dependency because &lt;code&gt;blueberry.scss&lt;/code&gt; contains an &lt;code&gt;@import &amp;quot;sass&amp;quot;;&lt;/code&gt; directive.&lt;/p&gt;
+
+&lt;p&gt;Finally, lines 32-36 take care of syncing directories &lt;code&gt;i&lt;/code&gt; and &lt;code&gt;lib&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;In the end, our filesystem looks like this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;.
+├── src
+│   ├── js
+│   │   ├── eggs.js
+│   │   ├── flour.js
+│   │   ├── main.js
+│   │   └── milk.js
+│   ├── css
+│   │   ├── blueberry.scss
+│   │   ├── fruit.scss
+│   │   └── yogurt.scss
+│   ├── i
+│   │   ├── hanjan.jpg
+│   │   └── ikant.png
+│   └── lib
+│       └── MooTools-Core-1.5.2-compressed.js
+└── pub
+│   ├── i
+│   │   ├── hanjan.jpg
+│   │   └── ikant.png
+│   ├── lib
+│   │   └── MooTools-Core-1.5.2-compressed.js
+│   ├── blueberry.css
+│   ├── eggs.js
+│   ├── main.js
+│   ├── pancake.js
+│   └── yogurt.css
+└── Makefile
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;dependencies:19cc05a9058f195db3905e6197b7999f&#34;&gt;Dependencies&lt;/h3&gt;
+
+&lt;p&gt;This makefile requires &lt;code&gt;jsmin&lt;/code&gt;, &lt;code&gt;sass&lt;/code&gt; and &lt;code&gt;watchman-make&lt;/code&gt; to be available at the command line.&lt;/p&gt;
+
+&lt;p&gt;Jsmin and &lt;a href=&#34;https://facebook.github.io/watchman/docs/install.html&#34;&gt;Watchman&lt;/a&gt; (which includes watchman-make) are available on OS X via Homebrew.  Sass is not (yet), but it can be installed as a system-wide ruby gem.  I&amp;rsquo;m not a fan of requiring rubygems for my decidedly anti-rails build system, but since Sass runs nicely from the command line I&amp;rsquo;ll turn a blind eye for now.&lt;/p&gt;
+
+&lt;p&gt;Jsmin is also &lt;a href=&#34;https://libraries.io/npm/jsmin&#34;&gt;available via npm&lt;/a&gt;.&lt;/p&gt;
+
+&lt;h3 id=&#34;other-features-i-d-like-to-include:19cc05a9058f195db3905e6197b7999f&#34;&gt;Other features I&amp;rsquo;d like to include&lt;/h3&gt;
+
+&lt;p&gt;Would be nice to automatically detect @import statements in scss source files and generate dependency lists based on that.  I&amp;rsquo;m aware that the Sass package has it&amp;rsquo;s own watcher that handles dependencies, but using that would mean bypassing a significant part of the makefile, thereby making a mess.&lt;/p&gt;
+
+&lt;p&gt;It would be pretty simple to add a &lt;code&gt;make deploy&lt;/code&gt; command to rsync the server.  I&amp;rsquo;ll probably do that later.&lt;/p&gt;
+
+&lt;h3 id=&#34;a-feature-i-excluded-on-purpose:19cc05a9058f195db3905e6197b7999f&#34;&gt;A feature I excluded on purpose&lt;/h3&gt;
+
+&lt;p&gt;Many web frameworks automatically append timestamps or version numbers to static assets in order to defeat browser caching.  This adds a whole lot of complexity for a pretty minor benefit.  Once a site is in production, I expect updates to be few and far between, and I&amp;rsquo;m happy to manually add a version number to a target filename as necessary.&lt;/p&gt;
+
+&lt;h3 id=&#34;credits:19cc05a9058f195db3905e6197b7999f&#34;&gt;Credits&lt;/h3&gt;
+
+&lt;p&gt;This Makefile was heavily influenced by and owes thanks to &lt;a href=&#34;http://west.io/post/2015/04/11-frontend-builds-with-makefiles/&#34;&gt;this blog post&lt;/a&gt;.  Thank you!&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Google Sign-in</title>
@@ -839,24 +1003,6 @@ Unfortunately, it wasn&amp;rsquo;t clear anywhere how to actually use the valida
 &lt;/p&gt;
 
 &lt;p&gt;My junior high math teacher would be disturbed by this.&amp;nbsp; Such is the power of Ruby.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Tip of the day</title>
-      <link>https://ders.github.io/post/2013-02-22-tip-of-the-day/</link>
-      <pubDate>Fri, 22 Feb 2013 10:41:00 +0900</pubDate>
-      
-      <guid>https://ders.github.io/post/2013-02-22-tip-of-the-day/</guid>
-      <description>&lt;p&gt;When running the Mongo shell for the first time, it is necessary to specify the port:&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;$ mongo 127.0.0.1:27017
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;Subsequently it is sufficient just to to say &lt;code&gt;mongo&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Learned the hard way, and by reading &lt;a href=&#34;http://stackoverflow.com/a/8509918&#34;&gt;this answer&lt;/a&gt;.&lt;/p&gt;
 </description>
     </item>
     

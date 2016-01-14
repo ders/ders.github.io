@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static assets for websites &middot; awm&#39;s blog</title>
+
+    <meta name="description" content="">
+
+    <meta name="generator" content="Hugo 0.15" />
+    <meta name="twitter:card" content="summary">
+    
+    <meta name="twitter:title" content="Static assets for websites &middot; awm&#39;s blog">
+    <meta name="twitter:description" content="">
+
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Static assets for websites &middot; awm&#39;s blog">
+    <meta property="og:description" content="">
+
+    <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Oxygen:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+    <!--[if lte IE 8]>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+    <!--<![endif]-->
+
+    <link rel="stylesheet" href="https://ders.github.io/css/all.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
+
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io/index.xml" />
+</head>
+<body>
+
+
+<div id="layout" class="pure-g">
+    <div class="sidebar pure-u-1 pure-u-md-1-4">
+    <div class="header">
+        <hgroup>
+            <h1 class="brand-title"><a href="https://ders.github.io">awm&#39;s blog</a></h1>
+            <h2 class="brand-tagline"> What did I do today? </h2>
+        </hgroup>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                
+                
+                <li class="nav-item">
+                    <a class="pure-button" href="https://ders.github.io/index.xml"><i class="fa fa-rss"></i> rss</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+    <div class="content pure-u-1 pure-u-md-3-4">
+        <div>
+            
+            <div class="posts">
+                <h1 class="content-subhead">14 Jan 2016, 14:22</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2016-01-14-static-assets-for-websites/" class="post-title">Static assets for websites</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-share">
+                        <div class="post-share-links">
+                            <h4 style="">Share</h4>
+                            <a href="#" data-type="facebook" data-url="https://ders.github.io/post/2016-01-14-static-assets-for-websites/" data-title="Static assets for websites" data-description="" data-media="" class="prettySocial fa fa-facebook"></a>
+                            <a href="#" data-type="googleplus" data-url="https://ders.github.io/post/2016-01-14-static-assets-for-websites/" data-description="" class="prettySocial fa fa-google-plus"></a>
+                            
+                            
+                        </div>
+                    </div>
+                    <div class="post-description">
+                        
+
+<p>Count me in on the developers who believe that <a href="http://www.gnu.org/software/make/manual/make.html">GNU make</a> is the best tool for assembling static assets.</p>
+
+<h3 id="the-general-problem:19cc05a9058f195db3905e6197b7999f">The general problem</h3>
+
+<p>We need to maintain a set of files B that is derived from another set of files A through some known (and possibly complicated) transformation.  We edit the files in set A but not in set B.  We would like a simple way to (1) create B from A, and (2) update B when A changes, only recreating the parts that are necessary.</p>
+
+<h3 id="the-more-specific-problem:19cc05a9058f195db3905e6197b7999f">The more specific problem</h3>
+
+<p>B is the set of static assets for a web service, and A is the set of source files used to make them.  Only A will be checked into source control, and only B will be uploaded to the web server.</p>
+
+<p>There are different kinds of assets in A that need to be treated differently.</p>
+
+<p><strong>Javascript</strong></p>
+
+<ul>
+<li><p>My Javascript source files are formatted nicely and full of meaningful, well-thought-out comments.  I would like the js files sent with the web pages to be devoid of comments and mashed together so as to be almost unreadable.  This can be accomplished by piping the files through <a href="http://www.crockford.com/javascript/jsmin.html">JSMin</a> on the way from A to B.</p></li>
+
+<li><p>My Javascript source files are modular, and one page may need several files.  These are best combined into one file for faster loading.  Also, any source file could be included in several combination files.  I would like the ability to have each js file in B created from an arbitrary combination of source files from A.</p></li>
+</ul>
+
+<p><strong>CSS</strong></p>
+
+<ul>
+<li>All my css is written as scss and needs to be processed with an scss compiler such as  <a href="http://sass-lang.com/">Sass</a>.  Scss files may import other sccs files, a fact we need to be aware of when detecting changes.</li>
+</ul>
+
+<p>Other assets such as images and precompiled libraries can be copied from A to B without modification.</p>
+
+<h3 id="what-to-do:19cc05a9058f195db3905e6197b7999f">What to do</h3>
+
+<p>The first thing is to define a directory structure.</p>
+
+<p>For set A we&rsquo;ll make a subdirectory <code>src</code> in project root with four subdirectories: <code>js</code> for Javascript sources, <code>css</code> for scss sources, <code>i</code> for image files, and <code>lib</code> for precompiled libraries.</p>
+
+<p>For set B we&rsquo;ll make a subdirectory <code>pub</code> in project root.  Compiled js and css files will go directly in <code>pub</code>, and the two subdirectories <code>i</code> and <code>lib</code> will mirror <code>src/i</code> and <code>src/lib</code>.</p>
+
+<pre><code>.
+├── src
+│   ├── js
+│   ├── css
+│   ├── i
+│   └── lib
+└── pub
+    ├── i
+    └── lib
+</code></pre>
+
+<p>Next we need to make a list of the js and css files we would like generated and placed into <code>pub</code>.  We&rsquo;ll do that by defining variables <code>JSFILES</code> and <code>CSSFILES</code>, e.g.:</p>
+
+<pre><code>JSFILES := main.js eggs.js pancake.js
+CSSFILES := blueberry.css yogurt.css
+</code></pre>
+
+<p>After that, we need to define the dependencies for each of these files, e.g.:</p>
+
+<pre><code>pub/main.js: src/js/main.js
+pub/eggs.js: src/js/eggs.js src/js/milk.js
+pub/pancake.js: src/js/milk.js src/js/flour.js src/js/eggs.js
+
+pub/blueberry.css: src/css/blueberry.scss src/css/fruit.scss
+pub/yogurt.css: src/css/yogurt.scss
+</code></pre>
+
+<p>To simplify things, we&rsquo;ll define the default dependeny to be one source file of the same name, so we can omit dependency definitions for <code>main.js</code> and <code>yogurt.css</code>.  We&rsquo;ll also define <code>JS := src/js</code>, <code>CSS := src/css</code> and <code>PUB := pub</code>.</p>
+
+<pre><code>$(PUB)/eggs.js: $(JS)/eggs.js $(JS)/milk.js
+$(PUB)/pancake.js: $(JS)/milk.js $(JS)/flour.js $(JS)/eggs.js
+$(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
+</code></pre>
+
+<p>Finally, we need to make a list of directories to be copied directly from <code>src</code> to <code>pub</code>.</p>
+
+<pre><code>COPYDIRS := lib i
+</code></pre>
+
+<p>This is now enough information for us to build a simple makefile, giving us (at least) the following commands:</p>
+
+<ul>
+<li><code>make</code> does a clean build, deleting <code>pub</code> if it exists and building everything from src.</li>
+<li><code>make build</code> does an incremental build of js and css files, updating only those files whose source has changed.</li>
+<li><code>make copy</code> syncs the directories <code>i</code> and <code>lib</code> from <code>src</code> to <code>pub</code>.</li>
+<li><code>make watch</code> runs until you kill it, watching for changes in <code>src</code> and updating <code>pub</code> as necessary.</li>
+</ul>
+
+<p>Note that <code>make</code> is short for <code>make all</code>, which does <code>make clean</code> + <code>make copy</code> + <code>make build</code>.</p>
+
+<script src="https://gist.github.com/ders/627147bf67544c96f8be.js"></script>
+
+<h3 id="how-it-works:19cc05a9058f195db3905e6197b7999f">How it works</h3>
+
+<p>The meat of this makefile is in the pattern rules (lines 43-55).  Quick cheat sheet:  <code>$@</code> = target, <code>$^</code> = all dependencies, <code>$&lt;</code> = the first dependency.  <a href="http://www.gnu.org/software/make/manual/make.html#Automatic-Variables">Details are here.</a></p>
+
+<p>The first rule takes care of <code>main.js</code> and <code>eggs.js</code>.</p>
+
+<p>The second rule takes care of <code>pancake.js</code>.  Note that <code>pancake.js</code> doesn&rsquo;t match the first rule because there is no source file called pancake.</p>
+
+<p>The third rule takes care of <code>blueberry.css</code> and <code>yogurt.css</code>.  Note that on line 55 <code>fruit.scss</code> is <strong>not</strong> supplied as an argument to sass.  It&rsquo;s only listed as a dependency because <code>blueberry.scss</code> contains an <code>@import &quot;sass&quot;;</code> directive.</p>
+
+<p>Finally, lines 32-36 take care of syncing directories <code>i</code> and <code>lib</code>.</p>
+
+<p>In the end, our filesystem looks like this:</p>
+
+<pre><code>.
+├── src
+│   ├── js
+│   │   ├── eggs.js
+│   │   ├── flour.js
+│   │   ├── main.js
+│   │   └── milk.js
+│   ├── css
+│   │   ├── blueberry.scss
+│   │   ├── fruit.scss
+│   │   └── yogurt.scss
+│   ├── i
+│   │   ├── hanjan.jpg
+│   │   └── ikant.png
+│   └── lib
+│       └── MooTools-Core-1.5.2-compressed.js
+└── pub
+│   ├── i
+│   │   ├── hanjan.jpg
+│   │   └── ikant.png
+│   ├── lib
+│   │   └── MooTools-Core-1.5.2-compressed.js
+│   ├── blueberry.css
+│   ├── eggs.js
+│   ├── main.js
+│   ├── pancake.js
+│   └── yogurt.css
+└── Makefile
+</code></pre>
+
+<h3 id="dependencies:19cc05a9058f195db3905e6197b7999f">Dependencies</h3>
+
+<p>This makefile requires <code>jsmin</code>, <code>sass</code> and <code>watchman-make</code> to be available at the command line.</p>
+
+<p>Jsmin and <a href="https://facebook.github.io/watchman/docs/install.html">Watchman</a> (which includes watchman-make) are available on OS X via Homebrew.  Sass is not (yet), but it can be installed as a system-wide ruby gem.  I&rsquo;m not a fan of requiring rubygems for my decidedly anti-rails build system, but since Sass runs nicely from the command line I&rsquo;ll turn a blind eye for now.</p>
+
+<p>Jsmin is also <a href="https://libraries.io/npm/jsmin">available via npm</a>.</p>
+
+<h3 id="other-features-i-d-like-to-include:19cc05a9058f195db3905e6197b7999f">Other features I&rsquo;d like to include</h3>
+
+<p>Would be nice to automatically detect @import statements in scss source files and generate dependency lists based on that.  I&rsquo;m aware that the Sass package has it&rsquo;s own watcher that handles dependencies, but using that would mean bypassing a significant part of the makefile, thereby making a mess.</p>
+
+<p>It would be pretty simple to add a <code>make deploy</code> command to rsync the server.  I&rsquo;ll probably do that later.</p>
+
+<h3 id="a-feature-i-excluded-on-purpose:19cc05a9058f195db3905e6197b7999f">A feature I excluded on purpose</h3>
+
+<p>Many web frameworks automatically append timestamps or version numbers to static assets in order to defeat browser caching.  This adds a whole lot of complexity for a pretty minor benefit.  Once a site is in production, I expect updates to be few and far between, and I&rsquo;m happy to manually add a version number to a target filename as necessary.</p>
+
+<h3 id="credits:19cc05a9058f195db3905e6197b7999f">Credits</h3>
+
+<p>This Makefile was heavily influenced by and owes thanks to <a href="http://west.io/post/2015/04/11-frontend-builds-with-makefiles/">this blog post</a>.  Thank you!</p>
+
+                    </div>
+                    
+                </section>
+            </div>
+            <div class="footer">
+    <div class="pure-menu pure-menu-horizontal pure-menu-open">
+        <ul>
+            <li>Powered by <a class="hugo" href="http://hugo.spf13.com/" target="_blank">hugo</a></li>
+        </ul>
+    </div>
+</div>
+<script src="https://ders.github.io/js/all.min.js"></script>
+        </div>
+    </div>
+</div>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '', 'auto');
+ga('send', 'pageview');
+
+</script>
+
+</body>
+</html>

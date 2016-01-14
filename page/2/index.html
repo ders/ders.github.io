@@ -60,6 +60,46 @@
             
             <div class="posts">
                 
+                <h1 class="content-subhead">16 Apr 2013, 12:19</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-04-16-data-mapper/" class="post-title">Data Mapper</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>I&rsquo;ve been working on a project with <a href="http://www.padrinorb.com/">Padrino</a> and <a href="http://datamapper.org">Data Mapper</a>.
+So far I&rsquo;m quite a fan of the Data Mapper way of doing things.</p>
+
+<p>Unfortunately, I&rsquo;m schooled in the old way &ndash; ugly messes of <code>SELECT</code>, <code>JOIN</code> and <code>ORDER BY</code>,
+intelligible only by SQL gurus and dependent not just on SQL but on a particular variety of such, which in my case would be MySQL.</p>
+
+<p>I label this as unfortunate because my concept of database (e.g. MySQL) heavily influences how I organize the code I write.
+I often find myself with a &ldquo;How do you do this in DataMapper?&rdquo; kind of question, where <em>this</em> is something that I know how to do the old way.
+After all, DataMapper is generating SQL queries from the models I write, so if it&rsquo;s easy in SQL, shouldn&rsquo;t it also be easy in DataMapper?</p>
+
+<p>(Side note: DataMapper doesn&rsquo;t <em>necessarily</em> generate SQL, but in my current project the backend is SQL and I see the generated queries on the debugging console.)</p>
+
+<p>Recently I&rsquo;ve a question of this sort that I haven&rsquo;t been able to solve.</p>
+
+<p>I have a model with an ordering field, which we&rsquo;ll call <code>position</code>.  I want to sort by this field (ascending), except that I want all the zeroes to be at the end.  In addition, I&rsquo;d like the all the records with <code>position=0</code> sorted by <code>id</code> descending.</p>
+
+<p>In MySQL, I would write:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">SELECT</span> <span style="color: #f92672">*</span> <span style="color: #66d9ef">FROM</span> <span style="color: #f92672">`</span><span style="color: #f8f8f2">things</span><span style="color: #f92672">`</span> <span style="color: #66d9ef">ORDER</span> <span style="color: #66d9ef">BY</span> <span style="color: #f92672">`</span><span style="color: #66d9ef">position</span><span style="color: #f92672">`=</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">`</span><span style="color: #66d9ef">position</span><span style="color: #f92672">`</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">`</span><span style="color: #f8f8f2">id</span><span style="color: #f92672">`</span> <span style="color: #66d9ef">DESC</span>
+</pre></div>
+
+
+<p>Free donuts to the first person who can make a DataMapper version of this.</p>
+
+                    </div>
+                </section>
+                
                 <h1 class="content-subhead">21 Mar 2013, 12:19</h1>
                 <section class="post">
                     <header class="post-header">
