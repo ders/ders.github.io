@@ -6,8 +6,179 @@
     <description>Recent content in Posts on awm&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 14 Jan 2016 14:22:00 +0900</lastBuildDate>
+    <lastBuildDate>Wed, 03 Feb 2016 17:51:00 +0900</lastBuildDate>
     <atom:link href="https://ders.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Using Grunt to Manage Static Assets</title>
+      <link>https://ders.github.io/post/2016-02-03-static-assets-with-grunt/</link>
+      <pubDate>Wed, 03 Feb 2016 17:51:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2016-02-03-static-assets-with-grunt/</guid>
+      <description>
+
+&lt;p&gt;I &lt;a href=&#34;https://ders.github.io/post/2016-01-14-static-assets-for-websites/&#34;&gt;previously posted&lt;/a&gt; about using GNU Make to manage front-end assets for a website.  A colleague suggested that I should check out &lt;a href=&#34;http://gruntjs.com/getting-started&#34;&gt;Grunt&lt;/a&gt; as it does everything I need to do and more.  So here it is.&lt;/p&gt;
+
+&lt;p&gt;I have the same goals as I did last week:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;concatenate an arbitrary combination of js files, minifying them in the process&lt;/li&gt;
+&lt;li&gt;preprocess css with sass&lt;/li&gt;
+&lt;li&gt;copy directories i and lib untouched&lt;/li&gt;
+&lt;li&gt;run a watch process to update files as they&amp;rsquo;re changed&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;installing-grunt:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Installing grunt&lt;/h2&gt;
+
+&lt;p&gt;Grunt is part of the &lt;a href=&#34;https://nodejs.org/&#34;&gt;node.js&lt;/a&gt; ecosystem, and as such is available via &lt;a href=&#34;https://www.npmjs.com/&#34;&gt;the node package manager (npm)&lt;/a&gt;.  Npm is available on OS X via Homebrew.&lt;/p&gt;
+
+&lt;h3 id=&#34;basic-npm-concepts:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Basic npm concepts&lt;/h3&gt;
+
+&lt;p&gt;There are a few things that we need to understand about npm.  The biggest headache was recognizing the difference between local and global installs and knowing when to use which.&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Npm installs packages into a project (unless the &lt;code&gt;-g&lt;/code&gt; global option is specified, more on that later) and needs to be run in project root.  Packages then go into a subdirectory called &lt;code&gt;node_packages&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;If you&amp;rsquo;re in some other directory when running npm, the packages will go into a &lt;code&gt;node_packages&lt;/code&gt; subdirectory there and confuse you.&lt;/li&gt;
+&lt;li&gt;Npm expects to see a file called &lt;code&gt;package.json&lt;/code&gt; in the project root directory and complains if it&amp;rsquo;s not there.
+&lt;code&gt;package.json&lt;/code&gt; includes a list of packages that the project depends on, and the default &lt;code&gt;npm install&lt;/code&gt; without any parameters installs those packages.&lt;/li&gt;
+&lt;li&gt;When installing a package explicitly, there is in an option to add an entry to &lt;code&gt;package.json&lt;/code&gt; so that someone else will be able to use &lt;code&gt;npm install&lt;/code&gt; and get everything.  Note that this is an option and not the default behavior.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;creating-the-package-json-file:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Creating the package.json file&lt;/h3&gt;
+
+&lt;p&gt;According to &lt;a href=&#34;http://gruntjs.com/getting-started#package.json&#34;&gt;the documentation&lt;/a&gt;,
+the command to use is &lt;code&gt;npm init&lt;/code&gt;, and it must be run in project root.  Running it starts a dialog on the terminal, asking some mostly irrelevant questions: name (defaults to the name of the project directory), version (defaults to 1.0.0), description, entry point (defaults to index.js), test command, git repository, keywords, author, and license (defaults to ISC).  These questions can be suppressed by using &lt;code&gt;npm init --yes&lt;/code&gt;, which defaults everything.&lt;/p&gt;
+
+&lt;p&gt;Unfortunately, npm will complain if it doesn&amp;rsquo;t see a description, a repository field and a license field.  The defaults only cover the license field, leaving the description blank and the repository field missing altogether.&lt;/p&gt;
+
+&lt;p&gt;The minimum &lt;code&gt;package.json&lt;/code&gt; has &lt;a href=&#34;https://docs.npmjs.com/getting-started/using-a-package.json#requirements&#34;&gt;just a name and a version&lt;/a&gt;.
+But since I&amp;rsquo;m &lt;a href=&#34;https://www.bignerdranch.com/blog/a-bit-on-warnings/&#34;&gt;a stickler for getting rid of warnings&lt;/a&gt;, I&amp;rsquo;m going to have to create my own &lt;code&gt;package.json&lt;/code&gt; that includes name, version, description, repository and license.  None of this information is relevant; its only purpose is to make the warnings go away.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;{
+  &amp;quot;name&amp;quot;: &amp;quot;taco&amp;quot;,
+  &amp;quot;version&amp;quot;: &amp;quot;1.0.0&amp;quot;,
+  &amp;quot;description&amp;quot;: &amp;quot;xyz&amp;quot;,
+  &amp;quot;repository&amp;quot;: {
+    &amp;quot;type&amp;quot;: &amp;quot;git&amp;quot;,
+    &amp;quot;url&amp;quot;: &amp;quot;xyz&amp;quot;
+  },
+  &amp;quot;license&amp;quot;: &amp;quot;ISC&amp;quot;
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Unfortunately there&amp;rsquo;s one warning I can&amp;rsquo;t get rid of.  At the time of this writing, &lt;code&gt;npm install grunt&lt;/code&gt; produces this:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm WARN deprecated lodash@0.9.2: lodash@&amp;lt;2.0.0 is no longer maintained. Upgrade to lodash@^3.0.0
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;According to &lt;a href=&#34;https://github.com/lodash/lodash/wiki/Changelog#v092&#34;&gt;the changelog for lodash&lt;/a&gt;,
+version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the &amp;ldquo;upgrade to&amp;rdquo; version of 3.0.0 is a year old already.  This is a red flag; how and why are these dependencies not getting maintained?  That said, it appears that &lt;a href=&#34;https://github.com/gruntjs/grunt/issues/1419&#34;&gt;an update is on the way&lt;/a&gt;.  Will have to ignore this warning for now.&lt;/p&gt;
+
+&lt;h3 id=&#34;grunt-plugins:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Grunt plugins&lt;/h3&gt;
+
+&lt;p&gt;Grunt itself is just the overlord; to do any real work we&amp;rsquo;re going to need some plugins.  After a lot of googling, I&amp;rsquo;ve come up with this list:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;To minify and combine javascript files, we can use &lt;code&gt;grunt-contrib-uglify&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;To compile scss into css, we can use &lt;code&gt;grunt-contrib-sass&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;To copy directories, we can use &lt;code&gt;grunt-contrib-copy&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;To delete old files, we can use &lt;code&gt;grunt-contrib-clean&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;To watch for changes and recompile, we can use &lt;code&gt;grunt-contrib-watch&lt;/code&gt;.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;All of these are &lt;a href=&#34;http://gruntjs.com/plugins&#34;&gt;marked as officially maintained&lt;/a&gt;, giving us the warm, fuzzy feeling that everything is going to work.&lt;/p&gt;
+
+&lt;p&gt;We can now install grunt and the plugins.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;npm install grunt grunt-contrib-uglify grunt-contrib-sass grunt-contrib-copy grunt-contrib-clean grunt-contrib-watch --save-dev
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h3 id=&#34;grunt-command-line:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Grunt command line&lt;/h3&gt;
+
+&lt;p&gt;There is one more install required if we are to be able to run grunt from the command line.  The package is &lt;code&gt;grunt-cli&lt;/code&gt;, and needs to be installed globally so that the grunt executable goes into /usr/local/bin and is available in the system path.&lt;/p&gt;
+
+&lt;p&gt;npm install grunt-cli -g&lt;/p&gt;
+
+&lt;p&gt;It&amp;rsquo;s possible to install &lt;code&gt;grunt-cli&lt;/code&gt; in the project directory, but then the executable will be in node_modules/.bin instead of /usr/local/bin, and that makes more headaches for us&lt;/p&gt;
+
+&lt;p&gt;One gotcha is that the global grunt-cli requires a local grunt or it will fail.  Grunt-cli is a wrapper to find the locally installed grunt to whatever project you&amp;rsquo;re in.  The global grunt-cli will not find a global grunt.&lt;/p&gt;
+
+&lt;h3 id=&#34;summary-of-grunt-installation:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Summary of grunt installation&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Install npm (e.g. &lt;code&gt;brew install npm&lt;/code&gt;).&lt;/li&gt;
+&lt;li&gt;Create the package.json file shown above.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;npm install grunt grunt-contrib-uglify grunt-contrib-sass grunt-contrib-copy grunt-contrib-clean grunt-contrib-* watch --save-dev&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;npm install grunt-cli -g&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;code&gt;package.json&lt;/code&gt; should go into source control, and &lt;code&gt;node_modules&lt;/code&gt; should be excluded from source control with the appropriate entry in &lt;code&gt;.gitignore&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;Once we have &lt;code&gt;package.json&lt;/code&gt; as updated by the npm install &amp;ndash;save-dev command, steps 2 and 3 can be replaced by a simple &lt;code&gt;npm install&lt;/code&gt;.  We still need to keep step 4; global packages can&amp;rsquo;t go into &lt;code&gt;package.json&lt;/code&gt; (npm will ignore &lt;code&gt;--save-dev&lt;/code&gt; when &lt;code&gt;-g&lt;/code&gt; is specified).&lt;/p&gt;
+
+&lt;h3 id=&#34;optionally-installing-grunt-cli-locally:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Optionally installing grunt-cli locally&lt;/h3&gt;
+
+&lt;p&gt;Installing &lt;code&gt;grunt-cli&lt;/code&gt; locally instead of globally will allow it to be included in &lt;code&gt;package.json&lt;/code&gt;, but it has the side effect of not having the grunt executable in the path.  A possible workaround to this side effect is to add a script section to &lt;code&gt;package.json&lt;/code&gt; with all the grunts you want to do.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;&amp;quot;scripts&amp;quot;: { &amp;quot;watch&amp;quot;: &amp;quot;grunt watch&amp;quot; }
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Then you can type &lt;code&gt;npm run watch&lt;/code&gt; instead of &lt;code&gt;grunt watch&lt;/code&gt;.  This may or may not be worth the trouble.&lt;/p&gt;
+
+&lt;h2 id=&#34;writing-a-gruntfile:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Writing a gruntfile&lt;/h2&gt;
+
+&lt;h3 id=&#34;basic-gruntfile-concept:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Basic gruntfile concept&lt;/h3&gt;
+
+&lt;p&gt;The gruntfile is a bit of javascript initialization that gets run whenever grunt is invoked.  The gruntfile needs to define an initialization function and assign that to the global &lt;code&gt;module.exports&lt;/code&gt;.  Within the initialization function, we&amp;rsquo;ll need to list the modules we need (grunt-contrib-uglify, etc.), specify some configuration for each module, define the default task, and optionally define additional tasks.&lt;/p&gt;
+
+&lt;p&gt;Each plugin defines a task of the same name as the plugin (e.g. grunt-contrib-uglify defines an &amp;ldquo;uglify&amp;rdquo; task, under which any number of subtasks may be defined).&lt;/p&gt;
+
+&lt;p&gt;The gruntfile is named &lt;code&gt;Gruntfile.js&lt;/code&gt; and resides in project root.  The basic gruntfile structure is:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;module.exports = function(grunt) {
+  grunt.initConfig({
+    pluginname: { ... }  // one of these for each plugin
+  };
+  grunt.loadNpmTasks( ... );  // one of these for each plugin
+  grunt.registerTask(&#39;default&#39;, ... );  // define the default behavior of `grunt` with no parameters
+  grunt.registerTask( ... );  // optional additional tasks
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Each plugin defines a task of the same name as the plugin (e.g. grunt-contrib-uglify defines an &amp;ldquo;uglify&amp;rdquo; task, under which any number of subtasks may be defined).  Defining additional tasks is useful for combining tasks into a single command.&lt;/p&gt;
+
+&lt;p&gt;A thorough read of &lt;a href=&#34;http://gruntjs.com/getting-started&#34;&gt;the docs&lt;/a&gt; along with &lt;a href=&#34;https://www.google.co.kr/search?q=gruntfile+examples&#34;&gt;some examples&lt;/a&gt; gives us enough information to build a single gruntfile, giving us the following commands:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;&lt;code&gt;grunt&lt;/code&gt; does a clean build, deleting &lt;code&gt;pub&lt;/code&gt; if it exists and building everything from &lt;code&gt;src&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;grunt build&lt;/code&gt; does an incremental build of js and css files, updating only those files whose source has changed.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;grunt copy&lt;/code&gt; syncs the directories &lt;code&gt;i&lt;/code&gt; and &lt;code&gt;lib&lt;/code&gt; from &lt;code&gt;src&lt;/code&gt; to &lt;code&gt;pub&lt;/code&gt;.&lt;/li&gt;
+&lt;li&gt;&lt;code&gt;grunt watch&lt;/code&gt; runs until you kill it, watching for changes in &lt;code&gt;src&lt;/code&gt; and updating &lt;code&gt;pub&lt;/code&gt; as necessary.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Note that &lt;code&gt;grunt&lt;/code&gt; is short for &lt;code&gt;grunt all&lt;/code&gt;, which does &lt;code&gt;grunt clean&lt;/code&gt; + &lt;code&gt;grunt copy&lt;/code&gt; + &lt;code&gt;grunt build&lt;/code&gt;.&lt;/p&gt;
+
+&lt;script src=&#34;https://gist.github.com/ders/3ca946b14641e5efe783.js&#34;&gt;&lt;/script&gt;
+
+&lt;h3 id=&#34;observations:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Observations&lt;/h3&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Overall, the quality of documentation is poor.  I had to resort to copying examples and then modifying them by trial and error until I got the results I wanted.  There are many alternate syntaxes, causing further confusion.&lt;/li&gt;
+&lt;li&gt;Could not find a way to do incremental updates with uglify.  The entire js collection is rebuilt whenever any js source file changes.&lt;/li&gt;
+&lt;li&gt;The sass plugin depends on having command-line sass installed as a ruby gem, a dependency that I grudgingly accepted when writing the previous makefile and was hoping to avoid.&lt;/li&gt;
+&lt;li&gt;Dependencies from &lt;code&gt;@import&lt;/code&gt; statements in scss source files are handled nicely; the dependencies are honored when doing an incremental build and don&amp;rsquo;t need to be included in the gruntfile.  This is nice.&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;grunt-contrib-copy&lt;/code&gt; plugin doesn&amp;rsquo;t know how to sync. The &lt;code&gt;i&lt;/code&gt; and &lt;code&gt;lib&lt;/code&gt; directories are copied in their entireties every time there&amp;rsquo;s a change.  There is &lt;a href=&#34;https://github.com/tomusdrw/grunt-sync&#34;&gt;another plugin&lt;/a&gt; which claims to know how to sync, but I haven&amp;rsquo;t tested it.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h3 id=&#34;conclusion:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Conclusion&lt;/h3&gt;
+
+&lt;p&gt;This was a whole lot of trouble to set up a relatively simple build system. Grunt is a powerful tool, and I can see the value of using it when you&amp;rsquo;re already in a node-based project, but it to use it as an isolated build tool is not worth the effort.&lt;/p&gt;
+
+&lt;p&gt;The only thing we gained with Grunt is the ability to auto-detect imports in .scss files and do incremental updates accordingly.  At the same time we lost the ability to incremental updates of the Javascript files, at least with the standard plugin.&lt;/p&gt;
+
+&lt;p&gt;I was also hoping to avoid the ruby sass dependency by using the plugin, but no luck there since the plugin is just a wrapper for the command line sass.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Static assets for websites</title>
@@ -966,43 +1137,6 @@ Unfortunately, it wasn&amp;rsquo;t clear anywhere how to actually use the valida
 &lt;/p&gt;
 
 &lt;p&gt;At this point George is in our database, but Bill isn&amp;rsquo;t.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Power</title>
-      <link>https://ders.github.io/post/2013-02-22-power/</link>
-      <pubDate>Fri, 22 Feb 2013 18:20:00 +0900</pubDate>
-      
-      <guid>https://ders.github.io/post/2013-02-22-power/</guid>
-      <description>&lt;p&gt;Finished a user athentication system today using &lt;a href=&#34;http://bcrypt-ruby.rubyforge.org/classes/BCrypt/Password.html&#34;&gt;BCrypt::Password&lt;/a&gt;.&lt;/p&gt;
-
-&lt;p&gt;There was an Aha! moment when I realized that they&amp;rsquo;ve defined the &lt;code&gt;==&lt;/code&gt; operator to return true when the password matches, not when the strings are equal (as a novice like me might expect).&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;1.9.3p385 :002 &amp;gt; secret = BCrypt::Password.create(&amp;quot;password&amp;quot;)
- =&amp;gt; &amp;quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&amp;quot;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;The hashed secret is saved in the database.&amp;nbsp; It&amp;rsquo;s later retrieved and checked against the user input using &lt;code&gt;==&lt;/code&gt;.&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;1.9.3p385 :005 &amp;gt; secret
- =&amp;gt; &amp;quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&amp;quot;
-1.9.3p385 :006 &amp;gt; q = BCrypt::Password.new(secret)
- =&amp;gt; &amp;quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&amp;quot;
-1.9.3p385 :007 &amp;gt; q == &amp;quot;password&amp;quot;
- =&amp;gt; true
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;This also has the interesting side effect that &lt;code&gt;==&lt;/code&gt; is not commutative.&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;1.9.3p385 :008 &amp;gt; &amp;quot;password&amp;quot; == q
- =&amp;gt; false
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
-
-&lt;p&gt;My junior high math teacher would be disturbed by this.&amp;nbsp; Such is the power of Ruby.&lt;/p&gt;
 </description>
     </item>
     

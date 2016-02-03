@@ -60,6 +60,78 @@
             
             <div class="posts">
                 
+                <h1 class="content-subhead">16 Apr 2013, 14:05</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-04-16-more-data-mapper/" class="post-title">More Data Mapper</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>One of the basic functions of <a href="http://datamapper.org/">Data Mapper</a> is to remember which attributes in the model have been modified so that it&rsquo;s easy to determine what (if anything) needs to be updated in the database.
+Data Mapper checks automatically on a call to <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#save-instance_method"><code>#save</code></a> and only writes what needs to be written.
+It also provides methods <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#dirty%3F-instance_method"><code>#dirty?</code></a> and <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_dirty%3F-instance_method"><code>#attribute_dirty?</code></a>, which tell you whether or not a record or a particular attribute has changed.</p>
+
+<p>Unfortunately, while it&rsquo;s easy to find out whether or not an attribute has changed, there is no easy way to see what the old value was.
+It&rsquo;s obviously keeping the old value somewhere.  We know this because when you change an attribute back to the old value, it recognizes that you&rsquo;ve done so and considers it unchanged.</p>
+
+<p>There is a method called <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#dirty_attributes-instance_method"><code>#dirty_attributes</code></a>, which returns a hash of changed attributes, but the keys to this hash are hashes themselves and in a format that&rsquo;s used only internally in Data Mapper, making it a needlessly inconvenient method to use.
+Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not part of the public API.</p>
+
+<p>There is a possible workaround, suggested by some.  Override the setter for the attribute and save the old value for later use.</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">thing</span><span style="color: #f92672">=</span><span style="color: #f8f8f2">(newthing)</span>
+  <span style="color: #f8f8f2">@oldthing</span> <span style="color: #f92672">||=</span> <span style="color: #f8f8f2">@thing</span>
+  <span style="color: #f8f8f2">@thing</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">newthing</span>
+<span style="color: #66d9ef">end</span>
+</pre></div>
+
+
+<p>I&rsquo;m not going to link to the people who suggested this, though, because it&rsquo;s a terrible suggestion.  Since we&rsquo;ve overridden Data Mapper&rsquo;s setter for attribute <code>thing</code>, Data Mapper no longer knows that we&rsquo;ve changed its value.</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">001</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">Record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">get(</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">)</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #f92672">...</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">002</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;teamaker&quot;</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">003</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&quot;coffeemaker&quot;</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;coffeemaker&quot;</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">004</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">attribute_dirty?(</span><span style="color: #e6db74">:thing</span><span style="color: #f8f8f2">)</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">false</span>
+</pre></div>
+
+
+<p>Imagine the insidious bugs that could creep in here.</p>
+
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">005</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">save</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">006</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">Record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">get(</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">)</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #f92672">...</span>
+<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">003</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span>
+ <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;teamaker&quot;</span>
+</pre></div>
+</p>
+
+<p>Simply put, our changes are silently ignored because we&rsquo;ve stupidly disabled what is arguably Data Mapper&rsquo;s most important function.</p>
+
+<p>Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&rsquo;s <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method"><code>#attribute_set</code></a>.</p>
+
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">thing</span><span style="color: #f92672">=</span><span style="color: #f8f8f2">(newthing)</span>
+  <span style="color: #f8f8f2">@oldthing</span> <span style="color: #f92672">||=</span> <span style="color: #f8f8f2">@thing</span>
+  <span style="color: #f8f8f2">attribute_set(</span><span style="color: #e6db74">:thing</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">newthing)</span>
+<span style="color: #66d9ef">end</span>
+</pre></div>
+</p>
+
+<p>Method <code>#attribute_set</code> keeps track of the changes.  It&rsquo;s what <code>thing=</code> pointed to before we overrode it.</p>
+
+                    </div>
+                </section>
+                
                 <h1 class="content-subhead">16 Apr 2013, 12:19</h1>
                 <section class="post">
                     <header class="post-header">

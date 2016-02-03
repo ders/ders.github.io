@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Using Grunt to Manage Static Assets &middot; awm&#39;s blog</title>
+
+    <meta name="description" content="">
+
+    <meta name="generator" content="Hugo 0.15" />
+    <meta name="twitter:card" content="summary">
+    
+    <meta name="twitter:title" content="Using Grunt to Manage Static Assets &middot; awm&#39;s blog">
+    <meta name="twitter:description" content="">
+
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="Using Grunt to Manage Static Assets &middot; awm&#39;s blog">
+    <meta property="og:description" content="">
+
+    <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Oxygen:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+    <!--[if lte IE 8]>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+    <!--<![endif]-->
+
+    <link rel="stylesheet" href="https://ders.github.io/css/all.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
+
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io/index.xml" />
+</head>
+<body>
+
+
+<div id="layout" class="pure-g">
+    <div class="sidebar pure-u-1 pure-u-md-1-4">
+    <div class="header">
+        <hgroup>
+            <h1 class="brand-title"><a href="https://ders.github.io">awm&#39;s blog</a></h1>
+            <h2 class="brand-tagline"> What did I do today? </h2>
+        </hgroup>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                
+                
+                <li class="nav-item">
+                    <a class="pure-button" href="https://ders.github.io/index.xml"><i class="fa fa-rss"></i> rss</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+    <div class="content pure-u-1 pure-u-md-3-4">
+        <div>
+            
+            <div class="posts">
+                <h1 class="content-subhead">03 Feb 2016, 17:51</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2016-02-03-static-assets-with-grunt/" class="post-title">Using Grunt to Manage Static Assets</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-share">
+                        <div class="post-share-links">
+                            <h4 style="">Share</h4>
+                            <a href="#" data-type="facebook" data-url="https://ders.github.io/post/2016-02-03-static-assets-with-grunt/" data-title="Using Grunt to Manage Static Assets" data-description="" data-media="" class="prettySocial fa fa-facebook"></a>
+                            <a href="#" data-type="googleplus" data-url="https://ders.github.io/post/2016-02-03-static-assets-with-grunt/" data-description="" class="prettySocial fa fa-google-plus"></a>
+                            
+                            
+                        </div>
+                    </div>
+                    <div class="post-description">
+                        
+
+<p>I <a href="https://ders.github.io/post/2016-01-14-static-assets-for-websites/">previously posted</a> about using GNU Make to manage front-end assets for a website.  A colleague suggested that I should check out <a href="http://gruntjs.com/getting-started">Grunt</a> as it does everything I need to do and more.  So here it is.</p>
+
+<p>I have the same goals as I did last week:</p>
+
+<ul>
+<li>concatenate an arbitrary combination of js files, minifying them in the process</li>
+<li>preprocess css with sass</li>
+<li>copy directories i and lib untouched</li>
+<li>run a watch process to update files as they&rsquo;re changed</li>
+</ul>
+
+<h2 id="installing-grunt:230cd0b47b3fc52b0f70982618b640aa">Installing grunt</h2>
+
+<p>Grunt is part of the <a href="https://nodejs.org/">node.js</a> ecosystem, and as such is available via <a href="https://www.npmjs.com/">the node package manager (npm)</a>.  Npm is available on OS X via Homebrew.</p>
+
+<h3 id="basic-npm-concepts:230cd0b47b3fc52b0f70982618b640aa">Basic npm concepts</h3>
+
+<p>There are a few things that we need to understand about npm.  The biggest headache was recognizing the difference between local and global installs and knowing when to use which.</p>
+
+<ul>
+<li>Npm installs packages into a project (unless the <code>-g</code> global option is specified, more on that later) and needs to be run in project root.  Packages then go into a subdirectory called <code>node_packages</code>.</li>
+<li>If you&rsquo;re in some other directory when running npm, the packages will go into a <code>node_packages</code> subdirectory there and confuse you.</li>
+<li>Npm expects to see a file called <code>package.json</code> in the project root directory and complains if it&rsquo;s not there.
+<code>package.json</code> includes a list of packages that the project depends on, and the default <code>npm install</code> without any parameters installs those packages.</li>
+<li>When installing a package explicitly, there is in an option to add an entry to <code>package.json</code> so that someone else will be able to use <code>npm install</code> and get everything.  Note that this is an option and not the default behavior.</li>
+</ul>
+
+<h3 id="creating-the-package-json-file:230cd0b47b3fc52b0f70982618b640aa">Creating the package.json file</h3>
+
+<p>According to <a href="http://gruntjs.com/getting-started#package.json">the documentation</a>,
+the command to use is <code>npm init</code>, and it must be run in project root.  Running it starts a dialog on the terminal, asking some mostly irrelevant questions: name (defaults to the name of the project directory), version (defaults to 1.0.0), description, entry point (defaults to index.js), test command, git repository, keywords, author, and license (defaults to ISC).  These questions can be suppressed by using <code>npm init --yes</code>, which defaults everything.</p>
+
+<p>Unfortunately, npm will complain if it doesn&rsquo;t see a description, a repository field and a license field.  The defaults only cover the license field, leaving the description blank and the repository field missing altogether.</p>
+
+<p>The minimum <code>package.json</code> has <a href="https://docs.npmjs.com/getting-started/using-a-package.json#requirements">just a name and a version</a>.
+But since I&rsquo;m <a href="https://www.bignerdranch.com/blog/a-bit-on-warnings/">a stickler for getting rid of warnings</a>, I&rsquo;m going to have to create my own <code>package.json</code> that includes name, version, description, repository and license.  None of this information is relevant; its only purpose is to make the warnings go away.</p>
+
+<pre><code>{
+  &quot;name&quot;: &quot;taco&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;description&quot;: &quot;xyz&quot;,
+  &quot;repository&quot;: {
+    &quot;type&quot;: &quot;git&quot;,
+    &quot;url&quot;: &quot;xyz&quot;
+  },
+  &quot;license&quot;: &quot;ISC&quot;
+}
+</code></pre>
+
+<p>Unfortunately there&rsquo;s one warning I can&rsquo;t get rid of.  At the time of this writing, <code>npm install grunt</code> produces this:</p>
+
+<pre><code>npm WARN deprecated lodash@0.9.2: lodash@&lt;2.0.0 is no longer maintained. Upgrade to lodash@^3.0.0
+</code></pre>
+
+<p>According to <a href="https://github.com/lodash/lodash/wiki/Changelog#v092">the changelog for lodash</a>,
+version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the &ldquo;upgrade to&rdquo; version of 3.0.0 is a year old already.  This is a red flag; how and why are these dependencies not getting maintained?  That said, it appears that <a href="https://github.com/gruntjs/grunt/issues/1419">an update is on the way</a>.  Will have to ignore this warning for now.</p>
+
+<h3 id="grunt-plugins:230cd0b47b3fc52b0f70982618b640aa">Grunt plugins</h3>
+
+<p>Grunt itself is just the overlord; to do any real work we&rsquo;re going to need some plugins.  After a lot of googling, I&rsquo;ve come up with this list:</p>
+
+<ul>
+<li>To minify and combine javascript files, we can use <code>grunt-contrib-uglify</code>.</li>
+<li>To compile scss into css, we can use <code>grunt-contrib-sass</code>.</li>
+<li>To copy directories, we can use <code>grunt-contrib-copy</code>.</li>
+<li>To delete old files, we can use <code>grunt-contrib-clean</code>.</li>
+<li>To watch for changes and recompile, we can use <code>grunt-contrib-watch</code>.</li>
+</ul>
+
+<p>All of these are <a href="http://gruntjs.com/plugins">marked as officially maintained</a>, giving us the warm, fuzzy feeling that everything is going to work.</p>
+
+<p>We can now install grunt and the plugins.</p>
+
+<pre><code>npm install grunt grunt-contrib-uglify grunt-contrib-sass grunt-contrib-copy grunt-contrib-clean grunt-contrib-watch --save-dev
+</code></pre>
+
+<h3 id="grunt-command-line:230cd0b47b3fc52b0f70982618b640aa">Grunt command line</h3>
+
+<p>There is one more install required if we are to be able to run grunt from the command line.  The package is <code>grunt-cli</code>, and needs to be installed globally so that the grunt executable goes into /usr/local/bin and is available in the system path.</p>
+
+<p>npm install grunt-cli -g</p>
+
+<p>It&rsquo;s possible to install <code>grunt-cli</code> in the project directory, but then the executable will be in node_modules/.bin instead of /usr/local/bin, and that makes more headaches for us</p>
+
+<p>One gotcha is that the global grunt-cli requires a local grunt or it will fail.  Grunt-cli is a wrapper to find the locally installed grunt to whatever project you&rsquo;re in.  The global grunt-cli will not find a global grunt.</p>
+
+<h3 id="summary-of-grunt-installation:230cd0b47b3fc52b0f70982618b640aa">Summary of grunt installation</h3>
+
+<ul>
+<li>Install npm (e.g. <code>brew install npm</code>).</li>
+<li>Create the package.json file shown above.</li>
+<li><code>npm install grunt grunt-contrib-uglify grunt-contrib-sass grunt-contrib-copy grunt-contrib-clean grunt-contrib-* watch --save-dev</code></li>
+<li><code>npm install grunt-cli -g</code></li>
+</ul>
+
+<p><code>package.json</code> should go into source control, and <code>node_modules</code> should be excluded from source control with the appropriate entry in <code>.gitignore</code>.</p>
+
+<p>Once we have <code>package.json</code> as updated by the npm install &ndash;save-dev command, steps 2 and 3 can be replaced by a simple <code>npm install</code>.  We still need to keep step 4; global packages can&rsquo;t go into <code>package.json</code> (npm will ignore <code>--save-dev</code> when <code>-g</code> is specified).</p>
+
+<h3 id="optionally-installing-grunt-cli-locally:230cd0b47b3fc52b0f70982618b640aa">Optionally installing grunt-cli locally</h3>
+
+<p>Installing <code>grunt-cli</code> locally instead of globally will allow it to be included in <code>package.json</code>, but it has the side effect of not having the grunt executable in the path.  A possible workaround to this side effect is to add a script section to <code>package.json</code> with all the grunts you want to do.</p>
+
+<pre><code>&quot;scripts&quot;: { &quot;watch&quot;: &quot;grunt watch&quot; }
+</code></pre>
+
+<p>Then you can type <code>npm run watch</code> instead of <code>grunt watch</code>.  This may or may not be worth the trouble.</p>
+
+<h2 id="writing-a-gruntfile:230cd0b47b3fc52b0f70982618b640aa">Writing a gruntfile</h2>
+
+<h3 id="basic-gruntfile-concept:230cd0b47b3fc52b0f70982618b640aa">Basic gruntfile concept</h3>
+
+<p>The gruntfile is a bit of javascript initialization that gets run whenever grunt is invoked.  The gruntfile needs to define an initialization function and assign that to the global <code>module.exports</code>.  Within the initialization function, we&rsquo;ll need to list the modules we need (grunt-contrib-uglify, etc.), specify some configuration for each module, define the default task, and optionally define additional tasks.</p>
+
+<p>Each plugin defines a task of the same name as the plugin (e.g. grunt-contrib-uglify defines an &ldquo;uglify&rdquo; task, under which any number of subtasks may be defined).</p>
+
+<p>The gruntfile is named <code>Gruntfile.js</code> and resides in project root.  The basic gruntfile structure is:</p>
+
+<pre><code>module.exports = function(grunt) {
+  grunt.initConfig({
+    pluginname: { ... }  // one of these for each plugin
+  };
+  grunt.loadNpmTasks( ... );  // one of these for each plugin
+  grunt.registerTask('default', ... );  // define the default behavior of `grunt` with no parameters
+  grunt.registerTask( ... );  // optional additional tasks
+}
+</code></pre>
+
+<p>Each plugin defines a task of the same name as the plugin (e.g. grunt-contrib-uglify defines an &ldquo;uglify&rdquo; task, under which any number of subtasks may be defined).  Defining additional tasks is useful for combining tasks into a single command.</p>
+
+<p>A thorough read of <a href="http://gruntjs.com/getting-started">the docs</a> along with <a href="https://www.google.co.kr/search?q=gruntfile+examples">some examples</a> gives us enough information to build a single gruntfile, giving us the following commands:</p>
+
+<ul>
+<li><code>grunt</code> does a clean build, deleting <code>pub</code> if it exists and building everything from <code>src</code>.</li>
+<li><code>grunt build</code> does an incremental build of js and css files, updating only those files whose source has changed.</li>
+<li><code>grunt copy</code> syncs the directories <code>i</code> and <code>lib</code> from <code>src</code> to <code>pub</code>.</li>
+<li><code>grunt watch</code> runs until you kill it, watching for changes in <code>src</code> and updating <code>pub</code> as necessary.</li>
+</ul>
+
+<p>Note that <code>grunt</code> is short for <code>grunt all</code>, which does <code>grunt clean</code> + <code>grunt copy</code> + <code>grunt build</code>.</p>
+
+<script src="https://gist.github.com/ders/3ca946b14641e5efe783.js"></script>
+
+<h3 id="observations:230cd0b47b3fc52b0f70982618b640aa">Observations</h3>
+
+<ul>
+<li>Overall, the quality of documentation is poor.  I had to resort to copying examples and then modifying them by trial and error until I got the results I wanted.  There are many alternate syntaxes, causing further confusion.</li>
+<li>Could not find a way to do incremental updates with uglify.  The entire js collection is rebuilt whenever any js source file changes.</li>
+<li>The sass plugin depends on having command-line sass installed as a ruby gem, a dependency that I grudgingly accepted when writing the previous makefile and was hoping to avoid.</li>
+<li>Dependencies from <code>@import</code> statements in scss source files are handled nicely; the dependencies are honored when doing an incremental build and don&rsquo;t need to be included in the gruntfile.  This is nice.</li>
+<li>The <code>grunt-contrib-copy</code> plugin doesn&rsquo;t know how to sync. The <code>i</code> and <code>lib</code> directories are copied in their entireties every time there&rsquo;s a change.  There is <a href="https://github.com/tomusdrw/grunt-sync">another plugin</a> which claims to know how to sync, but I haven&rsquo;t tested it.</li>
+</ul>
+
+<h3 id="conclusion:230cd0b47b3fc52b0f70982618b640aa">Conclusion</h3>
+
+<p>This was a whole lot of trouble to set up a relatively simple build system. Grunt is a powerful tool, and I can see the value of using it when you&rsquo;re already in a node-based project, but it to use it as an isolated build tool is not worth the effort.</p>
+
+<p>The only thing we gained with Grunt is the ability to auto-detect imports in .scss files and do incremental updates accordingly.  At the same time we lost the ability to incremental updates of the Javascript files, at least with the standard plugin.</p>
+
+<p>I was also hoping to avoid the ruby sass dependency by using the plugin, but no luck there since the plugin is just a wrapper for the command line sass.</p>
+
+                    </div>
+                    
+                </section>
+            </div>
+            <div class="footer">
+    <div class="pure-menu pure-menu-horizontal pure-menu-open">
+        <ul>
+            <li>Powered by <a class="hugo" href="http://hugo.spf13.com/" target="_blank">hugo</a></li>
+        </ul>
+    </div>
+</div>
+<script src="https://ders.github.io/js/all.min.js"></script>
+        </div>
+    </div>
+</div>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '', 'auto');
+ga('send', 'pageview');
+
+</script>
+
+</body>
+</html>
