@@ -10,6 +10,112 @@
     <atom:link href="https://ders.github.io/post/index.xml" rel="self" type="application/rss+xml" />
     
     <item>
+      <title>A simple sentiment analysis of two US presidential candidates</title>
+      <link>https://ders.github.io/post/2016-02-18-a-simple-sentiment-analysis/</link>
+      <pubDate>Wed, 03 Feb 2016 17:51:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2016-02-18-a-simple-sentiment-analysis/</guid>
+      <description>
+
+&lt;p&gt;&lt;strong&gt;Goal:&lt;/strong&gt;  To do some basic &lt;a href=&#34;https://en.wikipedia.org/wiki/Sentiment_analysis&#34;&gt;sentiment analysis&lt;/a&gt; on video content.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Test cases:&lt;/strong&gt;  Two 5-minute clips of US presidential candidate speeches.&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Strategy:&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Extract 5 minutes of audio from the beginning of each video.&lt;/li&gt;
+&lt;li&gt;Generate a transcript using a speech-to-text program.&lt;/li&gt;
+&lt;li&gt;Feed the transcript into a sentiment analyzer.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2 id=&#34;the-original-content:c99f1888a421b678b37e5694192a42d0&#34;&gt;The original content&lt;/h2&gt;
+
+&lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/qOQCw7Hcwic&#34; frameborder=&#34;0&#34; allowfullscreen&gt;&lt;/iframe&gt;
+
+&lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/p5ZB8Lg1tcA&#34; frameborder=&#34;0&#34; allowfullscreen&gt;&lt;/iframe&gt;
+
+&lt;h2 id=&#34;extracting-a-5-minute-audio-clip:c99f1888a421b678b37e5694192a42d0&#34;&gt;Extracting a 5-minute audio clip&lt;/h2&gt;
+
+&lt;p&gt;There are many ways to do this.  One way is to download the video using a browser add-on.  Browser add-ons are easy to find but are also fickle, as they make it easy to download material in violation of copyright.  And if you&amp;rsquo;re downloading from YouTube, you&amp;rsquo;re violating their terms of service, even if you&amp;rsquo;re not infringing on copyright.  (We maintain that this exercise falls under &lt;a href=&#34;https://en.wikipedia.org/wiki/Fair_use&#34;&gt;fair use&lt;/a&gt;.)&lt;/p&gt;
+
+&lt;p&gt;Another way is to turn on audio capture while playing the video.&lt;/p&gt;
+
+&lt;p&gt;After the capture is complete, we&amp;rsquo;ll want to convert to FLAC if we&amp;rsquo;re not there already.  We&amp;rsquo;ll use &lt;a href=&#34;https://ffmpeg.org/&#34;&gt;ffmpeg&lt;/a&gt; for this, e.g.:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;ffmpeg -i captured-content.mp4 captured-content.flac
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And then to extract the first 5 minutes:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;flac --until=5:00 captured-content.flac -o five-minute-clip.flac
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Both &lt;code&gt;ffmpeg&lt;/code&gt; and &lt;code&gt;flac&lt;/code&gt; are available via homebrew.&lt;/p&gt;
+
+&lt;h2 id=&#34;generating-a-transcript:c99f1888a421b678b37e5694192a42d0&#34;&gt;Generating a transcript&lt;/h2&gt;
+
+&lt;p&gt;The IBM Watson Developer Cloud has a &lt;a href=&#34;http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html&#34;&gt;speech-to-text&lt;/a&gt; service which is available through an API and also has a &lt;a href=&#34;https://speech-to-text-demo.mybluemix.net/&#34;&gt;demo page&lt;/a&gt;.  In theory, one can get limited free access to the API after going through a mildly annoying sign-up process, but in practice I was unable to convince the API to accept the credentials I&amp;rsquo;d obtained.&lt;/p&gt;
+
+&lt;p&gt;Fortunately, the demo page allows file uploads and produced the following transcripts from the content above:&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Trump&lt;/strong&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;This is no way I&amp;rsquo;m leaving South Carolina. And I was gonna leave for tonight come back as it upsets up saying you have a five days we got a win on Saturday we&amp;rsquo;re going to win. Make America great again we&amp;rsquo;re gonna make America. We&amp;rsquo;re going to win. You know. It&amp;rsquo;s been an amazing friend Ruben all over the state today I love you too girly looking out dnmt love you I love you all. I love you. So many things are happening for a country. And it&amp;rsquo;s this is a movement time magazine last week at the most beautiful story cover. And they talk about its improvement they&amp;rsquo;ve never seen they say there&amp;rsquo;s not been anything like this I don&amp;rsquo;t know ever but they actually say ever. We went to Tampa the other day Tampa Florida would like two days notice fifteen thousand people that are turned away five thousand and by the way for all of the people in this room I can&amp;rsquo;t believe it this is a huge room but downstairs to filling up another one and there sadly sending people away we don&amp;rsquo;t like that right. No okay why don&amp;rsquo;t we all get up go let&amp;rsquo;s have that now. Now we have one of the great veterans outside I&amp;rsquo;ll stand up while one of the great great you are great. Love this guy. He loves the veterans and I love the veterans are we going to take care of our veterans I&amp;rsquo;ll tell you that we&amp;rsquo;re going to take it did not. They are not properly taken care of so we&amp;rsquo;re going to take a right we have sent a look at this. I knew you guys would say that I can spot a veteran a long ways off. But we are we going to take a break here we&amp;rsquo;re gonna take you have a military we&amp;rsquo;re going to take you have a military because our military is being whittled away whittled away we&amp;rsquo;re going to make our military so big so strong so powerful nobody&amp;rsquo;s going to mess with us anymore nobody nobody. Nobody. So Nikki Haley a very nice woman she better speech the other day you saw that and she was talking about anger and she said there&amp;rsquo;s a lot of anger and I guess she was applying all of us you know really referring to us. And by the end of the day she was actually saying that Donald Trump is a friend of mine he&amp;rsquo;s been a supporter of mine everything else you know the tone at the beginning was designed by the time that she was just barraged with people she said I think we better change our path here. And by the end of the day and it was fun it was great but she said you know there is anger but I said there is a group and I was asked during not this debate but the previous debate I was asked. I by the way did you love this last debate dnmt. Listen to like. They came at me from every angle possible. Don&amp;rsquo;t know they came out before every angle you know sort of interesting. They were hitting me with things like and such until as you know I never realized I&amp;rsquo;ve always don&amp;rsquo;t politicians it is honest but I&amp;rsquo;ve never known the level of dishonesty. And I deal in industries a lot of different but mostly real estate and like in Manhattan at different places but I&amp;rsquo;ve never seen people as dishonest as politicians. They will say anything. Like okay so a lot of you people understand that you you get when you&amp;rsquo;ve seen the speeches that you see in a lot of it and you know that I protect the second amendment more than anybody by far dnmt more than. And this guy Ted Cruz gets upset Donald Trump does not respect a second amendment and the more that anybody I&amp;rsquo;m with the second amendment. I saw no no it&amp;rsquo;s lies. And then they do commercials and you know he did it to Ben Carson and him in particular in all fairness. Jeff is represents but these are minor misrepresentations and he&amp;rsquo;s not going anywhere anyway so what would how casual. Not as. Well Jeb was talking about eminent domain Donald Trump used eminent domain privately then I see there&amp;rsquo;s a big story I had to bring this out luck. Proof Jeb bush under eminent domain took a disabled veterans property. Something about me. No state. Honestly these guys are these guys are the worst. Eminent domain without eminent domain by the way you don&amp;rsquo;t up highways roads airports hospitals you know not bridges you drive anything so. They say Donald Trump does look like Eminem and I don&amp;rsquo;t even tell me but you need to road you need a highway you need you know it&amp;rsquo;s funny they all want they all want the keystone pipeline right but without eminent domain without think of it without eminent domain you can&amp;rsquo;t have the keystone pipeline and we&amp;rsquo;re going to get the keystone pipeline approved but but fluids jumps. It&amp;rsquo;s jobs but remember this when it gets approved a politicians go to baby approve it.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;&lt;strong&gt;Sanders&lt;/strong&gt;&lt;/p&gt;
+
+&lt;blockquote&gt;
+&lt;p&gt;President Falwell and. David. Ok thank you very much for inviting my wife Jane and. Ought to be with you this morning we appreciate the invitation. Very much. And let me start off by acknowledging what I think. All of you already know. And that is the views. That many here at liberty university have. And all I. On a number of important issues. A very very different. I believe in women&amp;rsquo;s rights dnmt. In the light of the woman to control her own body dnmt. I believe in gay rights. And now. Those of my views. And it is no secret. But I came here today. Because I believe from the bottom of my heart. That it is vitally important for those of us. Who hold different views. To be able to engage in any civil discourse. Who often in our country and I think both sides. Bear responsibility for us. There is too much shouting at each other. There is too much making fun of each other. Now in my view then are you can say this is somebody who whose voice is hoarse because I have given dozens of speeches. And the last few months it is easy. To go out and talk to people who agree with you are missing Greensboro North Carolina just last night. Alright. We are nine thousand people out. Mostly they agreed with me tonight. We&amp;rsquo;re going to be a Manassas and thousands out they agree with me. It&amp;rsquo;s not a whole lot to do. That&amp;rsquo;s what politicians by and large do we go out and we talk to people who agree with us. But it is harder. But not less important. For us to try and communicate with those who do not agree with us on every issue. After. And it is important to see where if possible and I do believe it&amp;rsquo;s possible we can find common grounds. No liberty university. Is a religious school obviously. Pn. All of you are proud of the. You already school. Which as all of us in our own way. Tries to understand the meaning of morality. What does it mean. To live a moral life. And you try to understand in this very complicated modern world that we live in. What the words of the Bible me in today&amp;rsquo;s society. You are in school which tries to teach its students. How to behave with decency and with honesty and how you can best relates. To your fellow human beings and I applaud. You for trying to achieve those goals. Let me. Take a moment. Or a few moments. To tell you what motivates me. And the work that I do. As a public servant as a Sentinel. From the state of Vermont. And let me tell you that it goes without saying I am flaws foh throw me being a perfect human being. But all I am motivated by a vision.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h2 id=&#34;sentiment-analysis:c99f1888a421b678b37e5694192a42d0&#34;&gt;Sentiment Analysis&lt;/h2&gt;
+
+&lt;p&gt;Again, there are a variety of tools to do this, including the &lt;a href=&#34;http://www.nltk.org/&#34;&gt;Natural Language Toolkit Project&lt;/a&gt;, a free python library. Taking advantage of a &lt;a href=&#34;http://text-processing.com/demo/sentiment/&#34;&gt;simple demo site&lt;/a&gt; which uses the NLTK, we can see that both Sanders and Trump are polar, but Sanders is more positive.  Who would&amp;rsquo;ve known?&lt;/p&gt;
+
+&lt;p&gt;&lt;strong&gt;Trump&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Overall: negative&lt;/li&gt;
+&lt;li&gt;Subjectivity
+
+&lt;ul&gt;
+&lt;li&gt;neutral: 0.2&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;polar: 0.8&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Polarity
+
+&lt;ul&gt;
+&lt;li&gt;pos: 0.4&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;neg: 0.6&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;&lt;strong&gt;Sanders&lt;/strong&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;Overall: positive&lt;/li&gt;
+&lt;li&gt;Subjectivity
+
+&lt;ul&gt;
+&lt;li&gt;neutral: 0.2&lt;/li&gt;
+&lt;li&gt;&lt;strong&gt;polar: 0.8&lt;/strong&gt;&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;li&gt;Polarity
+
+&lt;ul&gt;
+&lt;li&gt;&lt;strong&gt;pos: 0.8&lt;/strong&gt;&lt;/li&gt;
+&lt;li&gt;neg: 0.2&lt;/li&gt;
+&lt;/ul&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;For the adventuresome, &lt;a href=&#34;http://www.nltk.org/howto/sentiment.html&#34;&gt;here are more detailed instructions&lt;/a&gt; on using the NLTK for sentiment analysis.&lt;/p&gt;
+</description>
+    </item>
+    
+    <item>
       <title>Using Grunt to Manage Static Assets</title>
       <link>https://ders.github.io/post/2016-02-03-static-assets-with-grunt/</link>
       <pubDate>Wed, 03 Feb 2016 17:51:00 +0900</pubDate>
@@ -1063,80 +1169,6 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 &lt;p&gt;Sass is packaged as a Ruby gem, but you&amp;rsquo;re not limited to using it on Ruby projects, since in the end all you need on your server (obviously) are the css files it generates locally.&lt;/p&gt;
 
 &lt;p&gt;It&amp;rsquo;s likely that a lot of Sass&amp;rsquo;s functionality will eventually become standard css.  But for now, we&amp;rsquo;ve got Sass.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Validating data with Mongoid</title>
-      <link>https://ders.github.io/post/2013-02-26-validataing-data-with-mongoid/</link>
-      <pubDate>Tue, 26 Feb 2013 15:57:00 +0900</pubDate>
-      
-      <guid>https://ders.github.io/post/2013-02-26-validataing-data-with-mongoid/</guid>
-      <description>&lt;p&gt;I&amp;rsquo;ve been working with &lt;a href=&#34;http://mongoid.org/en/mongoid/&#34;&gt;Mongoid&lt;/a&gt;, which is an object-document-mapper for &lt;a href=&#34;http://mongodb.org/&#34;&gt;MongoDB&lt;/a&gt; written in Ruby.&lt;/p&gt;
-
-&lt;p&gt;Mongo organizes data into collections of documents, just as relational databases such as SQL organize data into tables of records.  Reading and writing of
-documents is done via named classes, one for each collection.&lt;/p&gt;
-
-&lt;p&gt;The named class for each collection includes &lt;code&gt;Mongoid::Document&lt;/code&gt; to get the database interface methods such as &lt;code&gt;.where&lt;/code&gt;, &lt;code&gt;.new&lt;/code&gt;, and &lt;code&gt;.save&lt;/code&gt;. It also defines the data fields and any custom data handlers.&lt;/p&gt;
-
-&lt;p&gt;One very useful feature is the availability of automatic validators which check the format and integrity of your data before allowing it to be saved.  There&amp;rsquo;s a myriad of options, and they are &lt;a href=&#34;http://mongoid.org/en/mongoid/docs/validation.html&#34;&gt;not very well explained&lt;/a&gt; in the documentation.&lt;/p&gt;
-
-&lt;p&gt;Since the data validators are shared with &lt;a href=&#34;http://api.rubyonrails.org/classes/ActiveModel.html&#34;&gt;Active Model&lt;/a&gt;, I decided to look for some help there and found &lt;a href=&#34;http://apidock.com/rails/ActiveModel/Validations/ClassMethods/validates&#34;&gt;this pretty good description&lt;/a&gt; of what kind of validation could be done.
-Unfortunately, it wasn&amp;rsquo;t clear anywhere how to actually use the validators once they&amp;rsquo;re defined.&lt;/p&gt;
-
-&lt;p&gt;After a bit of hair-pulling, I discovered it&amp;rsquo;s actually quite simple.&lt;/p&gt;
-
-&lt;p&gt;Let&amp;rsquo;s define a minimal class &lt;code&gt;Iqscore&lt;/code&gt;.  (The name of the collection will be &lt;code&gt;iqscores&lt;/code&gt;; this is a weird behavior of Mongoid whereby class names must be singular and Mongoid will pluralize them for you when naming the collection.)&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;require&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;mongoid&amp;quot;&lt;/span&gt;
-
-&lt;span style=&#34;color: #66d9ef&#34;&gt;class&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;Iqscore&lt;/span&gt;
-
-  &lt;span style=&#34;color: #66d9ef&#34;&gt;include&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;Mongoid&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;::&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;Document&lt;/span&gt;
-
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;field&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:kid&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:type&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;String&lt;/span&gt;
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;field&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:iq&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt;  &lt;span style=&#34;color: #e6db74&#34;&gt;:type&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;Integer&lt;/span&gt;
-
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;validates&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:kid&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:presence&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;true&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:uniqueness&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;true&lt;/span&gt;
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;validates&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:iq&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:numericality&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;true&lt;/span&gt;
-
-&lt;span style=&#34;color: #66d9ef&#34;&gt;end&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;Mongoid provides a &lt;code&gt;valid?&lt;/code&gt; method on Iqscore objects.  Valid? tells us whether or not the criteria in the &lt;code&gt;validates&lt;/code&gt; declarations are met.&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;1.9.3p385 :008 &amp;gt; x = Iqscore.new({kid: &amp;quot;George&amp;quot;, iq: 70})
- =&amp;gt; #&amp;lt;Iqscore _id: 512c72d5352420234d000003, kid: &amp;quot;George&amp;quot;, iq: 70&amp;gt;
-1.9.3p385 :009 &amp;gt; x.valid?
- =&amp;gt; true
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;1.9.3p385 :010 &amp;gt; y = Iqscore.new({kid: &amp;quot;Bill&amp;quot;, iq: &amp;quot;unknown&amp;quot;})
- =&amp;gt; #&amp;lt;Iqscore _id: 512c736e352420234d000004, kid: &amp;quot;Bill&amp;quot;, iq: 0&amp;gt;
-1.9.3p385 :011 &amp;gt; y.valid?
- =&amp;gt; false
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
-
-&lt;p&gt;If it doesn&amp;rsquo;t validate, we can see what&amp;rsquo;s wrong by looking at the &lt;code&gt;errors&lt;/code&gt; property.  In this case it tells us that &lt;code&gt;iq&lt;/code&gt; is not a number (and it should be).  Note that the message &amp;ldquo;is not a number&amp;rdquo; is in an array, as it&amp;rsquo;s possible for there to be multiple messages for a single field.&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;1.9.3p385 :012 &amp;gt; y.errors
- =&amp;gt; #&amp;lt;ActiveModel::Errors:0x98a31cc @base=#&amp;lt;Iqscore _id: 512c736e352420234d000004, kid: &amp;quot;Bill&amp;quot;, iq: 0&amp;gt;, @messages={:iq=&amp;gt;[&amp;quot;is not a number&amp;quot;]}&amp;gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
-
-&lt;p&gt;The &lt;code&gt;valid?&lt;/code&gt; method is called automatically before any save operation (e.g. &lt;code&gt;save&lt;/code&gt; or &lt;code&gt;create&lt;/code&gt;), and if it returns false, then the save is not done.  Both &lt;code&gt;save&lt;/code&gt; and &lt;code&gt;create&lt;/code&gt; return true or false to indicate whether the save was done or not.&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;1.9.3p385 :013 &amp;gt; x.save
- =&amp;gt; true
-1.9.3p385 :014 &amp;gt; y.save
- =&amp;gt; false
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
-
-&lt;p&gt;At this point George is in our database, but Bill isn&amp;rsquo;t.&lt;/p&gt;
 </description>
     </item>
     

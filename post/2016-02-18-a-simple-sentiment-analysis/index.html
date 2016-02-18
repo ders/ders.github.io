@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A simple sentiment analysis of two US presidential candidates &middot; awm&#39;s blog</title>
+
+    <meta name="description" content="">
+
+    <meta name="generator" content="Hugo 0.15" />
+    <meta name="twitter:card" content="summary">
+    
+    <meta name="twitter:title" content="A simple sentiment analysis of two US presidential candidates &middot; awm&#39;s blog">
+    <meta name="twitter:description" content="">
+
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="A simple sentiment analysis of two US presidential candidates &middot; awm&#39;s blog">
+    <meta property="og:description" content="">
+
+    <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Oxygen:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+    <!--[if lte IE 8]>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+    <!--<![endif]-->
+
+    <link rel="stylesheet" href="https://ders.github.io/css/all.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
+
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io/index.xml" />
+</head>
+<body>
+
+
+<div id="layout" class="pure-g">
+    <div class="sidebar pure-u-1 pure-u-md-1-4">
+    <div class="header">
+        <hgroup>
+            <h1 class="brand-title"><a href="https://ders.github.io">awm&#39;s blog</a></h1>
+            <h2 class="brand-tagline"> What did I do today? </h2>
+        </hgroup>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                
+                
+                <li class="nav-item">
+                    <a class="pure-button" href="https://ders.github.io/index.xml"><i class="fa fa-rss"></i> rss</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+    <div class="content pure-u-1 pure-u-md-3-4">
+        <div>
+            
+            <div class="posts">
+                <h1 class="content-subhead">03 Feb 2016, 17:51</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2016-02-18-a-simple-sentiment-analysis/" class="post-title">A simple sentiment analysis of two US presidential candidates</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-share">
+                        <div class="post-share-links">
+                            <h4 style="">Share</h4>
+                            <a href="#" data-type="facebook" data-url="https://ders.github.io/post/2016-02-18-a-simple-sentiment-analysis/" data-title="A simple sentiment analysis of two US presidential candidates" data-description="" data-media="" class="prettySocial fa fa-facebook"></a>
+                            <a href="#" data-type="googleplus" data-url="https://ders.github.io/post/2016-02-18-a-simple-sentiment-analysis/" data-description="" class="prettySocial fa fa-google-plus"></a>
+                            
+                            
+                        </div>
+                    </div>
+                    <div class="post-description">
+                        
+
+<p><strong>Goal:</strong>  To do some basic <a href="https://en.wikipedia.org/wiki/Sentiment_analysis">sentiment analysis</a> on video content.</p>
+
+<p><strong>Test cases:</strong>  Two 5-minute clips of US presidential candidate speeches.</p>
+
+<p><strong>Strategy:</strong></p>
+
+<ul>
+<li>Extract 5 minutes of audio from the beginning of each video.</li>
+<li>Generate a transcript using a speech-to-text program.</li>
+<li>Feed the transcript into a sentiment analyzer.</li>
+</ul>
+
+<h2 id="the-original-content:c99f1888a421b678b37e5694192a42d0">The original content</h2>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/qOQCw7Hcwic" frameborder="0" allowfullscreen></iframe>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/p5ZB8Lg1tcA" frameborder="0" allowfullscreen></iframe>
+
+<h2 id="extracting-a-5-minute-audio-clip:c99f1888a421b678b37e5694192a42d0">Extracting a 5-minute audio clip</h2>
+
+<p>There are many ways to do this.  One way is to download the video using a browser add-on.  Browser add-ons are easy to find but are also fickle, as they make it easy to download material in violation of copyright.  And if you&rsquo;re downloading from YouTube, you&rsquo;re violating their terms of service, even if you&rsquo;re not infringing on copyright.  (We maintain that this exercise falls under <a href="https://en.wikipedia.org/wiki/Fair_use">fair use</a>.)</p>
+
+<p>Another way is to turn on audio capture while playing the video.</p>
+
+<p>After the capture is complete, we&rsquo;ll want to convert to FLAC if we&rsquo;re not there already.  We&rsquo;ll use <a href="https://ffmpeg.org/">ffmpeg</a> for this, e.g.:</p>
+
+<pre><code>ffmpeg -i captured-content.mp4 captured-content.flac
+</code></pre>
+
+<p>And then to extract the first 5 minutes:</p>
+
+<pre><code>flac --until=5:00 captured-content.flac -o five-minute-clip.flac
+</code></pre>
+
+<p>Both <code>ffmpeg</code> and <code>flac</code> are available via homebrew.</p>
+
+<h2 id="generating-a-transcript:c99f1888a421b678b37e5694192a42d0">Generating a transcript</h2>
+
+<p>The IBM Watson Developer Cloud has a <a href="http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html">speech-to-text</a> service which is available through an API and also has a <a href="https://speech-to-text-demo.mybluemix.net/">demo page</a>.  In theory, one can get limited free access to the API after going through a mildly annoying sign-up process, but in practice I was unable to convince the API to accept the credentials I&rsquo;d obtained.</p>
+
+<p>Fortunately, the demo page allows file uploads and produced the following transcripts from the content above:</p>
+
+<p><strong>Trump</strong></p>
+
+<blockquote>
+<p>This is no way I&rsquo;m leaving South Carolina. And I was gonna leave for tonight come back as it upsets up saying you have a five days we got a win on Saturday we&rsquo;re going to win. Make America great again we&rsquo;re gonna make America. We&rsquo;re going to win. You know. It&rsquo;s been an amazing friend Ruben all over the state today I love you too girly looking out dnmt love you I love you all. I love you. So many things are happening for a country. And it&rsquo;s this is a movement time magazine last week at the most beautiful story cover. And they talk about its improvement they&rsquo;ve never seen they say there&rsquo;s not been anything like this I don&rsquo;t know ever but they actually say ever. We went to Tampa the other day Tampa Florida would like two days notice fifteen thousand people that are turned away five thousand and by the way for all of the people in this room I can&rsquo;t believe it this is a huge room but downstairs to filling up another one and there sadly sending people away we don&rsquo;t like that right. No okay why don&rsquo;t we all get up go let&rsquo;s have that now. Now we have one of the great veterans outside I&rsquo;ll stand up while one of the great great you are great. Love this guy. He loves the veterans and I love the veterans are we going to take care of our veterans I&rsquo;ll tell you that we&rsquo;re going to take it did not. They are not properly taken care of so we&rsquo;re going to take a right we have sent a look at this. I knew you guys would say that I can spot a veteran a long ways off. But we are we going to take a break here we&rsquo;re gonna take you have a military we&rsquo;re going to take you have a military because our military is being whittled away whittled away we&rsquo;re going to make our military so big so strong so powerful nobody&rsquo;s going to mess with us anymore nobody nobody. Nobody. So Nikki Haley a very nice woman she better speech the other day you saw that and she was talking about anger and she said there&rsquo;s a lot of anger and I guess she was applying all of us you know really referring to us. And by the end of the day she was actually saying that Donald Trump is a friend of mine he&rsquo;s been a supporter of mine everything else you know the tone at the beginning was designed by the time that she was just barraged with people she said I think we better change our path here. And by the end of the day and it was fun it was great but she said you know there is anger but I said there is a group and I was asked during not this debate but the previous debate I was asked. I by the way did you love this last debate dnmt. Listen to like. They came at me from every angle possible. Don&rsquo;t know they came out before every angle you know sort of interesting. They were hitting me with things like and such until as you know I never realized I&rsquo;ve always don&rsquo;t politicians it is honest but I&rsquo;ve never known the level of dishonesty. And I deal in industries a lot of different but mostly real estate and like in Manhattan at different places but I&rsquo;ve never seen people as dishonest as politicians. They will say anything. Like okay so a lot of you people understand that you you get when you&rsquo;ve seen the speeches that you see in a lot of it and you know that I protect the second amendment more than anybody by far dnmt more than. And this guy Ted Cruz gets upset Donald Trump does not respect a second amendment and the more that anybody I&rsquo;m with the second amendment. I saw no no it&rsquo;s lies. And then they do commercials and you know he did it to Ben Carson and him in particular in all fairness. Jeff is represents but these are minor misrepresentations and he&rsquo;s not going anywhere anyway so what would how casual. Not as. Well Jeb was talking about eminent domain Donald Trump used eminent domain privately then I see there&rsquo;s a big story I had to bring this out luck. Proof Jeb bush under eminent domain took a disabled veterans property. Something about me. No state. Honestly these guys are these guys are the worst. Eminent domain without eminent domain by the way you don&rsquo;t up highways roads airports hospitals you know not bridges you drive anything so. They say Donald Trump does look like Eminem and I don&rsquo;t even tell me but you need to road you need a highway you need you know it&rsquo;s funny they all want they all want the keystone pipeline right but without eminent domain without think of it without eminent domain you can&rsquo;t have the keystone pipeline and we&rsquo;re going to get the keystone pipeline approved but but fluids jumps. It&rsquo;s jobs but remember this when it gets approved a politicians go to baby approve it.</p>
+</blockquote>
+
+<p><strong>Sanders</strong></p>
+
+<blockquote>
+<p>President Falwell and. David. Ok thank you very much for inviting my wife Jane and. Ought to be with you this morning we appreciate the invitation. Very much. And let me start off by acknowledging what I think. All of you already know. And that is the views. That many here at liberty university have. And all I. On a number of important issues. A very very different. I believe in women&rsquo;s rights dnmt. In the light of the woman to control her own body dnmt. I believe in gay rights. And now. Those of my views. And it is no secret. But I came here today. Because I believe from the bottom of my heart. That it is vitally important for those of us. Who hold different views. To be able to engage in any civil discourse. Who often in our country and I think both sides. Bear responsibility for us. There is too much shouting at each other. There is too much making fun of each other. Now in my view then are you can say this is somebody who whose voice is hoarse because I have given dozens of speeches. And the last few months it is easy. To go out and talk to people who agree with you are missing Greensboro North Carolina just last night. Alright. We are nine thousand people out. Mostly they agreed with me tonight. We&rsquo;re going to be a Manassas and thousands out they agree with me. It&rsquo;s not a whole lot to do. That&rsquo;s what politicians by and large do we go out and we talk to people who agree with us. But it is harder. But not less important. For us to try and communicate with those who do not agree with us on every issue. After. And it is important to see where if possible and I do believe it&rsquo;s possible we can find common grounds. No liberty university. Is a religious school obviously. Pn. All of you are proud of the. You already school. Which as all of us in our own way. Tries to understand the meaning of morality. What does it mean. To live a moral life. And you try to understand in this very complicated modern world that we live in. What the words of the Bible me in today&rsquo;s society. You are in school which tries to teach its students. How to behave with decency and with honesty and how you can best relates. To your fellow human beings and I applaud. You for trying to achieve those goals. Let me. Take a moment. Or a few moments. To tell you what motivates me. And the work that I do. As a public servant as a Sentinel. From the state of Vermont. And let me tell you that it goes without saying I am flaws foh throw me being a perfect human being. But all I am motivated by a vision.</p>
+</blockquote>
+
+<h2 id="sentiment-analysis:c99f1888a421b678b37e5694192a42d0">Sentiment Analysis</h2>
+
+<p>Again, there are a variety of tools to do this, including the <a href="http://www.nltk.org/">Natural Language Toolkit Project</a>, a free python library. Taking advantage of a <a href="http://text-processing.com/demo/sentiment/">simple demo site</a> which uses the NLTK, we can see that both Sanders and Trump are polar, but Sanders is more positive.  Who would&rsquo;ve known?</p>
+
+<p><strong>Trump</strong></p>
+
+<ul>
+<li>Overall: negative</li>
+<li>Subjectivity
+
+<ul>
+<li>neutral: 0.2</li>
+<li><strong>polar: 0.8</strong></li>
+</ul></li>
+<li>Polarity
+
+<ul>
+<li>pos: 0.4</li>
+<li><strong>neg: 0.6</strong></li>
+</ul></li>
+</ul>
+
+<p><strong>Sanders</strong></p>
+
+<ul>
+<li>Overall: positive</li>
+<li>Subjectivity
+
+<ul>
+<li>neutral: 0.2</li>
+<li><strong>polar: 0.8</strong></li>
+</ul></li>
+<li>Polarity
+
+<ul>
+<li><strong>pos: 0.8</strong></li>
+<li>neg: 0.2</li>
+</ul></li>
+</ul>
+
+<p>For the adventuresome, <a href="http://www.nltk.org/howto/sentiment.html">here are more detailed instructions</a> on using the NLTK for sentiment analysis.</p>
+
+                    </div>
+                    
+                </section>
+            </div>
+            <div class="footer">
+    <div class="pure-menu pure-menu-horizontal pure-menu-open">
+        <ul>
+            <li>Powered by <a class="hugo" href="http://hugo.spf13.com/" target="_blank">hugo</a></li>
+        </ul>
+    </div>
+</div>
+<script src="https://ders.github.io/js/all.min.js"></script>
+        </div>
+    </div>
+</div>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '', 'auto');
+ga('send', 'pageview');
+
+</script>
+
+</body>
+</html>
