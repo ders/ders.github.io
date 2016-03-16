@@ -6,8 +6,36 @@
     <description>Recent content on awm&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 03 Feb 2016 17:51:00 +0900</lastBuildDate>
+    <lastBuildDate>Wed, 16 Mar 2016 16:47:00 +0900</lastBuildDate>
     <atom:link href="https://ders.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>Why I code in Go for server applications</title>
+      <link>https://ders.github.io/post/2016-03-16-why-i-code-in-go/</link>
+      <pubDate>Wed, 16 Mar 2016 16:47:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2016-03-16-why-i-code-in-go/</guid>
+      <description>&lt;p&gt;I&amp;rsquo;ve written server applications in Ruby, Python, and Go.  With Ruby I&amp;rsquo;ve tried out both Sinatra and Rails; with Python I&amp;rsquo;ve used Flask and Django; with Go I&amp;rsquo;ve used the net/http package.&lt;/p&gt;
+
+&lt;p&gt;There are endless arguments for and against using this framework or that language, and there are many valid reasons to like or dislike a set of tools.  I personally like Django a lot.  But Go has two features that beat the competition when it comes to writing web services: static typing and explicit error handling.&lt;/p&gt;
+
+&lt;p&gt;In Ruby, we often find ourselves having to check if a value is nil before processing it.  Anything can be nil, and unexpected inputs often create nil values where we least expect.  If we forget to check just one place in the code, sooner or later it shows up as a 500 error and our service is &lt;a href=&#34;https://www.youtube.com/watch?v=nZiDS-4Xd2k&#34;&gt;broken&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;Test suites should cover this, but it&amp;rsquo;s just as easy to miss one edge case in a test suite as it is to miss one in the main code.&lt;/p&gt;
+
+&lt;p&gt;In Go, nothing can be nil (unless it&amp;rsquo;s a pointer, but it&amp;rsquo;s easy to know when a pointer might not have been initialized).  In the case of unexpected input, a variable is set to its zero value (e.g. 0, &amp;#39;&amp;#39;, {}), and the fact that there was unexpected input &lt;a href=&#34;http://dave.cheney.net/2015/01/26/errors-and-exceptions-redux&#34;&gt;is conveyed separately&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;In Python, we often find ourselves having to convert types, especially in the case of numerical inputs into string variables.  Using a string where an int is required will raise a TypeError exception, and casting a non-numeric string to int will raise a ValueError exception.  Here too, it&amp;rsquo;s all too easy to miss one try-except block and get a 500 error.&lt;/p&gt;
+
+&lt;p&gt;Again, test suites should cover this, but that means a test for every possible branch in the code.  Again, it&amp;rsquo;s just as easy to miss one edge case in a test suite as it is to miss one in the main code.&lt;/p&gt;
+
+&lt;p&gt;In Go, compatible types are checked at compile time, thereby eliminating this source of errors.&lt;/p&gt;
+
+&lt;p&gt;I choose Go for the simple reason that most 500-inducing code bugs can be either caught at compile time or avoided entirely.  The result is faster and more stable deployments than the alternatives.&lt;/p&gt;
+
+&lt;p&gt;OK, I lied.  I choose Go because I like it.  But this is a great way to justify my choice.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>A simple sentiment analysis of two US presidential candidates</title>
@@ -1106,69 +1134,6 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 &lt;/p&gt;
 
 &lt;p&gt;Again, I&amp;rsquo;m confused. Do we need (or even want) a leading slash here?&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Good Tools</title>
-      <link>https://ders.github.io/post/2013-03-15-good-tools/</link>
-      <pubDate>Fri, 15 Mar 2013 16:59:00 +0900</pubDate>
-      
-      <guid>https://ders.github.io/post/2013-03-15-good-tools/</guid>
-      <description>
-
-&lt;p&gt;Here are some some tools that I like.&lt;/p&gt;
-
-&lt;h2 id=&#34;rerun:641fb2fef50bdd606c86780f8eb06737&#34;&gt;Rerun&lt;/h2&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;Rerun launches your program, then watches the filesystem. If a relevant file changes, then it restarts your program.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;I had some trouble getting Shotgun configured probably, and I found &lt;a href=&#34;https://github.com/alexch/rerun&#34;&gt;Rerun&lt;/a&gt; to be a simple alternative.  I like it because it can be used for any process you want, not just restarting your web server.&lt;/p&gt;
-
-&lt;h2 id=&#34;gitk:641fb2fef50bdd606c86780f8eb06737&#34;&gt;Gitk&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://gitk.sourceforge.net/&#34;&gt;Gitk&lt;/a&gt; is a graphical interface for Git.  It shows your entire development tree graphically, great for those of us less fluent in pushes and pulls.  It does a lot of other things too that I don&amp;rsquo;t know about.&lt;/p&gt;
-
-&lt;p&gt;Debian-based systems can enjoy Gitk with a simple &lt;code&gt;sudo apt-get install gitk&lt;/code&gt;.  Then issue a &lt;code&gt;gitk --all&lt;/code&gt; to see everything.&lt;/p&gt;
-
-&lt;h2 id=&#34;irb:641fb2fef50bdd606c86780f8eb06737&#34;&gt;Irb&lt;/h2&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://ruby-doc.org/docs/ProgrammingRuby/html/irb.html&#34;&gt;Irb&lt;/a&gt; is the Ruby console.  I should actually generalize this and include all consoles.  One of the most valuable checks while coding is to paste snippets of code into the console and see that they do what you think they&amp;rsquo;re doing.&lt;/p&gt;
-
-&lt;p&gt;Make an &lt;code&gt;.irbrc&lt;/code&gt; startup file for a richer experience.  Rails users can get a the console with the full Rails evnironment with &lt;code&gt;rails c&lt;/code&gt;.&lt;/p&gt;
-
-&lt;p&gt;Here is &lt;a href=&#34;http://samuelmullen.com/2012/07/getting-more-out-of-the-rails-console/&#34;&gt;an excellent blog post&lt;/a&gt; on the topic.&lt;/p&gt;
-
-&lt;h2 id=&#34;awesome-print:641fb2fef50bdd606c86780f8eb06737&#34;&gt;Awesome Print&lt;/h2&gt;
-
-&lt;p&gt;A great companion to the Ruby console is &lt;a href=&#34;https://github.com/michaeldv/awesome_print&#34;&gt;Awesome Print&lt;/a&gt;, a Ruby gem which lets you pretty up the output of array, hashes, and the like while in the console.&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;001&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;:name&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;Hong Gildong&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:age&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;10&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:interests&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;nil&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
- &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;:name&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;Hong Gildong&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:age&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;10&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:interests&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;nil&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;002&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;ap&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;_&lt;/span&gt;
-&lt;span style=&#34;color: #f8f8f2&#34;&gt;{&lt;/span&gt;
-         &lt;span style=&#34;color: #e6db74&#34;&gt;:name&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;Hong Gildong&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt;
-          &lt;span style=&#34;color: #e6db74&#34;&gt;:age&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;10&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt;
-    &lt;span style=&#34;color: #e6db74&#34;&gt;:interests&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;nil&lt;/span&gt;
-&lt;span style=&#34;color: #f8f8f2&#34;&gt;}&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;h2 id=&#34;sass:641fb2fef50bdd606c86780f8eb06737&#34;&gt;Sass&lt;/h2&gt;
-
-&lt;blockquote&gt;
-&lt;p&gt;Sass makes css fun again.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;&lt;a href=&#34;http://sass-lang.com/&#34;&gt;Sass&lt;/a&gt; is a nifty program that adds some badly-needed css functionality, such as variables, nesting and inheritance.  But the really nifty thing is how it&amp;rsquo;s accomplished.&lt;/p&gt;
-
-&lt;p&gt;You make a &lt;code&gt;.scss&lt;/code&gt; file and Sass converts it to an equivalent &lt;code&gt;.css&lt;/code&gt; that any browser, even IE, can understand.  Sass even has a stealth mode, where it will regenerate the css when your scss is updated.&lt;/p&gt;
-
-&lt;p&gt;Sass is packaged as a Ruby gem, but you&amp;rsquo;re not limited to using it on Ruby projects, since in the end all you need on your server (obviously) are the css files it generates locally.&lt;/p&gt;
-
-&lt;p&gt;It&amp;rsquo;s likely that a lot of Sass&amp;rsquo;s functionality will eventually become standard css.  But for now, we&amp;rsquo;ve got Sass.&lt;/p&gt;
 </description>
     </item>
     

@@ -60,6 +60,42 @@
             
             <div class="posts">
                 
+                <h1 class="content-subhead">16 Mar 2016, 16:47</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2016-03-16-why-i-code-in-go/" class="post-title">Why I code in Go for server applications</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>I&rsquo;ve written server applications in Ruby, Python, and Go.  With Ruby I&rsquo;ve tried out both Sinatra and Rails; with Python I&rsquo;ve used Flask and Django; with Go I&rsquo;ve used the net/http package.</p>
+
+<p>There are endless arguments for and against using this framework or that language, and there are many valid reasons to like or dislike a set of tools.  I personally like Django a lot.  But Go has two features that beat the competition when it comes to writing web services: static typing and explicit error handling.</p>
+
+<p>In Ruby, we often find ourselves having to check if a value is nil before processing it.  Anything can be nil, and unexpected inputs often create nil values where we least expect.  If we forget to check just one place in the code, sooner or later it shows up as a 500 error and our service is <a href="https://www.youtube.com/watch?v=nZiDS-4Xd2k">broken</a>.</p>
+
+<p>Test suites should cover this, but it&rsquo;s just as easy to miss one edge case in a test suite as it is to miss one in the main code.</p>
+
+<p>In Go, nothing can be nil (unless it&rsquo;s a pointer, but it&rsquo;s easy to know when a pointer might not have been initialized).  In the case of unexpected input, a variable is set to its zero value (e.g. 0, &#39;&#39;, {}), and the fact that there was unexpected input <a href="http://dave.cheney.net/2015/01/26/errors-and-exceptions-redux">is conveyed separately</a>.</p>
+
+<p>In Python, we often find ourselves having to convert types, especially in the case of numerical inputs into string variables.  Using a string where an int is required will raise a TypeError exception, and casting a non-numeric string to int will raise a ValueError exception.  Here too, it&rsquo;s all too easy to miss one try-except block and get a 500 error.</p>
+
+<p>Again, test suites should cover this, but that means a test for every possible branch in the code.  Again, it&rsquo;s just as easy to miss one edge case in a test suite as it is to miss one in the main code.</p>
+
+<p>In Go, compatible types are checked at compile time, thereby eliminating this source of errors.</p>
+
+<p>I choose Go for the simple reason that most 500-inducing code bugs can be either caught at compile time or avoided entirely.  The result is faster and more stable deployments than the alternatives.</p>
+
+<p>OK, I lied.  I choose Go because I like it.  But this is a great way to justify my choice.</p>
+
+                    </div>
+                </section>
+                
                 <h1 class="content-subhead">03 Feb 2016, 17:51</h1>
                 <section class="post">
                     <header class="post-header">
@@ -965,99 +1001,12 @@ I&rsquo;ll come read my own blog and know exactly what to do.</p>
                     </div>
                 </section>
                 
-                <h1 class="content-subhead">17 Dec 2013, 11:06</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2013-12-17-woke-up/" class="post-title">Woke up, fell out of bed</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        <p>Things I learned this year:</p>
-
-<p><strong>Ruby.</strong> Ruby is an interesting language, but I find that the ability to
-open up classes and modify methods on the fly is too easily abused.
-Also not a fan of all the alternate method names (e.g. map and collect) &ndash;
-would prefer just to choose one and stick with it.</p>
-
-<p><strong>Git</strong> and <strong>Github.</strong> Made crystal clear with SourceTree.</p>
-
-<p><strong>Rails.</strong> Learned to hate it. Was going to write a blog post on why I
-hate rails, but someone
-<a href="http://kakubei.blogspot.kr/2012/05/why-i-hate-rails.html">beat me to it</a>.</p>
-
-<p><strong>Rubygems.</strong> Learned to hate them too. I&rsquo;ve wasted a stupid amount of
-time figuring out that my program is broken because the gems I&rsquo;m using
-don&rsquo;t work the way they&rsquo;re supposed to. Better to just write it myself.
-(I actually think the gem system is pretty cool, but quality control,
-ladies and gentlemen, quality control.)
-And if you can do something in two lines of ruby code, you don&rsquo;t need a gem.</p>
-
-<p><strong>Data Mapper.</strong> I wish this were maintained better. It&rsquo;s a handy tool,
-especially when you&rsquo;re dealing with simple, table-friendly data.
-It&rsquo;s not so good at complex queries, though, and I think that the lofty goal
-of making it compatible with all different kinds of database engines
-is hampering its ability to work really well with the most common ones (e.g. SQL).</p>
-
-<p><strong>Python.</strong> Python rocks. My next job will be in a python shop.</p>
-
-<p><strong>Django.</strong> Django rocks along with python. In my next life (when I get
-really good at python and am independently wealthy with a lot of free time)
-I&rsquo;m going to be a regular contributor to the django project.</p>
-
-<p><strong>Unfuddle</strong> and <strong>Pivotal Tracker.</strong> Say what? What is there to learn there?
-In fact there&rsquo;s a lot to learn if you&rsquo;ve never used an issue tracking system before.
-I find the Unfuddle UI to be kind of clunky, especially if you&rsquo;re dealing
-with a large number of tickets, but it&rsquo;s much more thorough than Pivotal
-Tracker in keeping track of comments, ticket disposition, change history,
-and so on.
-Maybe some clever person will invent a PT-style front end for Unfuddle.</p>
-
-<p><strong>Heroku.</strong> Five stars.
-The first time I attempted a heroku deployment, it was all black magic and I was lost.
-Now it&rsquo;s still black magic, but I&rsquo;ve learned that I can use it.
-Deployment is one of those things that gets more and more complicated the more you try to understand it.
-Heroku allows you to remain ignorant and just have your program run.</p>
-
-<p><strong>Android.</strong> On my desktop I have a 2200-page book on how to code for Android.
-I&rsquo;m going to tell you I&rsquo;ve read it all. I&rsquo;ll be lying, and you won&rsquo;t believe me.
-In reality, I&rsquo;ve learned the basics and can make a simple app.
-I&rsquo;m still at the tedious stage where I have to look everything up, and Android programming is already tedious by nature, but I&rsquo;m getting it done.</p>
-
-<p><strong>Amazon AWS.</strong> This probably has the steepest learning curve of all.
-The documentation is complete and thorough and is also written to an
-audience of Sysadmin Ph.Ds.
-So far I&rsquo;ve learned to use S3 buckets and create EC2 instances.</p>
-
-<p>Things I want to learn next year:</p>
-
-<ul>
-<li>advanced Python</li>
-<li>advanced Django</li>
-<li>advanced Git</li>
-<li>Neo4j</li>
-<li>Go</li>
-<li>Sass</li>
-<li>node.js</li>
-<li>backbone.js</li>
-<li>how to deploy stuff (why is this so hard, anyway?)</li>
-<li>Haskell</li>
-</ul>
-
-                    </div>
-                </section>
-                
             </div>
             
 <div class="pagination">
   <nav role="pagination" class="post-list-pagination">
       
-    <span class="post-list-pagination-item post-list-pagination-item-current">Page 1 of 2</span>
+    <span class="post-list-pagination-item post-list-pagination-item-current">Page 1 of 3</span>
     
       <a href="https://ders.github.io/page/2/" class="post-list-pagination-item pure-button post-list-pagination-item-next">
         Older&nbsp;<i class="fa fa-angle-double-right"></i>
