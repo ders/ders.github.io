@@ -60,6 +60,84 @@
             
             <div class="posts">
                 
+                <h1 class="content-subhead">10 Jan 2014, 14:55</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2014-01-10-aws-locale/" class="post-title">AWS Locale</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>Every time I start a new EC2 Ubuntu instance, I&rsquo;m confronted with the following
+warning when I ssh in:</p>
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">_____________________________________________________________________
+WARNING! Your environment specifies an invalid locale.
+ This can affect your user experience significantly, including the
+ ability to manage packages. You may install the locales by running:
+
+   sudo apt-get install language-pack-UTF-8
+     or
+   sudo locale-gen UTF-8
+
+To see all available language packs, run:
+   apt-cache search &quot;^language-pack-[a-z][a-z]$&quot;
+To disable this message for all users, run:
+   sudo touch /var/lib/cloud/instance/locale-check.skip
+_____________________________________________________________________
+</pre></div>
+
+
+<p>Furthermore, a variety of package installations fail with some complaint
+related to the locale, the default language, or both.
+And for some reason the advice to install relevant language packs
+is not helpful.</p>
+
+<p>It turns out that there are some of environment variables
+(<code>LANGUAGE</code>, <code>LC_CTYPE</code> and <code>LC_ALL</code> to be specific) that are not
+set properly.</p>
+
+<p>The advice to install language packs assumes that these environment
+variables are set to a language that&rsquo;s not installed.  However, in the
+case of a new EC2 instance, these variables are not set at all.</p>
+
+<p>An easy way to get the warnings to go away is to edit the file
+<code>/etc/default/locale</code> so that these variables always get set. I&rsquo;ve found
+that the default installation only sets <code>LANG</code>.</p>
+
+<p>/etc/default/locale
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">LANG=en_US.UTF-8
+LANGUAGE=en_US
+LC_CTYPE=en_US.UTF-8
+LC_ALL=en_US.UTF-8
+</pre></div>
+</p>
+
+<p>As always, it&rsquo;s also a good idea to make sure you have the latest and
+greatest packages:</p>
+
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo apt-get update
+$ sudo apt-get upgrade
+</pre></div>
+</p>
+
+<p>And finally, while we&rsquo;re at it, why not set the timezone?</p>
+
+<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo dpkg-reconfigure tzdata
+</pre></div>
+</p>
+
+<p>Next time I need to set up a new EC2 instance,
+I&rsquo;ll come read my own blog and know exactly what to do.</p>
+
+                    </div>
+                </section>
+                
                 <h1 class="content-subhead">17 Dec 2013, 11:06</h1>
                 <section class="post">
                     <header class="post-header">
@@ -587,65 +665,6 @@ Unfortunately, it wasn&rsquo;t clear anywhere how to actually use the validators
 <p>Subsequently it is sufficient just to to say <code>mongo</code>.</p>
 
 <p>Learned the hard way, and by reading <a href="http://stackoverflow.com/a/8509918">this answer</a>.</p>
-
-                    </div>
-                </section>
-                
-                <h1 class="content-subhead">20 Feb 2013, 10:58</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2013-02-20-the-rubymonk-tutorial/" class="post-title">The RubyMonk Tutorial</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        <p>I&rsquo;ve been working my way through the <a href="http://rubymonk.com/learning/books">RubyMonk Tutorials</a>.
-They are very well written and do an excellent job of guiding the user through progressively harder concepts.</p>
-
-<p>Today I found a couple of careless coding errors in the <a href="http://rubymonk.com/learning/books/4/chapters/44-collections/lessons/98-iterate-filtrate-and-transform">section on using Array#inject</a> (subscription required).  The first is an illustration of inject to do a simple sum of array elements.</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f92672">[</span><span style="color: #ae81ff">4</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">8</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">15</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">16</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">23</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">42</span><span style="color: #f92672">].</span><span style="color: #f8f8f2">inject(</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">do</span> <span style="color: #f92672">|</span><span style="color: #f8f8f2">accumulator,</span> <span style="color: #f8f8f2">iterated</span><span style="color: #f92672">|</span>
-  <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">+=</span> <span style="color: #f8f8f2">iterated</span>
-  <span style="color: #f8f8f2">accumulator</span>
-<span style="color: #66d9ef">end</span>
-</pre></div>
-
-
-<p>In fact, the assignment statement here is superfluous, as the inject
-function assigns the return value of the block to the accumulator automatically.
-It would suffice to do:</p>
-
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f92672">[</span><span style="color: #ae81ff">4</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">8</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">15</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">16</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">23</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">42</span><span style="color: #f92672">].</span><span style="color: #f8f8f2">inject(</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">do</span> <span style="color: #f92672">|</span><span style="color: #f8f8f2">accumulator,</span> <span style="color: #f8f8f2">iterated</span><span style="color: #f92672">|</span>
-  <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">+</span> <span style="color: #f8f8f2">iterated</span>
-<span style="color: #66d9ef">end</span>
-</pre></div>
-</p>
-
-<p>The second error is in an illustration of the behavior of inject.
-The function below is supposed to mimic the behavior of the one above.</p>
-
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">custom_inject</span><span style="color: #f8f8f2">(array,</span> <span style="color: #f8f8f2">default</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">nil</span><span style="color: #f8f8f2">)</span>
-  <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">default</span> <span style="color: #f92672">||</span> <span style="color: #f8f8f2">array</span><span style="color: #f92672">[</span><span style="color: #ae81ff">0</span><span style="color: #f92672">]</span>
-
-  <span style="color: #f8f8f2">array</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">each</span> <span style="color: #66d9ef">do</span> <span style="color: #f92672">|</span><span style="color: #f8f8f2">element</span><span style="color: #f92672">|</span>
-    <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">+</span> <span style="color: #f8f8f2">element</span>
-  <span style="color: #66d9ef">end</span>
-
-  <span style="color: #f8f8f2">accumulator</span>
-<span style="color: #66d9ef">end</span>
-
-<span style="color: #f8f8f2">p</span> <span style="color: #f8f8f2">custom_inject(</span><span style="color: #f92672">[</span><span style="color: #ae81ff">4</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">8</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">15</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">16</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">23</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">42</span><span style="color: #f92672">]</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span>
-</pre></div>
-</p>
-
-<p>The <code>custom_inject</code> function, however, fails for the case where the default value is not given.  It fails by counting the first array element twice.</p>
-
-<p>Native inject begins iterating from the second array element, as the first element has already been used as the starting value.</p>
 
                     </div>
                 </section>

@@ -60,6 +60,29 @@
             
             <div class="posts">
                 
+                <h1 class="content-subhead">14 Apr 2016, 10:22</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2016-04-14-django-rest-framework/" class="post-title">The Django REST framework</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>I may have to reconsider choosing Go for some server applications.</p>
+
+<p>There&rsquo;s a bit of a learning curve, but
+version 3 of the <a href="http://www.django-rest-framework.org/">Django REST framework</a>
+packs a lot of nice features.
+The web browsable API is the one that won me over.</p>
+
+                    </div>
+                </section>
+                
                 <h1 class="content-subhead">16 Mar 2016, 16:47</h1>
                 <section class="post">
                     <header class="post-header">
@@ -919,84 +942,6 @@ DataMapper internals, but I&rsquo;m not that good yet.)</p>
 
 
 <p>Just try it.</p>
-
-                    </div>
-                </section>
-                
-                <h1 class="content-subhead">10 Jan 2014, 14:55</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2014-01-10-aws-locale/" class="post-title">AWS Locale</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        <p>Every time I start a new EC2 Ubuntu instance, I&rsquo;m confronted with the following
-warning when I ssh in:</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">_____________________________________________________________________
-WARNING! Your environment specifies an invalid locale.
- This can affect your user experience significantly, including the
- ability to manage packages. You may install the locales by running:
-
-   sudo apt-get install language-pack-UTF-8
-     or
-   sudo locale-gen UTF-8
-
-To see all available language packs, run:
-   apt-cache search &quot;^language-pack-[a-z][a-z]$&quot;
-To disable this message for all users, run:
-   sudo touch /var/lib/cloud/instance/locale-check.skip
-_____________________________________________________________________
-</pre></div>
-
-
-<p>Furthermore, a variety of package installations fail with some complaint
-related to the locale, the default language, or both.
-And for some reason the advice to install relevant language packs
-is not helpful.</p>
-
-<p>It turns out that there are some of environment variables
-(<code>LANGUAGE</code>, <code>LC_CTYPE</code> and <code>LC_ALL</code> to be specific) that are not
-set properly.</p>
-
-<p>The advice to install language packs assumes that these environment
-variables are set to a language that&rsquo;s not installed.  However, in the
-case of a new EC2 instance, these variables are not set at all.</p>
-
-<p>An easy way to get the warnings to go away is to edit the file
-<code>/etc/default/locale</code> so that these variables always get set. I&rsquo;ve found
-that the default installation only sets <code>LANG</code>.</p>
-
-<p>/etc/default/locale
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">LANG=en_US.UTF-8
-LANGUAGE=en_US
-LC_CTYPE=en_US.UTF-8
-LC_ALL=en_US.UTF-8
-</pre></div>
-</p>
-
-<p>As always, it&rsquo;s also a good idea to make sure you have the latest and
-greatest packages:</p>
-
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo apt-get update
-$ sudo apt-get upgrade
-</pre></div>
-</p>
-
-<p>And finally, while we&rsquo;re at it, why not set the timezone?</p>
-
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo dpkg-reconfigure tzdata
-</pre></div>
-</p>
-
-<p>Next time I need to set up a new EC2 instance,
-I&rsquo;ll come read my own blog and know exactly what to do.</p>
 
                     </div>
                 </section>

@@ -6,8 +6,23 @@
     <description>Recent content on awm&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 16 Mar 2016 16:47:00 +0900</lastBuildDate>
+    <lastBuildDate>Thu, 14 Apr 2016 10:22:00 +0900</lastBuildDate>
     <atom:link href="https://ders.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>The Django REST framework</title>
+      <link>https://ders.github.io/post/2016-04-14-django-rest-framework/</link>
+      <pubDate>Thu, 14 Apr 2016 10:22:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2016-04-14-django-rest-framework/</guid>
+      <description>&lt;p&gt;I may have to reconsider choosing Go for some server applications.&lt;/p&gt;
+
+&lt;p&gt;There&amp;rsquo;s a bit of a learning curve, but
+version 3 of the &lt;a href=&#34;http://www.django-rest-framework.org/&#34;&gt;Django REST framework&lt;/a&gt;
+packs a lot of nice features.
+The web browsable API is the one that won me over.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>Why I code in Go for server applications</title>
@@ -1078,62 +1093,6 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 
 &lt;p&gt;Free donuts to the first person who can make a DataMapper version of this.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Rails for Zombies</title>
-      <link>https://ders.github.io/post/2013-03-21-rails-for-zombies/</link>
-      <pubDate>Thu, 21 Mar 2013 12:19:00 +0900</pubDate>
-      
-      <guid>https://ders.github.io/post/2013-03-21-rails-for-zombies/</guid>
-      <description>&lt;p&gt;I got introduced today to &lt;a href=&#34;http://railsforzombies.org&#34;&gt;an excellent Ruby on Rails tutorial&lt;/a&gt; with an entertaining zombie theme.  It covered a lot of the basic concepts, many of which I&amp;rsquo;d skipped over in my haste to dive into a real-live project.&lt;/p&gt;
-
-&lt;p&gt;Being who I am, I noticed a couple of inconsistencies between the tutorial videos and the exercises.  Actually, this only applies to the level 5 video; the rest seemed to be fine.&lt;/p&gt;
-
-&lt;p&gt;In the level 5 video at 2:10, the following match example is given:&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;match&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;new_tweet&amp;#39;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;Tweets#new&amp;quot;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;Note the uppercase T on Tweets.  This T is uppercase throughout the video.&lt;/p&gt;
-
-&lt;p&gt;However, when I tried to do the second exercise for this level, the following answer was rejected:&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;match&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;undead&amp;#39;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;Zombies#undead&amp;quot;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;The hints told me to do this:&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;match&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;undead&amp;#39;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;zombies#undead&amp;quot;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;with a lower case z, which was accepted.  Now I&amp;rsquo;m confused.  Do we need a capital letter here or not?&lt;/p&gt;
-
-&lt;p&gt;In the same video at 3:30, the following match example is given:&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;match&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;all&amp;#39;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;redirect(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;/tweets&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
-
-&lt;p&gt;Note that there is no leading slash on &amp;lsquo;all&amp;rsquo;; this format is consistent throughout the video.&lt;/p&gt;
-
-&lt;p&gt;However, when I tried to do the third exercise, the following answer was rejected:&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;match&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;undead&amp;#39;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;redirect(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;/zombies&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
-
-&lt;p&gt;This time the hints told me to do this:&lt;/p&gt;
-
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;match&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;/undead&amp;#39;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;redirect(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;/zombies&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
-
-&lt;p&gt;Again, I&amp;rsquo;m confused. Do we need (or even want) a leading slash here?&lt;/p&gt;
 </description>
     </item>
     
