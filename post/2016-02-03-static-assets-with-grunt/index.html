@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.15" />
+    <meta name="generator" content="Hugo 0.16" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Using Grunt to Manage Static Assets &middot; awm&#39;s blog">
@@ -94,11 +94,11 @@
 <li>run a watch process to update files as they&rsquo;re changed</li>
 </ul>
 
-<h2 id="installing-grunt:230cd0b47b3fc52b0f70982618b640aa">Installing grunt</h2>
+<h2 id="installing-grunt">Installing grunt</h2>
 
 <p>Grunt is part of the <a href="https://nodejs.org/">node.js</a> ecosystem, and as such is available via <a href="https://www.npmjs.com/">the node package manager (npm)</a>.  Npm is available on OS X via Homebrew.</p>
 
-<h3 id="basic-npm-concepts:230cd0b47b3fc52b0f70982618b640aa">Basic npm concepts</h3>
+<h3 id="basic-npm-concepts">Basic npm concepts</h3>
 
 <p>There are a few things that we need to understand about npm.  The biggest headache was recognizing the difference between local and global installs and knowing when to use which.</p>
 
@@ -110,7 +110,7 @@
 <li>When installing a package explicitly, there is in an option to add an entry to <code>package.json</code> so that someone else will be able to use <code>npm install</code> and get everything.  Note that this is an option and not the default behavior.</li>
 </ul>
 
-<h3 id="creating-the-package-json-file:230cd0b47b3fc52b0f70982618b640aa">Creating the package.json file</h3>
+<h3 id="creating-the-package-json-file">Creating the package.json file</h3>
 
 <p>According to <a href="http://gruntjs.com/getting-started#package.json">the documentation</a>,
 the command to use is <code>npm init</code>, and it must be run in project root.  Running it starts a dialog on the terminal, asking some mostly irrelevant questions: name (defaults to the name of the project directory), version (defaults to 1.0.0), description, entry point (defaults to index.js), test command, git repository, keywords, author, and license (defaults to ISC).  These questions can be suppressed by using <code>npm init --yes</code>, which defaults everything.</p>
@@ -140,7 +140,7 @@ But since I&rsquo;m <a href="https://www.bignerdranch.com/blog/a-bit-on-warnings
 <p>According to <a href="https://github.com/lodash/lodash/wiki/Changelog#v092">the changelog for lodash</a>,
 version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the &ldquo;upgrade to&rdquo; version of 3.0.0 is a year old already.  This is a red flag; how and why are these dependencies not getting maintained?  That said, it appears that <a href="https://github.com/gruntjs/grunt/issues/1419">an update is on the way</a>.  Will have to ignore this warning for now.</p>
 
-<h3 id="grunt-plugins:230cd0b47b3fc52b0f70982618b640aa">Grunt plugins</h3>
+<h3 id="grunt-plugins">Grunt plugins</h3>
 
 <p>Grunt itself is just the overlord; to do any real work we&rsquo;re going to need some plugins.  After a lot of googling, I&rsquo;ve come up with this list:</p>
 
@@ -159,7 +159,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 <pre><code>npm install grunt grunt-contrib-uglify grunt-contrib-sass grunt-contrib-copy grunt-contrib-clean grunt-contrib-watch --save-dev
 </code></pre>
 
-<h3 id="grunt-command-line:230cd0b47b3fc52b0f70982618b640aa">Grunt command line</h3>
+<h3 id="grunt-command-line">Grunt command line</h3>
 
 <p>There is one more install required if we are to be able to run grunt from the command line.  The package is <code>grunt-cli</code>, and needs to be installed globally so that the grunt executable goes into /usr/local/bin and is available in the system path.</p>
 
@@ -169,7 +169,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 <p>One gotcha is that the global grunt-cli requires a local grunt or it will fail.  Grunt-cli is a wrapper to find the locally installed grunt to whatever project you&rsquo;re in.  The global grunt-cli will not find a global grunt.</p>
 
-<h3 id="summary-of-grunt-installation:230cd0b47b3fc52b0f70982618b640aa">Summary of grunt installation</h3>
+<h3 id="summary-of-grunt-installation">Summary of grunt installation</h3>
 
 <ul>
 <li>Install npm (e.g. <code>brew install npm</code>).</li>
@@ -182,7 +182,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 <p>Once we have <code>package.json</code> as updated by the npm install &ndash;save-dev command, steps 2 and 3 can be replaced by a simple <code>npm install</code>.  We still need to keep step 4; global packages can&rsquo;t go into <code>package.json</code> (npm will ignore <code>--save-dev</code> when <code>-g</code> is specified).</p>
 
-<h3 id="optionally-installing-grunt-cli-locally:230cd0b47b3fc52b0f70982618b640aa">Optionally installing grunt-cli locally</h3>
+<h3 id="optionally-installing-grunt-cli-locally">Optionally installing grunt-cli locally</h3>
 
 <p>Installing <code>grunt-cli</code> locally instead of globally will allow it to be included in <code>package.json</code>, but it has the side effect of not having the grunt executable in the path.  A possible workaround to this side effect is to add a script section to <code>package.json</code> with all the grunts you want to do.</p>
 
@@ -191,9 +191,9 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 <p>Then you can type <code>npm run watch</code> instead of <code>grunt watch</code>.  This may or may not be worth the trouble.</p>
 
-<h2 id="writing-a-gruntfile:230cd0b47b3fc52b0f70982618b640aa">Writing a gruntfile</h2>
+<h2 id="writing-a-gruntfile">Writing a gruntfile</h2>
 
-<h3 id="basic-gruntfile-concept:230cd0b47b3fc52b0f70982618b640aa">Basic gruntfile concept</h3>
+<h3 id="basic-gruntfile-concept">Basic gruntfile concept</h3>
 
 <p>The gruntfile is a bit of javascript initialization that gets run whenever grunt is invoked.  The gruntfile needs to define an initialization function and assign that to the global <code>module.exports</code>.  Within the initialization function, we&rsquo;ll need to list the modules we need (grunt-contrib-uglify, etc.), specify some configuration for each module, define the default task, and optionally define additional tasks.</p>
 
@@ -226,7 +226,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 <script src="https://gist.github.com/ders/3ca946b14641e5efe783.js"></script>
 
-<h3 id="observations:230cd0b47b3fc52b0f70982618b640aa">Observations</h3>
+<h3 id="observations">Observations</h3>
 
 <ul>
 <li>Overall, the quality of documentation is poor.  I had to resort to copying examples and then modifying them by trial and error until I got the results I wanted.  There are many alternate syntaxes, causing further confusion.</li>
@@ -236,7 +236,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 <li>The <code>grunt-contrib-copy</code> plugin doesn&rsquo;t know how to sync. The <code>i</code> and <code>lib</code> directories are copied in their entireties every time there&rsquo;s a change.  There is <a href="https://github.com/tomusdrw/grunt-sync">another plugin</a> which claims to know how to sync, but I haven&rsquo;t tested it.</li>
 </ul>
 
-<h3 id="conclusion:230cd0b47b3fc52b0f70982618b640aa">Conclusion</h3>
+<h3 id="conclusion">Conclusion</h3>
 
 <p>This was a whole lot of trouble to set up a relatively simple build system. Grunt is a powerful tool, and I can see the value of using it when you&rsquo;re already in a node-based project, but it to use it as an isolated build tool is not worth the effort.</p>
 

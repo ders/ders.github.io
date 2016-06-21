@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.15" />
+    <meta name="generator" content="Hugo 0.16" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Why you should always understand what&#39;s going on under the hood &middot; awm&#39;s blog">
@@ -99,7 +99,7 @@ It beats the pants off of Active Somethingorother when it comes to making clean,
 <li>Datamapper has different representations of the Boolean type, even between different SQLs.</li>
 </ul>
 
-<h3 id="the-missing-feature:136baa383e3072f3c5db5b5786002bc4">The Missing Feature</h3>
+<h3 id="the-missing-feature">The Missing Feature</h3>
 
 <p>The glaringly missing feature is the ability to update a value and know
 whether or not we actually changed anything.</p>
@@ -130,31 +130,31 @@ generating an exception if no records are found.</p>
 Datamapper insists on generating two separate queries for the single
 update statement:</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">SELECT</span> <span style="color: #e6db74">&quot;id&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;size&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;name&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;seen&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;whosaw&quot;</span> <span style="color: #66d9ef">FROM</span> <span style="color: #e6db74">&quot;quarks&quot;</span> <span style="color: #66d9ef">WHERE</span> <span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;id&quot;</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">42</span> <span style="color: #66d9ef">AND</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;f&#39;</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">ORDER</span> <span style="color: #66d9ef">BY</span> <span style="color: #e6db74">&quot;id&quot;</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">SELECT</span> <span style="color: #e6db74">&quot;id&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;size&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;name&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;seen&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;whosaw&quot;</span> <span style="color: #66d9ef">FROM</span> <span style="color: #e6db74">&quot;quarks&quot;</span> <span style="color: #66d9ef">WHERE</span> <span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;id&quot;</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">42</span> <span style="color: #66d9ef">AND</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;f&#39;</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">ORDER</span> <span style="color: #66d9ef">BY</span> <span style="color: #e6db74">&quot;id&quot;</span>
 <span style="color: #66d9ef">UPDATE</span> <span style="color: #e6db74">&quot;quarks&quot;</span> <span style="color: #66d9ef">SET</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;t&#39;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;whosaw&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;ders&#39;</span> <span style="color: #66d9ef">WHERE</span> <span style="color: #e6db74">&quot;id&quot;</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">42</span>
 </pre></div>
-</p>
+
 
 <p>This obviously won&rsquo;t do, as it&rsquo;s not thread-safe.
 Two users running this code at the same time would both believe that they saw the quark first.</p>
 
-<h3 id="the-solution:136baa383e3072f3c5db5b5786002bc4">The Solution</h3>
+<h3 id="the-solution">The Solution</h3>
 
 <p>The solution was to write the update query in SQL.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">da</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">DataMapper</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">repository(</span><span style="color: #e6db74">:default</span><span style="color: #f8f8f2">)</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">adapter</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">da</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">DataMapper</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">repository(</span><span style="color: #e6db74">:default</span><span style="color: #f8f8f2">)</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">adapter</span>
 <span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=&#39;t&#39;, whosaw=&#39;ders&#39; WHERE id=42 AND seen=&#39;f&#39;&quot;</span><span style="color: #f8f8f2">)</span>
 <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">r</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">affected_rows</span> <span style="color: #f92672">&gt;</span> <span style="color: #ae81ff">0</span>
    <span style="color: #f92672">...</span> <span style="color: #75715e"># we saw it first</span>
 </pre></div>
-</p>
+
 
 <p>Kind of defeats the purpose of having an ORM, but it gets the job done.
 And as it turns out, I&rsquo;m
 <a href="http://stackoverflow.com/questions/18650932/how-to-add-a-where-clause-in-update-query-in-datamapper">not the first one</a>
 to run into this issue.</p>
 
-<h3 id="how-i-got-bitten:136baa383e3072f3c5db5b5786002bc4">How I Got Bitten</h3>
+<h3 id="how-i-got-bitten">How I Got Bitten</h3>
 
 <p>Little did I know that the internal mapping of a Boolean field varies
 between SQL implementations.
@@ -165,16 +165,16 @@ started returning 500s.</p>
 
 <p>It&rsquo;s easy enough to change the query to work with MySQL:</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=1, whosaw=&#39;ders&#39; WHERE id=42 AND seen=0&quot;</span><span style="color: #f8f8f2">)</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=1, whosaw=&#39;ders&#39; WHERE id=42 AND seen=0&quot;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
-</p>
+
 
 <p>But then the unit tests fail.</p>
 
 <p>In the end, I wrote this bit of horrible code to keep the tests passing
 and the live server happy.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">t,</span> <span style="color: #f8f8f2">f</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">options</span><span style="color: #f92672">[</span><span style="color: #e6db74">&#39;scheme&#39;</span><span style="color: #f92672">]</span> <span style="color: #f92672">==</span> <span style="color: #e6db74">&#39;sqlite&#39;</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">t,</span> <span style="color: #f8f8f2">f</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">options</span><span style="color: #f92672">[</span><span style="color: #e6db74">&#39;scheme&#39;</span><span style="color: #f92672">]</span> <span style="color: #f92672">==</span> <span style="color: #e6db74">&#39;sqlite&#39;</span>
   <span style="color: #f92672">[</span><span style="color: #e6db74">&quot;&#39;t&#39;&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;&#39;f&#39;&quot;</span><span style="color: #f92672">]</span> <span style="color: #75715e"># sqlite</span>
 <span style="color: #66d9ef">else</span>
   <span style="color: #f92672">[</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">0</span><span style="color: #f92672">]</span> <span style="color: #75715e"># mysql</span>
@@ -184,7 +184,7 @@ and the live server happy.</p>
 
 <span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=#{</span><span style="color: #f8f8f2">t</span><span style="color: #e6db74">}, whosaw=&#39;ders&#39; WHERE id=42 AND seen=#{</span><span style="color: #f8f8f2">f</span><span style="color: #e6db74">}&quot;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
-</p>
+
 
 <p>(There may be a way to extract <code>t</code> and <code>f</code> directly from the
 DataMapper internals, but I&rsquo;m not that good yet.)</p>

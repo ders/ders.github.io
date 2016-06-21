@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.15" />
+    <meta name="generator" content="Hugo 0.16" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Google Sign-in &middot; awm&#39;s blog">
@@ -83,13 +83,13 @@
                     <div class="post-description">
                         
 
-<h2 id="using-google-sign-in-on-website-x:a9bc523f98a05ffe7a400551ba7208e4">Using Google Sign-in on Website X</h2>
+<h2 id="using-google-sign-in-on-website-x">Using Google Sign-in on Website X</h2>
 
 <p><strong>Disclaimer:</strong>  <a href="https://developers.google.com/identity/sign-in/web/sign-in">Read the docs</a> too.  This post doesn&rsquo;t cover everything.</p>
 
 <p>A week ago I was completely clueless as to how Google sign-in works.  I set out to write about it and learned a few things.</p>
 
-<h3 id="overview:a9bc523f98a05ffe7a400551ba7208e4">Overview</h3>
+<h3 id="overview">Overview</h3>
 
 <p>Using Google sign-in on a website requires first doing the following in the <a href="https://console.developers.google.com/home/dashboard">Google developer&rsquo;s console</a>:</p>
 
@@ -113,7 +113,7 @@
 
 <p>If the webpage making the sign-in call is served from a domain that has not been registered in the console, then Joe will see a 400 error (redirect_uri_mismatch) and a picture of a broken robot when trying to sign in.  The error page also exposes the email address of the account that the project is made under.</p>
 
-<h3 id="javascript-details:a9bc523f98a05ffe7a400551ba7208e4">Javascript details</h3>
+<h3 id="javascript-details">Javascript details</h3>
 
 <p>The file platform.js provides the global Google API object called <code>gapi</code> and the auth2 module.  The auth2 module must be explicitly loaded into gapi with the <code>gapi.load</code> method before it&rsquo;s used.  This method provides an optional callback for when/if the module is loaded successfully.</p>
 
@@ -180,7 +180,7 @@ alert(user.isSignedIn());    // false
 
 <p>According to the documentation, <code>GoogleUser.signIn</code> is equivalent to <code>GoogleUser.grant</code>, but my Firebug tells me that there&rsquo;s in fact no method called signIn on the GoogleUser object.  Bad documentation.</p>
 
-<h3 id="what-usually-happens-in-practice:a9bc523f98a05ffe7a400551ba7208e4">What usually happens in practice</h3>
+<h3 id="what-usually-happens-in-practice">What usually happens in practice</h3>
 
 <p>Google provides <a href="https://developers.google.com/identity/sign-in/web/sign-in#add_a_google_sign-in_button">a handy shortcut</a> so that anyone can add Google sign-in to their page without knowing any javascript.  As soon as platform.js is loaded, it checks for the existence of a <code>div.g-signin2</code> (&lt;div class=&ldquo;g-signin2&rdquo;&gt;) and springs into action if found.</p>
 
@@ -193,7 +193,7 @@ alert(user.isSignedIn());    // false
 
 <p>One caution here is that data-longtitle is a string value that gets cast to a boolean, and, as such, the string &ldquo;false&rdquo; will get cast to true.  The way to make longtitle false is set data-longtitle=&quot;&quot; (or to omit it entirely, as false is the default).</p>
 
-<h3 id="involving-the-server-for-website-x:a9bc523f98a05ffe7a400551ba7208e4">Involving the server for website X</h3>
+<h3 id="involving-the-server-for-website-x">Involving the server for website X</h3>
 
 <p>Chances are website X will want to know about Joe&rsquo;s sign-in on the server side.  This will require some javascript to send a token to the server, which the server can then decode to get Joe&rsquo;s information.</p>
 
@@ -204,7 +204,7 @@ alert(user.isSignedIn());    // false
 
 <p>The token is signed to prevent spoofing, and it&rsquo;s up to the server code to <a href="https://developers.google.com/identity/sign-in/web/backend-auth#verify-the-integrity-of-the-id-token">verify its integrity</a>.</p>
 
-<h3 id="scopes:a9bc523f98a05ffe7a400551ba7208e4">Scopes</h3>
+<h3 id="scopes">Scopes</h3>
 
 <p>Scopes are the permissions that we&rsquo;re asking Joe to give to website X.  The default for sign-in is scopes profile and email, and we get Joe&rsquo;s name, email, and picture if available.  <em>(Nerdy detail: the name and picture are not part of any scope; see below.)</em></p>
 
@@ -220,7 +220,7 @@ alert(user.isSignedIn());    // false
 
 <p>Here is <a href="https://developers.google.com/identity/protocols/googlescopes">a list of all known scopes</a>.</p>
 
-<h3 id="fewer-scopes:a9bc523f98a05ffe7a400551ba7208e4">Fewer Scopes</h3>
+<h3 id="fewer-scopes">Fewer Scopes</h3>
 
 <p>The default scopes can be turned off with by sending <code>fetch_basic_profile: false</code> as one of the options to GoogleAuth.init.  (Note that this precludes using the auto magic button.)  In this case, at least one scope must be explicitly specified with the scope parameter.</p>
 

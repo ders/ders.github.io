@@ -6,8 +6,76 @@
     <description>Recent content in Posts on awm&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 14 Apr 2016 10:22:00 +0900</lastBuildDate>
+    <lastBuildDate>Tue, 21 Jun 2016 17:20:00 +0900</lastBuildDate>
     <atom:link href="https://ders.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>CRUD APIs are crud</title>
+      <link>https://ders.github.io/post/2016-06-21-crud-is-crud/</link>
+      <pubDate>Tue, 21 Jun 2016 17:20:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2016-06-21-crud-is-crud/</guid>
+      <description>
+
+&lt;h2 id=&#34;crud-apis-are-crud&#34;&gt;CRUD APIs are crud&lt;/h2&gt;
+
+&lt;p&gt;I&amp;rsquo;m making the case specifically about &lt;a href=&#34;http://web.archive.org/web/20130116005443/http://tomayko.com/writings/rest-to-my-wife&#34;&gt;REST&lt;/a&gt; APIs, but in fact everything here applies to any API, REST or not.&lt;/p&gt;
+
+&lt;p&gt;It&amp;rsquo;s a common paradigm to create a data model as a collection of tables in a relational database and then access the data from some client app (mobile or web).  &lt;a href=&#34;https://en.wikipedia.org/wiki/Create,_read,_update_and_delete&#34;&gt;CRUD&lt;/a&gt; has become a popular way to access the data, perhaps because it&amp;rsquo;s easy to make and easy to explain.&lt;/p&gt;
+
+&lt;p&gt;In CRUD, we&amp;rsquo;re essentially giving the caller direct access to INSERT, SELECT, UPDATE and DELETE commands on our SQL database.  Or something analogous if you&amp;rsquo;re into NoSQL.  It comes with some permissions checking, of course, but as far as the capabilities of the API, that&amp;rsquo;s pretty much it.&lt;/p&gt;
+
+&lt;p&gt;The worst thing this does is expose the schema to the client, making it difficult to change the internal structure later on.  Want to fix how tags are stored?  Too bad, you&amp;rsquo;re going to break the API.&lt;/p&gt;
+
+&lt;p&gt;Besides that, there&amp;rsquo;s a lot of &lt;a href=&#34;http://www.agiledata.org/essays/relationalDatabases.html#AdvancedFeatures&#34;&gt;database capability&lt;/a&gt; that&amp;rsquo;s missing.&lt;/p&gt;
+
+&lt;p&gt;What happens when we have some business logic, e.g. in a stored procedure?  We&amp;rsquo;ll have to create a separate endpoint for that.&lt;/p&gt;
+
+&lt;p&gt;What happens when we have some limited resource that we need to allocate on a first-come, first-served basis, e.g. room reservations.  Again, we need some special processing to ensure that only one of two simultaneous requests succeed.&lt;/p&gt;
+
+&lt;p&gt;What happens when we need some concept of transactions, that when a series of operations can&amp;rsquo;t be completed we revert back to the original state?  Once again, we need to handle this separately.&lt;/p&gt;
+
+&lt;p&gt;What happens when we need to enforce some consistency between tables?  In the case of foreign key constraints, it&amp;rsquo;s usually enough just to do the updates in the proper order, but other more complicated constraints will either need their own separate endpoints or will need to be momentarily violated.  And being violated is never acceptable, even for just a moment.&lt;/p&gt;
+
+&lt;p&gt;The biggest problem with a CRUD API is that it&amp;rsquo;s &lt;a href=&#34;https://lostechies.com/chrispatterson/2014/01/03/crud-is-not-a-service/&#34;&gt;shifting all the business logic to the caller&lt;/a&gt;, whereas it should instead be invisible to the caller.  Even Microsoft &lt;a href=&#34;https://msdn.microsoft.com/en-us/library/ms954638.aspx#soade_topic3&#34;&gt;recognized CRUD as an anti-pattern&lt;/a&gt;, and that was way back in 2005.  Even when we&amp;rsquo;re only doing read and display, it&amp;rsquo;s often necessary to make several API calls to produce one document, unnecessarily slowing down load times.&lt;/p&gt;
+
+&lt;p&gt;The second-biggest problem with a CRUD API is specific to the update operation.  Update does not represent any realistic use case.  When do you ever want to rewrite an entire database row?  We carry this mistake all the way to the UI, where we press &lt;code&gt;edit&lt;/code&gt; on our profile, get back all of our data in input fields, change one field, and then write everything back.&lt;/p&gt;
+
+&lt;h2 id=&#34;apis-that-work&#34;&gt;APIs that work&lt;/h2&gt;
+
+&lt;p&gt;I&amp;rsquo;m proposing a way to approach APIs, a way that avoids the pitfalls of CRUD.  If you&amp;rsquo;re practicing &lt;a href=&#34;http://dddcommunity.org/learning-ddd/what_is_ddd/&#34;&gt;domain-driven design (DDD)&lt;/a&gt;, this will happen naturally.  (Side note: at our company, we&amp;rsquo;ve been using DDD since day one, but no one here knew there was a buzzword for it.)  None of what I&amp;rsquo;m proposing is new or groundbreaking; it&amp;rsquo;s just the way we should be doing things.&lt;/p&gt;
+
+&lt;p&gt;For read operations, there is one API call per display operation.  Everything needed to render the requested view comes back as one bundle.  Dynamic web content that&amp;rsquo;s generated server-side is done this way, and the API can too.  As a bonus, we can use the same API as internal for server-generated pages and as external for client-generated views.&lt;/p&gt;
+
+&lt;p&gt;For write operations, there is a one-to-one correspondence between a user action and an API call.  On the backend, one API call is one transaction, and if any part fails, then the whole thing fails.  (Side note: one should never, ever build a system where it&amp;rsquo;s possible for only part of a user action to succeed.  Usability nightmare.)&lt;/p&gt;
+
+&lt;p&gt;If we absolutely need some CRUD-style functionality (e.g. updating one&amp;rsquo;s profile), we should make our updates one field at a time.  Not only does this match more closely what the average user will be doing, but it gives us an easy way to manage concurrency: simply require an update call to specify both the old and new value.  If the old value doesn&amp;rsquo;t match, it&amp;rsquo;s an error.&lt;/p&gt;
+
+&lt;h2 id=&#34;tracking-changes-and-archiving&#34;&gt;Tracking changes and archiving&lt;/h2&gt;
+
+&lt;p&gt;Tracking changes and archiving are two capabilities that are often added to a data store as an afterthought.  I&amp;rsquo;d like to be proactive and incorporate them into the data design from the beginning.&lt;/p&gt;
+
+&lt;p&gt;The simplest way to track changes is with created-at and updated-at fields on every db model, and most database engines have neat ways to auto-update these fields.  This level of tracking is of limited use, however, as we don&amp;rsquo;t know what changed or who changed it.&lt;/p&gt;
+
+&lt;p&gt;There are plenty of add-ons to do detailed revision tracking (&lt;a href=&#34;https://django-reversion.readthedocs.io/en/stable/&#34;&gt;django-reversion&lt;/a&gt; is one I like), but I&amp;rsquo;m a little bit concerned about the performance hit.  Also, such add-ons make the created-at and updated-at fields redundant.  That&amp;rsquo;s probably a good thing.&lt;/p&gt;
+
+&lt;p&gt;As for archiving, a common technique is to add a boolean field called &lt;code&gt;archived&lt;/code&gt; to every model you want to be able to archive.  On this plus side, it&amp;rsquo;s easy not to break references when you have non-archived data that refers to archived data, but &lt;a href=&#34;https://en.wikipedia.org/wiki/Design_smell&#34;&gt;we really shouldn&amp;rsquo;t have that happening&lt;/a&gt;.  On the minus side, we end up adding &lt;code&gt;and not archived&lt;/code&gt; to nearly every query.&lt;/p&gt;
+
+&lt;p&gt;We also might want to be able to permanently delete some archived material after a certain expiration time.  We&amp;rsquo;d then need an &lt;code&gt;archived_at&lt;/code&gt; field as well.&lt;/p&gt;
+
+&lt;p&gt;Here&amp;rsquo;s where CRUD fails again:  Archive a record by setting &lt;code&gt;archived&lt;/code&gt; to true and write it back.  Unarchive it similarly.  Determine the age of data by reading the created-at and updated-at fields on the model.&lt;/p&gt;
+
+&lt;p&gt;I propose that archiving and revision tracking can be implemented together in a way that&amp;rsquo;s clean and transparent to the client.&lt;/p&gt;
+
+&lt;p&gt;Instead of adding extra fields to the models, all the archive and tracking information goes into a read/append-only journal, which may or may not be implemented as a database table.&lt;/p&gt;
+
+&lt;p&gt;The journal contains one entry for each user action (see above). If there are system actions (e.g. daily aggregations) that get written to the database, those get included as well.  Each entry contains a before-and-after detail of all changes.  Since this before-and-after detail will only ever be accessed as a whole, it&amp;rsquo;s reasonable to make it one json bundle in a text field.&lt;/p&gt;
+
+&lt;p&gt;Archiving simply becomes a delete operation, as all the details are archived in the history.  This means, of course, that related data needs to be archived together, which is a good thing.  Furthermore, it&amp;rsquo;s trivial to put a time limit on data retention; simply delete old journal entries.&lt;/p&gt;
+
+&lt;p&gt;My next API is going to rock.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>The Django REST framework</title>
@@ -72,13 +140,13 @@ The web browsable API is the one that won me over.&lt;/p&gt;
 &lt;li&gt;Feed the transcript into a sentiment analyzer.&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h2 id=&#34;the-original-content:c99f1888a421b678b37e5694192a42d0&#34;&gt;The original content&lt;/h2&gt;
+&lt;h2 id=&#34;the-original-content&#34;&gt;The original content&lt;/h2&gt;
 
 &lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/qOQCw7Hcwic&#34; frameborder=&#34;0&#34; allowfullscreen&gt;&lt;/iframe&gt;
 
 &lt;iframe width=&#34;560&#34; height=&#34;315&#34; src=&#34;https://www.youtube.com/embed/p5ZB8Lg1tcA&#34; frameborder=&#34;0&#34; allowfullscreen&gt;&lt;/iframe&gt;
 
-&lt;h2 id=&#34;extracting-a-5-minute-audio-clip:c99f1888a421b678b37e5694192a42d0&#34;&gt;Extracting a 5-minute audio clip&lt;/h2&gt;
+&lt;h2 id=&#34;extracting-a-5-minute-audio-clip&#34;&gt;Extracting a 5-minute audio clip&lt;/h2&gt;
 
 &lt;p&gt;There are many ways to do this.  One way is to download the video using a browser add-on.  Browser add-ons are easy to find but are also fickle, as they make it easy to download material in violation of copyright.  And if you&amp;rsquo;re downloading from YouTube, you&amp;rsquo;re violating their terms of service, even if you&amp;rsquo;re not infringing on copyright.  (We maintain that this exercise falls under &lt;a href=&#34;https://en.wikipedia.org/wiki/Fair_use&#34;&gt;fair use&lt;/a&gt;.)&lt;/p&gt;
 
@@ -96,7 +164,7 @@ The web browsable API is the one that won me over.&lt;/p&gt;
 
 &lt;p&gt;Both &lt;code&gt;ffmpeg&lt;/code&gt; and &lt;code&gt;flac&lt;/code&gt; are available via homebrew.&lt;/p&gt;
 
-&lt;h2 id=&#34;generating-a-transcript:c99f1888a421b678b37e5694192a42d0&#34;&gt;Generating a transcript&lt;/h2&gt;
+&lt;h2 id=&#34;generating-a-transcript&#34;&gt;Generating a transcript&lt;/h2&gt;
 
 &lt;p&gt;The IBM Watson Developer Cloud has a &lt;a href=&#34;http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html&#34;&gt;speech-to-text&lt;/a&gt; service which is available through an API and also has a &lt;a href=&#34;https://speech-to-text-demo.mybluemix.net/&#34;&gt;demo page&lt;/a&gt;.  In theory, one can get limited free access to the API after going through a mildly annoying sign-up process, but in practice I was unable to convince the API to accept the credentials I&amp;rsquo;d obtained.&lt;/p&gt;
 
@@ -114,7 +182,7 @@ The web browsable API is the one that won me over.&lt;/p&gt;
 &lt;p&gt;President Falwell and. David. Ok thank you very much for inviting my wife Jane and. Ought to be with you this morning we appreciate the invitation. Very much. And let me start off by acknowledging what I think. All of you already know. And that is the views. That many here at liberty university have. And all I. On a number of important issues. A very very different. I believe in women&amp;rsquo;s rights dnmt. In the light of the woman to control her own body dnmt. I believe in gay rights. And now. Those of my views. And it is no secret. But I came here today. Because I believe from the bottom of my heart. That it is vitally important for those of us. Who hold different views. To be able to engage in any civil discourse. Who often in our country and I think both sides. Bear responsibility for us. There is too much shouting at each other. There is too much making fun of each other. Now in my view then are you can say this is somebody who whose voice is hoarse because I have given dozens of speeches. And the last few months it is easy. To go out and talk to people who agree with you are missing Greensboro North Carolina just last night. Alright. We are nine thousand people out. Mostly they agreed with me tonight. We&amp;rsquo;re going to be a Manassas and thousands out they agree with me. It&amp;rsquo;s not a whole lot to do. That&amp;rsquo;s what politicians by and large do we go out and we talk to people who agree with us. But it is harder. But not less important. For us to try and communicate with those who do not agree with us on every issue. After. And it is important to see where if possible and I do believe it&amp;rsquo;s possible we can find common grounds. No liberty university. Is a religious school obviously. Pn. All of you are proud of the. You already school. Which as all of us in our own way. Tries to understand the meaning of morality. What does it mean. To live a moral life. And you try to understand in this very complicated modern world that we live in. What the words of the Bible me in today&amp;rsquo;s society. You are in school which tries to teach its students. How to behave with decency and with honesty and how you can best relates. To your fellow human beings and I applaud. You for trying to achieve those goals. Let me. Take a moment. Or a few moments. To tell you what motivates me. And the work that I do. As a public servant as a Sentinel. From the state of Vermont. And let me tell you that it goes without saying I am flaws foh throw me being a perfect human being. But all I am motivated by a vision.&lt;/p&gt;
 &lt;/blockquote&gt;
 
-&lt;h2 id=&#34;sentiment-analysis:c99f1888a421b678b37e5694192a42d0&#34;&gt;Sentiment Analysis&lt;/h2&gt;
+&lt;h2 id=&#34;sentiment-analysis&#34;&gt;Sentiment Analysis&lt;/h2&gt;
 
 &lt;p&gt;Again, there are a variety of tools to do this, including the &lt;a href=&#34;http://www.nltk.org/&#34;&gt;Natural Language Toolkit Project&lt;/a&gt;, a free python library. Taking advantage of a &lt;a href=&#34;http://text-processing.com/demo/sentiment/&#34;&gt;simple demo site&lt;/a&gt; which uses the NLTK, we can see that both Sanders and Trump are polar, but Sanders is more positive.  Who would&amp;rsquo;ve known?&lt;/p&gt;
 
@@ -177,11 +245,11 @@ The web browsable API is the one that won me over.&lt;/p&gt;
 &lt;li&gt;run a watch process to update files as they&amp;rsquo;re changed&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h2 id=&#34;installing-grunt:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Installing grunt&lt;/h2&gt;
+&lt;h2 id=&#34;installing-grunt&#34;&gt;Installing grunt&lt;/h2&gt;
 
 &lt;p&gt;Grunt is part of the &lt;a href=&#34;https://nodejs.org/&#34;&gt;node.js&lt;/a&gt; ecosystem, and as such is available via &lt;a href=&#34;https://www.npmjs.com/&#34;&gt;the node package manager (npm)&lt;/a&gt;.  Npm is available on OS X via Homebrew.&lt;/p&gt;
 
-&lt;h3 id=&#34;basic-npm-concepts:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Basic npm concepts&lt;/h3&gt;
+&lt;h3 id=&#34;basic-npm-concepts&#34;&gt;Basic npm concepts&lt;/h3&gt;
 
 &lt;p&gt;There are a few things that we need to understand about npm.  The biggest headache was recognizing the difference between local and global installs and knowing when to use which.&lt;/p&gt;
 
@@ -193,7 +261,7 @@ The web browsable API is the one that won me over.&lt;/p&gt;
 &lt;li&gt;When installing a package explicitly, there is in an option to add an entry to &lt;code&gt;package.json&lt;/code&gt; so that someone else will be able to use &lt;code&gt;npm install&lt;/code&gt; and get everything.  Note that this is an option and not the default behavior.&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h3 id=&#34;creating-the-package-json-file:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Creating the package.json file&lt;/h3&gt;
+&lt;h3 id=&#34;creating-the-package-json-file&#34;&gt;Creating the package.json file&lt;/h3&gt;
 
 &lt;p&gt;According to &lt;a href=&#34;http://gruntjs.com/getting-started#package.json&#34;&gt;the documentation&lt;/a&gt;,
 the command to use is &lt;code&gt;npm init&lt;/code&gt;, and it must be run in project root.  Running it starts a dialog on the terminal, asking some mostly irrelevant questions: name (defaults to the name of the project directory), version (defaults to 1.0.0), description, entry point (defaults to index.js), test command, git repository, keywords, author, and license (defaults to ISC).  These questions can be suppressed by using &lt;code&gt;npm init --yes&lt;/code&gt;, which defaults everything.&lt;/p&gt;
@@ -223,7 +291,7 @@ But since I&amp;rsquo;m &lt;a href=&#34;https://www.bignerdranch.com/blog/a-bit-
 &lt;p&gt;According to &lt;a href=&#34;https://github.com/lodash/lodash/wiki/Changelog#v092&#34;&gt;the changelog for lodash&lt;/a&gt;,
 version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the &amp;ldquo;upgrade to&amp;rdquo; version of 3.0.0 is a year old already.  This is a red flag; how and why are these dependencies not getting maintained?  That said, it appears that &lt;a href=&#34;https://github.com/gruntjs/grunt/issues/1419&#34;&gt;an update is on the way&lt;/a&gt;.  Will have to ignore this warning for now.&lt;/p&gt;
 
-&lt;h3 id=&#34;grunt-plugins:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Grunt plugins&lt;/h3&gt;
+&lt;h3 id=&#34;grunt-plugins&#34;&gt;Grunt plugins&lt;/h3&gt;
 
 &lt;p&gt;Grunt itself is just the overlord; to do any real work we&amp;rsquo;re going to need some plugins.  After a lot of googling, I&amp;rsquo;ve come up with this list:&lt;/p&gt;
 
@@ -242,7 +310,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 &lt;pre&gt;&lt;code&gt;npm install grunt grunt-contrib-uglify grunt-contrib-sass grunt-contrib-copy grunt-contrib-clean grunt-contrib-watch --save-dev
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;h3 id=&#34;grunt-command-line:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Grunt command line&lt;/h3&gt;
+&lt;h3 id=&#34;grunt-command-line&#34;&gt;Grunt command line&lt;/h3&gt;
 
 &lt;p&gt;There is one more install required if we are to be able to run grunt from the command line.  The package is &lt;code&gt;grunt-cli&lt;/code&gt;, and needs to be installed globally so that the grunt executable goes into /usr/local/bin and is available in the system path.&lt;/p&gt;
 
@@ -252,7 +320,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 &lt;p&gt;One gotcha is that the global grunt-cli requires a local grunt or it will fail.  Grunt-cli is a wrapper to find the locally installed grunt to whatever project you&amp;rsquo;re in.  The global grunt-cli will not find a global grunt.&lt;/p&gt;
 
-&lt;h3 id=&#34;summary-of-grunt-installation:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Summary of grunt installation&lt;/h3&gt;
+&lt;h3 id=&#34;summary-of-grunt-installation&#34;&gt;Summary of grunt installation&lt;/h3&gt;
 
 &lt;ul&gt;
 &lt;li&gt;Install npm (e.g. &lt;code&gt;brew install npm&lt;/code&gt;).&lt;/li&gt;
@@ -265,7 +333,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 &lt;p&gt;Once we have &lt;code&gt;package.json&lt;/code&gt; as updated by the npm install &amp;ndash;save-dev command, steps 2 and 3 can be replaced by a simple &lt;code&gt;npm install&lt;/code&gt;.  We still need to keep step 4; global packages can&amp;rsquo;t go into &lt;code&gt;package.json&lt;/code&gt; (npm will ignore &lt;code&gt;--save-dev&lt;/code&gt; when &lt;code&gt;-g&lt;/code&gt; is specified).&lt;/p&gt;
 
-&lt;h3 id=&#34;optionally-installing-grunt-cli-locally:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Optionally installing grunt-cli locally&lt;/h3&gt;
+&lt;h3 id=&#34;optionally-installing-grunt-cli-locally&#34;&gt;Optionally installing grunt-cli locally&lt;/h3&gt;
 
 &lt;p&gt;Installing &lt;code&gt;grunt-cli&lt;/code&gt; locally instead of globally will allow it to be included in &lt;code&gt;package.json&lt;/code&gt;, but it has the side effect of not having the grunt executable in the path.  A possible workaround to this side effect is to add a script section to &lt;code&gt;package.json&lt;/code&gt; with all the grunts you want to do.&lt;/p&gt;
 
@@ -274,9 +342,9 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 &lt;p&gt;Then you can type &lt;code&gt;npm run watch&lt;/code&gt; instead of &lt;code&gt;grunt watch&lt;/code&gt;.  This may or may not be worth the trouble.&lt;/p&gt;
 
-&lt;h2 id=&#34;writing-a-gruntfile:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Writing a gruntfile&lt;/h2&gt;
+&lt;h2 id=&#34;writing-a-gruntfile&#34;&gt;Writing a gruntfile&lt;/h2&gt;
 
-&lt;h3 id=&#34;basic-gruntfile-concept:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Basic gruntfile concept&lt;/h3&gt;
+&lt;h3 id=&#34;basic-gruntfile-concept&#34;&gt;Basic gruntfile concept&lt;/h3&gt;
 
 &lt;p&gt;The gruntfile is a bit of javascript initialization that gets run whenever grunt is invoked.  The gruntfile needs to define an initialization function and assign that to the global &lt;code&gt;module.exports&lt;/code&gt;.  Within the initialization function, we&amp;rsquo;ll need to list the modules we need (grunt-contrib-uglify, etc.), specify some configuration for each module, define the default task, and optionally define additional tasks.&lt;/p&gt;
 
@@ -309,7 +377,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 &lt;script src=&#34;https://gist.github.com/ders/3ca946b14641e5efe783.js&#34;&gt;&lt;/script&gt;
 
-&lt;h3 id=&#34;observations:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Observations&lt;/h3&gt;
+&lt;h3 id=&#34;observations&#34;&gt;Observations&lt;/h3&gt;
 
 &lt;ul&gt;
 &lt;li&gt;Overall, the quality of documentation is poor.  I had to resort to copying examples and then modifying them by trial and error until I got the results I wanted.  There are many alternate syntaxes, causing further confusion.&lt;/li&gt;
@@ -319,7 +387,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 &lt;li&gt;The &lt;code&gt;grunt-contrib-copy&lt;/code&gt; plugin doesn&amp;rsquo;t know how to sync. The &lt;code&gt;i&lt;/code&gt; and &lt;code&gt;lib&lt;/code&gt; directories are copied in their entireties every time there&amp;rsquo;s a change.  There is &lt;a href=&#34;https://github.com/tomusdrw/grunt-sync&#34;&gt;another plugin&lt;/a&gt; which claims to know how to sync, but I haven&amp;rsquo;t tested it.&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h3 id=&#34;conclusion:230cd0b47b3fc52b0f70982618b640aa&#34;&gt;Conclusion&lt;/h3&gt;
+&lt;h3 id=&#34;conclusion&#34;&gt;Conclusion&lt;/h3&gt;
 
 &lt;p&gt;This was a whole lot of trouble to set up a relatively simple build system. Grunt is a powerful tool, and I can see the value of using it when you&amp;rsquo;re already in a node-based project, but it to use it as an isolated build tool is not worth the effort.&lt;/p&gt;
 
@@ -339,11 +407,11 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 &lt;p&gt;Count me in on the developers who believe that &lt;a href=&#34;http://www.gnu.org/software/make/manual/make.html&#34;&gt;GNU make&lt;/a&gt; is the best tool for assembling static assets.&lt;/p&gt;
 
-&lt;h3 id=&#34;the-general-problem:19cc05a9058f195db3905e6197b7999f&#34;&gt;The general problem&lt;/h3&gt;
+&lt;h3 id=&#34;the-general-problem&#34;&gt;The general problem&lt;/h3&gt;
 
 &lt;p&gt;We need to maintain a set of files B that is derived from another set of files A through some known (and possibly complicated) transformation.  We edit the files in set A but not in set B.  We would like a simple way to (1) create B from A, and (2) update B when A changes, only recreating the parts that are necessary.&lt;/p&gt;
 
-&lt;h3 id=&#34;the-more-specific-problem:19cc05a9058f195db3905e6197b7999f&#34;&gt;The more specific problem&lt;/h3&gt;
+&lt;h3 id=&#34;the-more-specific-problem&#34;&gt;The more specific problem&lt;/h3&gt;
 
 &lt;p&gt;B is the set of static assets for a web service, and A is the set of source files used to make them.  Only A will be checked into source control, and only B will be uploaded to the web server.&lt;/p&gt;
 
@@ -365,7 +433,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 &lt;p&gt;Other assets such as images and precompiled libraries can be copied from A to B without modification.&lt;/p&gt;
 
-&lt;h3 id=&#34;what-to-do:19cc05a9058f195db3905e6197b7999f&#34;&gt;What to do&lt;/h3&gt;
+&lt;h3 id=&#34;what-to-do&#34;&gt;What to do&lt;/h3&gt;
 
 &lt;p&gt;The first thing is to define a directory structure.&lt;/p&gt;
 
@@ -425,7 +493,7 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
 
 &lt;script src=&#34;https://gist.github.com/ders/627147bf67544c96f8be.js&#34;&gt;&lt;/script&gt;
 
-&lt;h3 id=&#34;how-it-works:19cc05a9058f195db3905e6197b7999f&#34;&gt;How it works&lt;/h3&gt;
+&lt;h3 id=&#34;how-it-works&#34;&gt;How it works&lt;/h3&gt;
 
 &lt;p&gt;The meat of this makefile is in the pattern rules (lines 43-55).  Quick cheat sheet:  &lt;code&gt;$@&lt;/code&gt; = target, &lt;code&gt;$^&lt;/code&gt; = all dependencies, &lt;code&gt;$&amp;lt;&lt;/code&gt; = the first dependency.  &lt;a href=&#34;http://www.gnu.org/software/make/manual/make.html#Automatic-Variables&#34;&gt;Details are here.&lt;/a&gt;&lt;/p&gt;
 
@@ -469,7 +537,7 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
 └── Makefile
 &lt;/code&gt;&lt;/pre&gt;
 
-&lt;h3 id=&#34;dependencies:19cc05a9058f195db3905e6197b7999f&#34;&gt;Dependencies&lt;/h3&gt;
+&lt;h3 id=&#34;dependencies&#34;&gt;Dependencies&lt;/h3&gt;
 
 &lt;p&gt;This makefile requires &lt;code&gt;jsmin&lt;/code&gt;, &lt;code&gt;sass&lt;/code&gt; and &lt;code&gt;watchman-make&lt;/code&gt; to be available at the command line.&lt;/p&gt;
 
@@ -477,17 +545,17 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
 
 &lt;p&gt;Jsmin is also &lt;a href=&#34;https://libraries.io/npm/jsmin&#34;&gt;available via npm&lt;/a&gt;.&lt;/p&gt;
 
-&lt;h3 id=&#34;other-features-i-d-like-to-include:19cc05a9058f195db3905e6197b7999f&#34;&gt;Other features I&amp;rsquo;d like to include&lt;/h3&gt;
+&lt;h3 id=&#34;other-features-i-d-like-to-include&#34;&gt;Other features I&amp;rsquo;d like to include&lt;/h3&gt;
 
 &lt;p&gt;Would be nice to automatically detect @import statements in scss source files and generate dependency lists based on that.  I&amp;rsquo;m aware that the Sass package has it&amp;rsquo;s own watcher that handles dependencies, but using that would mean bypassing a significant part of the makefile, thereby making a mess.&lt;/p&gt;
 
 &lt;p&gt;It would be pretty simple to add a &lt;code&gt;make deploy&lt;/code&gt; command to rsync the server.  I&amp;rsquo;ll probably do that later.&lt;/p&gt;
 
-&lt;h3 id=&#34;a-feature-i-excluded-on-purpose:19cc05a9058f195db3905e6197b7999f&#34;&gt;A feature I excluded on purpose&lt;/h3&gt;
+&lt;h3 id=&#34;a-feature-i-excluded-on-purpose&#34;&gt;A feature I excluded on purpose&lt;/h3&gt;
 
 &lt;p&gt;Many web frameworks automatically append timestamps or version numbers to static assets in order to defeat browser caching.  This adds a whole lot of complexity for a pretty minor benefit.  Once a site is in production, I expect updates to be few and far between, and I&amp;rsquo;m happy to manually add a version number to a target filename as necessary.&lt;/p&gt;
 
-&lt;h3 id=&#34;credits:19cc05a9058f195db3905e6197b7999f&#34;&gt;Credits&lt;/h3&gt;
+&lt;h3 id=&#34;credits&#34;&gt;Credits&lt;/h3&gt;
 
 &lt;p&gt;This Makefile was heavily influenced by and owes thanks to &lt;a href=&#34;http://west.io/post/2015/04/11-frontend-builds-with-makefiles/&#34;&gt;this blog post&lt;/a&gt;.  Thank you!&lt;/p&gt;
 </description>
@@ -501,13 +569,13 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
       <guid>https://ders.github.io/post/2016-01-08-google-signin/</guid>
       <description>
 
-&lt;h2 id=&#34;using-google-sign-in-on-website-x:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;Using Google Sign-in on Website X&lt;/h2&gt;
+&lt;h2 id=&#34;using-google-sign-in-on-website-x&#34;&gt;Using Google Sign-in on Website X&lt;/h2&gt;
 
 &lt;p&gt;&lt;strong&gt;Disclaimer:&lt;/strong&gt;  &lt;a href=&#34;https://developers.google.com/identity/sign-in/web/sign-in&#34;&gt;Read the docs&lt;/a&gt; too.  This post doesn&amp;rsquo;t cover everything.&lt;/p&gt;
 
 &lt;p&gt;A week ago I was completely clueless as to how Google sign-in works.  I set out to write about it and learned a few things.&lt;/p&gt;
 
-&lt;h3 id=&#34;overview:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;Overview&lt;/h3&gt;
+&lt;h3 id=&#34;overview&#34;&gt;Overview&lt;/h3&gt;
 
 &lt;p&gt;Using Google sign-in on a website requires first doing the following in the &lt;a href=&#34;https://console.developers.google.com/home/dashboard&#34;&gt;Google developer&amp;rsquo;s console&lt;/a&gt;:&lt;/p&gt;
 
@@ -531,7 +599,7 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
 
 &lt;p&gt;If the webpage making the sign-in call is served from a domain that has not been registered in the console, then Joe will see a 400 error (redirect_uri_mismatch) and a picture of a broken robot when trying to sign in.  The error page also exposes the email address of the account that the project is made under.&lt;/p&gt;
 
-&lt;h3 id=&#34;javascript-details:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;Javascript details&lt;/h3&gt;
+&lt;h3 id=&#34;javascript-details&#34;&gt;Javascript details&lt;/h3&gt;
 
 &lt;p&gt;The file platform.js provides the global Google API object called &lt;code&gt;gapi&lt;/code&gt; and the auth2 module.  The auth2 module must be explicitly loaded into gapi with the &lt;code&gt;gapi.load&lt;/code&gt; method before it&amp;rsquo;s used.  This method provides an optional callback for when/if the module is loaded successfully.&lt;/p&gt;
 
@@ -598,7 +666,7 @@ alert(user.isSignedIn());    // false
 
 &lt;p&gt;According to the documentation, &lt;code&gt;GoogleUser.signIn&lt;/code&gt; is equivalent to &lt;code&gt;GoogleUser.grant&lt;/code&gt;, but my Firebug tells me that there&amp;rsquo;s in fact no method called signIn on the GoogleUser object.  Bad documentation.&lt;/p&gt;
 
-&lt;h3 id=&#34;what-usually-happens-in-practice:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;What usually happens in practice&lt;/h3&gt;
+&lt;h3 id=&#34;what-usually-happens-in-practice&#34;&gt;What usually happens in practice&lt;/h3&gt;
 
 &lt;p&gt;Google provides &lt;a href=&#34;https://developers.google.com/identity/sign-in/web/sign-in#add_a_google_sign-in_button&#34;&gt;a handy shortcut&lt;/a&gt; so that anyone can add Google sign-in to their page without knowing any javascript.  As soon as platform.js is loaded, it checks for the existence of a &lt;code&gt;div.g-signin2&lt;/code&gt; (&amp;lt;div class=&amp;ldquo;g-signin2&amp;rdquo;&amp;gt;) and springs into action if found.&lt;/p&gt;
 
@@ -611,7 +679,7 @@ alert(user.isSignedIn());    // false
 
 &lt;p&gt;One caution here is that data-longtitle is a string value that gets cast to a boolean, and, as such, the string &amp;ldquo;false&amp;rdquo; will get cast to true.  The way to make longtitle false is set data-longtitle=&amp;quot;&amp;quot; (or to omit it entirely, as false is the default).&lt;/p&gt;
 
-&lt;h3 id=&#34;involving-the-server-for-website-x:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;Involving the server for website X&lt;/h3&gt;
+&lt;h3 id=&#34;involving-the-server-for-website-x&#34;&gt;Involving the server for website X&lt;/h3&gt;
 
 &lt;p&gt;Chances are website X will want to know about Joe&amp;rsquo;s sign-in on the server side.  This will require some javascript to send a token to the server, which the server can then decode to get Joe&amp;rsquo;s information.&lt;/p&gt;
 
@@ -622,7 +690,7 @@ alert(user.isSignedIn());    // false
 
 &lt;p&gt;The token is signed to prevent spoofing, and it&amp;rsquo;s up to the server code to &lt;a href=&#34;https://developers.google.com/identity/sign-in/web/backend-auth#verify-the-integrity-of-the-id-token&#34;&gt;verify its integrity&lt;/a&gt;.&lt;/p&gt;
 
-&lt;h3 id=&#34;scopes:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;Scopes&lt;/h3&gt;
+&lt;h3 id=&#34;scopes&#34;&gt;Scopes&lt;/h3&gt;
 
 &lt;p&gt;Scopes are the permissions that we&amp;rsquo;re asking Joe to give to website X.  The default for sign-in is scopes profile and email, and we get Joe&amp;rsquo;s name, email, and picture if available.  &lt;em&gt;(Nerdy detail: the name and picture are not part of any scope; see below.)&lt;/em&gt;&lt;/p&gt;
 
@@ -638,7 +706,7 @@ alert(user.isSignedIn());    // false
 
 &lt;p&gt;Here is &lt;a href=&#34;https://developers.google.com/identity/protocols/googlescopes&#34;&gt;a list of all known scopes&lt;/a&gt;.&lt;/p&gt;
 
-&lt;h3 id=&#34;fewer-scopes:a9bc523f98a05ffe7a400551ba7208e4&#34;&gt;Fewer Scopes&lt;/h3&gt;
+&lt;h3 id=&#34;fewer-scopes&#34;&gt;Fewer Scopes&lt;/h3&gt;
 
 &lt;p&gt;The default scopes can be turned off with by sending &lt;code&gt;fetch_basic_profile: false&lt;/code&gt; as one of the options to GoogleAuth.init.  (Note that this precludes using the auto magic button.)  In this case, at least one scope must be explicitly specified with the scope parameter.&lt;/p&gt;
 
@@ -708,7 +776,7 @@ It beats the pants off of Active Somethingorother when it comes to making clean,
 &lt;li&gt;Datamapper has different representations of the Boolean type, even between different SQLs.&lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;h3 id=&#34;the-missing-feature:136baa383e3072f3c5db5b5786002bc4&#34;&gt;The Missing Feature&lt;/h3&gt;
+&lt;h3 id=&#34;the-missing-feature&#34;&gt;The Missing Feature&lt;/h3&gt;
 
 &lt;p&gt;The glaringly missing feature is the ability to update a value and know
 whether or not we actually changed anything.&lt;/p&gt;
@@ -739,31 +807,31 @@ generating an exception if no records are found.&lt;/p&gt;
 Datamapper insists on generating two separate queries for the single
 update statement:&lt;/p&gt;
 
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;SELECT&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;size&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;whosaw&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;FROM&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;quarks&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;WHERE&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;42&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;AND&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;f&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;ORDER&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;BY&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt;
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;SELECT&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;size&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;whosaw&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;FROM&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;quarks&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;WHERE&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;42&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;AND&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;f&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;ORDER&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;BY&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt;
 &lt;span style=&#34;color: #66d9ef&#34;&gt;UPDATE&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;quarks&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;SET&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;t&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;whosaw&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;ders&amp;#39;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;WHERE&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;42&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
+
 
 &lt;p&gt;This obviously won&amp;rsquo;t do, as it&amp;rsquo;s not thread-safe.
 Two users running this code at the same time would both believe that they saw the quark first.&lt;/p&gt;
 
-&lt;h3 id=&#34;the-solution:136baa383e3072f3c5db5b5786002bc4&#34;&gt;The Solution&lt;/h3&gt;
+&lt;h3 id=&#34;the-solution&#34;&gt;The Solution&lt;/h3&gt;
 
 &lt;p&gt;The solution was to write the update query in SQL.&lt;/p&gt;
 
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;DataMapper&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;repository(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;:default&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;adapter&lt;/span&gt;
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;DataMapper&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;repository(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;:default&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;adapter&lt;/span&gt;
 &lt;span style=&#34;color: #f8f8f2&#34;&gt;r&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;execute(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;UPDATE quarks SET seen=&amp;#39;t&amp;#39;, whosaw=&amp;#39;ders&amp;#39; WHERE id=42 AND seen=&amp;#39;f&amp;#39;&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
 &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;affected_rows&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;
    &lt;span style=&#34;color: #f92672&#34;&gt;...&lt;/span&gt; &lt;span style=&#34;color: #75715e&#34;&gt;# we saw it first&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
+
 
 &lt;p&gt;Kind of defeats the purpose of having an ORM, but it gets the job done.
 And as it turns out, I&amp;rsquo;m
 &lt;a href=&#34;http://stackoverflow.com/questions/18650932/how-to-add-a-where-clause-in-update-query-in-datamapper&#34;&gt;not the first one&lt;/a&gt;
 to run into this issue.&lt;/p&gt;
 
-&lt;h3 id=&#34;how-i-got-bitten:136baa383e3072f3c5db5b5786002bc4&#34;&gt;How I Got Bitten&lt;/h3&gt;
+&lt;h3 id=&#34;how-i-got-bitten&#34;&gt;How I Got Bitten&lt;/h3&gt;
 
 &lt;p&gt;Little did I know that the internal mapping of a Boolean field varies
 between SQL implementations.
@@ -774,16 +842,16 @@ started returning 500s.&lt;/p&gt;
 
 &lt;p&gt;It&amp;rsquo;s easy enough to change the query to work with MySQL:&lt;/p&gt;
 
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;r&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;execute(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;UPDATE quarks SET seen=1, whosaw=&amp;#39;ders&amp;#39; WHERE id=42 AND seen=0&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;r&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;execute(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;UPDATE quarks SET seen=1, whosaw=&amp;#39;ders&amp;#39; WHERE id=42 AND seen=0&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
+
 
 &lt;p&gt;But then the unit tests fail.&lt;/p&gt;
 
 &lt;p&gt;In the end, I wrote this bit of horrible code to keep the tests passing
 and the live server happy.&lt;/p&gt;
 
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;t,&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;f&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;options&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;scheme&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;sqlite&amp;#39;&lt;/span&gt;
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;t,&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;f&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;options&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;scheme&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;sqlite&amp;#39;&lt;/span&gt;
   &lt;span style=&#34;color: #f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;&amp;#39;t&amp;#39;&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;&amp;#39;f&amp;#39;&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color: #75715e&#34;&gt;# sqlite&lt;/span&gt;
 &lt;span style=&#34;color: #66d9ef&#34;&gt;else&lt;/span&gt;
   &lt;span style=&#34;color: #f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color: #75715e&#34;&gt;# mysql&lt;/span&gt;
@@ -793,7 +861,7 @@ and the live server happy.&lt;/p&gt;
 
 &lt;span style=&#34;color: #f8f8f2&#34;&gt;r&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;execute(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;UPDATE quarks SET seen=#{&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;t&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;}, whosaw=&amp;#39;ders&amp;#39; WHERE id=42 AND seen=#{&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;f&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;}&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
+
 
 &lt;p&gt;(There may be a way to extract &lt;code&gt;t&lt;/code&gt; and &lt;code&gt;f&lt;/code&gt; directly from the
 DataMapper internals, but I&amp;rsquo;m not that good yet.)&lt;/p&gt;
@@ -869,16 +937,16 @@ LC_ALL=en_US.UTF-8
 &lt;p&gt;As always, it&amp;rsquo;s also a good idea to make sure you have the latest and
 greatest packages:&lt;/p&gt;
 
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;$ sudo apt-get update
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;$ sudo apt-get update
 $ sudo apt-get upgrade
 &lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
+
 
 &lt;p&gt;And finally, while we&amp;rsquo;re at it, why not set the timezone?&lt;/p&gt;
 
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;$ sudo dpkg-reconfigure tzdata
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;$ sudo dpkg-reconfigure tzdata
 &lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
+
 
 &lt;p&gt;Next time I need to set up a new EC2 instance,
 I&amp;rsquo;ll come read my own blog and know exactly what to do.&lt;/p&gt;
@@ -1040,59 +1108,27 @@ Also, I&amp;rsquo;d like to avoid &lt;code&gt;#dirty_attributes&lt;/code&gt; as 
 
 &lt;p&gt;Imagine the insidious bugs that could creep in here.&lt;/p&gt;
 
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;005&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;record&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;save&lt;/span&gt;
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;005&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;record&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;save&lt;/span&gt;
  &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;true&lt;/span&gt;
 &lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;006&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;record&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;Record&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;get(&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
  &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;...&lt;/span&gt;
 &lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;003&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;record&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;thing&lt;/span&gt;
  &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;teamaker&amp;quot;&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
+
 
 &lt;p&gt;Simply put, our changes are silently ignored because we&amp;rsquo;ve stupidly disabled what is arguably Data Mapper&amp;rsquo;s most important function.&lt;/p&gt;
 
 &lt;p&gt;Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&amp;rsquo;s &lt;a href=&#34;http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method&#34;&gt;&lt;code&gt;#attribute_set&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
 
-&lt;p&gt;&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;def&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;thing&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(newthing)&lt;/span&gt;
+&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;def&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;thing&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(newthing)&lt;/span&gt;
   &lt;span style=&#34;color: #f8f8f2&#34;&gt;@oldthing&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;||=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;@thing&lt;/span&gt;
   &lt;span style=&#34;color: #f8f8f2&#34;&gt;attribute_set(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;:thing&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;newthing)&lt;/span&gt;
 &lt;span style=&#34;color: #66d9ef&#34;&gt;end&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
-&lt;/p&gt;
+
 
 &lt;p&gt;Method &lt;code&gt;#attribute_set&lt;/code&gt; keeps track of the changes.  It&amp;rsquo;s what &lt;code&gt;thing=&lt;/code&gt; pointed to before we overrode it.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Data Mapper</title>
-      <link>https://ders.github.io/post/2013-04-16-data-mapper/</link>
-      <pubDate>Tue, 16 Apr 2013 12:19:00 +0900</pubDate>
-      
-      <guid>https://ders.github.io/post/2013-04-16-data-mapper/</guid>
-      <description>&lt;p&gt;I&amp;rsquo;ve been working on a project with &lt;a href=&#34;http://www.padrinorb.com/&#34;&gt;Padrino&lt;/a&gt; and &lt;a href=&#34;http://datamapper.org&#34;&gt;Data Mapper&lt;/a&gt;.
-So far I&amp;rsquo;m quite a fan of the Data Mapper way of doing things.&lt;/p&gt;
-
-&lt;p&gt;Unfortunately, I&amp;rsquo;m schooled in the old way &amp;ndash; ugly messes of &lt;code&gt;SELECT&lt;/code&gt;, &lt;code&gt;JOIN&lt;/code&gt; and &lt;code&gt;ORDER BY&lt;/code&gt;,
-intelligible only by SQL gurus and dependent not just on SQL but on a particular variety of such, which in my case would be MySQL.&lt;/p&gt;
-
-&lt;p&gt;I label this as unfortunate because my concept of database (e.g. MySQL) heavily influences how I organize the code I write.
-I often find myself with a &amp;ldquo;How do you do this in DataMapper?&amp;rdquo; kind of question, where &lt;em&gt;this&lt;/em&gt; is something that I know how to do the old way.
-After all, DataMapper is generating SQL queries from the models I write, so if it&amp;rsquo;s easy in SQL, shouldn&amp;rsquo;t it also be easy in DataMapper?&lt;/p&gt;
-
-&lt;p&gt;(Side note: DataMapper doesn&amp;rsquo;t &lt;em&gt;necessarily&lt;/em&gt; generate SQL, but in my current project the backend is SQL and I see the generated queries on the debugging console.)&lt;/p&gt;
-
-&lt;p&gt;Recently I&amp;rsquo;ve a question of this sort that I haven&amp;rsquo;t been able to solve.&lt;/p&gt;
-
-&lt;p&gt;I have a model with an ordering field, which we&amp;rsquo;ll call &lt;code&gt;position&lt;/code&gt;.  I want to sort by this field (ascending), except that I want all the zeroes to be at the end.  In addition, I&amp;rsquo;d like the all the records with &lt;code&gt;position=0&lt;/code&gt; sorted by &lt;code&gt;id&lt;/code&gt; descending.&lt;/p&gt;
-
-&lt;p&gt;In MySQL, I would write:&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;SELECT&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;*&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;FROM&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;`&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;things&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;`&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;ORDER&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;BY&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;`&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;position&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;`=&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;`&lt;/span&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;position&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;`&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;`&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;id&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;`&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;DESC&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;Free donuts to the first person who can make a DataMapper version of this.&lt;/p&gt;
 </description>
     </item>
     

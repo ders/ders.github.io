@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.15" />
+    <meta name="generator" content="Hugo 0.16" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Validating data with Mongoid &middot; awm&#39;s blog">
@@ -115,35 +115,35 @@ Unfortunately, it wasn&rsquo;t clear anywhere how to actually use the validators
 
 <p>Mongoid provides a <code>valid?</code> method on Iqscore objects.  Valid? tells us whether or not the criteria in the <code>validates</code> declarations are met.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :008 &gt; x = Iqscore.new({kid: &quot;George&quot;, iq: 70})
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :008 &gt; x = Iqscore.new({kid: &quot;George&quot;, iq: 70})
  =&gt; #&lt;Iqscore _id: 512c72d5352420234d000003, kid: &quot;George&quot;, iq: 70&gt;
 1.9.3p385 :009 &gt; x.valid?
  =&gt; true
 </pre></div>
-</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :010 &gt; y = Iqscore.new({kid: &quot;Bill&quot;, iq: &quot;unknown&quot;})
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :010 &gt; y = Iqscore.new({kid: &quot;Bill&quot;, iq: &quot;unknown&quot;})
  =&gt; #&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;
 1.9.3p385 :011 &gt; y.valid?
  =&gt; false
 </pre></div>
-</p>
+
 
 <p>If it doesn&rsquo;t validate, we can see what&rsquo;s wrong by looking at the <code>errors</code> property.  In this case it tells us that <code>iq</code> is not a number (and it should be).  Note that the message &ldquo;is not a number&rdquo; is in an array, as it&rsquo;s possible for there to be multiple messages for a single field.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :012 &gt; y.errors
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :012 &gt; y.errors
  =&gt; #&lt;ActiveModel::Errors:0x98a31cc @base=#&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;, @messages={:iq=&gt;[&quot;is not a number&quot;]}&gt;
 </pre></div>
-</p>
+
 
 <p>The <code>valid?</code> method is called automatically before any save operation (e.g. <code>save</code> or <code>create</code>), and if it returns false, then the save is not done.  Both <code>save</code> and <code>create</code> return true or false to indicate whether the save was done or not.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :013 &gt; x.save
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :013 &gt; x.save
  =&gt; true
 1.9.3p385 :014 &gt; y.save
  =&gt; false
 </pre></div>
-</p>
+
 
 <p>At this point George is in our database, but Bill isn&rsquo;t.</p>
 

@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.15" />
+    <meta name="generator" content="Hugo 0.16" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="More Data Mapper &middot; awm&#39;s blog">
@@ -115,25 +115,25 @@ Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not p
 
 <p>Imagine the insidious bugs that could creep in here.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">005</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">save</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">005</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">save</span>
  <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span>
 <span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">006</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">Record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">get(</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">)</span>
  <span style="color: #f92672">=&gt;</span> <span style="color: #f92672">...</span>
 <span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">003</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span>
  <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;teamaker&quot;</span>
 </pre></div>
-</p>
+
 
 <p>Simply put, our changes are silently ignored because we&rsquo;ve stupidly disabled what is arguably Data Mapper&rsquo;s most important function.</p>
 
 <p>Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&rsquo;s <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method"><code>#attribute_set</code></a>.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">thing</span><span style="color: #f92672">=</span><span style="color: #f8f8f2">(newthing)</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">thing</span><span style="color: #f92672">=</span><span style="color: #f8f8f2">(newthing)</span>
   <span style="color: #f8f8f2">@oldthing</span> <span style="color: #f92672">||=</span> <span style="color: #f8f8f2">@thing</span>
   <span style="color: #f8f8f2">attribute_set(</span><span style="color: #e6db74">:thing</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">newthing)</span>
 <span style="color: #66d9ef">end</span>
 </pre></div>
-</p>
+
 
 <p>Method <code>#attribute_set</code> keeps track of the changes.  It&rsquo;s what <code>thing=</code> pointed to before we overrode it.</p>
 

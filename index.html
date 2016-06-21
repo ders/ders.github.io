@@ -7,7 +7,7 @@
 
     <meta name="description" content="What did I do today?">
 
-    <meta name="generator" content="Hugo 0.15" />
+    <meta name="generator" content="Hugo 0.16" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="awm&#39;s blog &middot; awm&#39;s blog">
@@ -59,6 +59,82 @@
         <div>
             
             <div class="posts">
+                
+                <h1 class="content-subhead">21 Jun 2016, 17:20</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2016-06-21-crud-is-crud/" class="post-title">CRUD APIs are crud</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        
+
+<h2 id="crud-apis-are-crud">CRUD APIs are crud</h2>
+
+<p>I&rsquo;m making the case specifically about <a href="http://web.archive.org/web/20130116005443/http://tomayko.com/writings/rest-to-my-wife">REST</a> APIs, but in fact everything here applies to any API, REST or not.</p>
+
+<p>It&rsquo;s a common paradigm to create a data model as a collection of tables in a relational database and then access the data from some client app (mobile or web).  <a href="https://en.wikipedia.org/wiki/Create,_read,_update_and_delete">CRUD</a> has become a popular way to access the data, perhaps because it&rsquo;s easy to make and easy to explain.</p>
+
+<p>In CRUD, we&rsquo;re essentially giving the caller direct access to INSERT, SELECT, UPDATE and DELETE commands on our SQL database.  Or something analogous if you&rsquo;re into NoSQL.  It comes with some permissions checking, of course, but as far as the capabilities of the API, that&rsquo;s pretty much it.</p>
+
+<p>The worst thing this does is expose the schema to the client, making it difficult to change the internal structure later on.  Want to fix how tags are stored?  Too bad, you&rsquo;re going to break the API.</p>
+
+<p>Besides that, there&rsquo;s a lot of <a href="http://www.agiledata.org/essays/relationalDatabases.html#AdvancedFeatures">database capability</a> that&rsquo;s missing.</p>
+
+<p>What happens when we have some business logic, e.g. in a stored procedure?  We&rsquo;ll have to create a separate endpoint for that.</p>
+
+<p>What happens when we have some limited resource that we need to allocate on a first-come, first-served basis, e.g. room reservations.  Again, we need some special processing to ensure that only one of two simultaneous requests succeed.</p>
+
+<p>What happens when we need some concept of transactions, that when a series of operations can&rsquo;t be completed we revert back to the original state?  Once again, we need to handle this separately.</p>
+
+<p>What happens when we need to enforce some consistency between tables?  In the case of foreign key constraints, it&rsquo;s usually enough just to do the updates in the proper order, but other more complicated constraints will either need their own separate endpoints or will need to be momentarily violated.  And being violated is never acceptable, even for just a moment.</p>
+
+<p>The biggest problem with a CRUD API is that it&rsquo;s <a href="https://lostechies.com/chrispatterson/2014/01/03/crud-is-not-a-service/">shifting all the business logic to the caller</a>, whereas it should instead be invisible to the caller.  Even Microsoft <a href="https://msdn.microsoft.com/en-us/library/ms954638.aspx#soade_topic3">recognized CRUD as an anti-pattern</a>, and that was way back in 2005.  Even when we&rsquo;re only doing read and display, it&rsquo;s often necessary to make several API calls to produce one document, unnecessarily slowing down load times.</p>
+
+<p>The second-biggest problem with a CRUD API is specific to the update operation.  Update does not represent any realistic use case.  When do you ever want to rewrite an entire database row?  We carry this mistake all the way to the UI, where we press <code>edit</code> on our profile, get back all of our data in input fields, change one field, and then write everything back.</p>
+
+<h2 id="apis-that-work">APIs that work</h2>
+
+<p>I&rsquo;m proposing a way to approach APIs, a way that avoids the pitfalls of CRUD.  If you&rsquo;re practicing <a href="http://dddcommunity.org/learning-ddd/what_is_ddd/">domain-driven design (DDD)</a>, this will happen naturally.  (Side note: at our company, we&rsquo;ve been using DDD since day one, but no one here knew there was a buzzword for it.)  None of what I&rsquo;m proposing is new or groundbreaking; it&rsquo;s just the way we should be doing things.</p>
+
+<p>For read operations, there is one API call per display operation.  Everything needed to render the requested view comes back as one bundle.  Dynamic web content that&rsquo;s generated server-side is done this way, and the API can too.  As a bonus, we can use the same API as internal for server-generated pages and as external for client-generated views.</p>
+
+<p>For write operations, there is a one-to-one correspondence between a user action and an API call.  On the backend, one API call is one transaction, and if any part fails, then the whole thing fails.  (Side note: one should never, ever build a system where it&rsquo;s possible for only part of a user action to succeed.  Usability nightmare.)</p>
+
+<p>If we absolutely need some CRUD-style functionality (e.g. updating one&rsquo;s profile), we should make our updates one field at a time.  Not only does this match more closely what the average user will be doing, but it gives us an easy way to manage concurrency: simply require an update call to specify both the old and new value.  If the old value doesn&rsquo;t match, it&rsquo;s an error.</p>
+
+<h2 id="tracking-changes-and-archiving">Tracking changes and archiving</h2>
+
+<p>Tracking changes and archiving are two capabilities that are often added to a data store as an afterthought.  I&rsquo;d like to be proactive and incorporate them into the data design from the beginning.</p>
+
+<p>The simplest way to track changes is with created-at and updated-at fields on every db model, and most database engines have neat ways to auto-update these fields.  This level of tracking is of limited use, however, as we don&rsquo;t know what changed or who changed it.</p>
+
+<p>There are plenty of add-ons to do detailed revision tracking (<a href="https://django-reversion.readthedocs.io/en/stable/">django-reversion</a> is one I like), but I&rsquo;m a little bit concerned about the performance hit.  Also, such add-ons make the created-at and updated-at fields redundant.  That&rsquo;s probably a good thing.</p>
+
+<p>As for archiving, a common technique is to add a boolean field called <code>archived</code> to every model you want to be able to archive.  On this plus side, it&rsquo;s easy not to break references when you have non-archived data that refers to archived data, but <a href="https://en.wikipedia.org/wiki/Design_smell">we really shouldn&rsquo;t have that happening</a>.  On the minus side, we end up adding <code>and not archived</code> to nearly every query.</p>
+
+<p>We also might want to be able to permanently delete some archived material after a certain expiration time.  We&rsquo;d then need an <code>archived_at</code> field as well.</p>
+
+<p>Here&rsquo;s where CRUD fails again:  Archive a record by setting <code>archived</code> to true and write it back.  Unarchive it similarly.  Determine the age of data by reading the created-at and updated-at fields on the model.</p>
+
+<p>I propose that archiving and revision tracking can be implemented together in a way that&rsquo;s clean and transparent to the client.</p>
+
+<p>Instead of adding extra fields to the models, all the archive and tracking information goes into a read/append-only journal, which may or may not be implemented as a database table.</p>
+
+<p>The journal contains one entry for each user action (see above). If there are system actions (e.g. daily aggregations) that get written to the database, those get included as well.  Each entry contains a before-and-after detail of all changes.  Since this before-and-after detail will only ever be accessed as a whole, it&rsquo;s reasonable to make it one json bundle in a text field.</p>
+
+<p>Archiving simply becomes a delete operation, as all the details are archived in the history.  This means, of course, that related data needs to be archived together, which is a good thing.  Furthermore, it&rsquo;s trivial to put a time limit on data retention; simply delete old journal entries.</p>
+
+<p>My next API is going to rock.</p>
+
+                    </div>
+                </section>
                 
                 <h1 class="content-subhead">14 Apr 2016, 10:22</h1>
                 <section class="post">
@@ -146,13 +222,13 @@ The web browsable API is the one that won me over.</p>
 <li>Feed the transcript into a sentiment analyzer.</li>
 </ul>
 
-<h2 id="the-original-content:c99f1888a421b678b37e5694192a42d0">The original content</h2>
+<h2 id="the-original-content">The original content</h2>
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/qOQCw7Hcwic" frameborder="0" allowfullscreen></iframe>
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/p5ZB8Lg1tcA" frameborder="0" allowfullscreen></iframe>
 
-<h2 id="extracting-a-5-minute-audio-clip:c99f1888a421b678b37e5694192a42d0">Extracting a 5-minute audio clip</h2>
+<h2 id="extracting-a-5-minute-audio-clip">Extracting a 5-minute audio clip</h2>
 
 <p>There are many ways to do this.  One way is to download the video using a browser add-on.  Browser add-ons are easy to find but are also fickle, as they make it easy to download material in violation of copyright.  And if you&rsquo;re downloading from YouTube, you&rsquo;re violating their terms of service, even if you&rsquo;re not infringing on copyright.  (We maintain that this exercise falls under <a href="https://en.wikipedia.org/wiki/Fair_use">fair use</a>.)</p>
 
@@ -170,7 +246,7 @@ The web browsable API is the one that won me over.</p>
 
 <p>Both <code>ffmpeg</code> and <code>flac</code> are available via homebrew.</p>
 
-<h2 id="generating-a-transcript:c99f1888a421b678b37e5694192a42d0">Generating a transcript</h2>
+<h2 id="generating-a-transcript">Generating a transcript</h2>
 
 <p>The IBM Watson Developer Cloud has a <a href="http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html">speech-to-text</a> service which is available through an API and also has a <a href="https://speech-to-text-demo.mybluemix.net/">demo page</a>.  In theory, one can get limited free access to the API after going through a mildly annoying sign-up process, but in practice I was unable to convince the API to accept the credentials I&rsquo;d obtained.</p>
 
@@ -188,7 +264,7 @@ The web browsable API is the one that won me over.</p>
 <p>President Falwell and. David. Ok thank you very much for inviting my wife Jane and. Ought to be with you this morning we appreciate the invitation. Very much. And let me start off by acknowledging what I think. All of you already know. And that is the views. That many here at liberty university have. And all I. On a number of important issues. A very very different. I believe in women&rsquo;s rights dnmt. In the light of the woman to control her own body dnmt. I believe in gay rights. And now. Those of my views. And it is no secret. But I came here today. Because I believe from the bottom of my heart. That it is vitally important for those of us. Who hold different views. To be able to engage in any civil discourse. Who often in our country and I think both sides. Bear responsibility for us. There is too much shouting at each other. There is too much making fun of each other. Now in my view then are you can say this is somebody who whose voice is hoarse because I have given dozens of speeches. And the last few months it is easy. To go out and talk to people who agree with you are missing Greensboro North Carolina just last night. Alright. We are nine thousand people out. Mostly they agreed with me tonight. We&rsquo;re going to be a Manassas and thousands out they agree with me. It&rsquo;s not a whole lot to do. That&rsquo;s what politicians by and large do we go out and we talk to people who agree with us. But it is harder. But not less important. For us to try and communicate with those who do not agree with us on every issue. After. And it is important to see where if possible and I do believe it&rsquo;s possible we can find common grounds. No liberty university. Is a religious school obviously. Pn. All of you are proud of the. You already school. Which as all of us in our own way. Tries to understand the meaning of morality. What does it mean. To live a moral life. And you try to understand in this very complicated modern world that we live in. What the words of the Bible me in today&rsquo;s society. You are in school which tries to teach its students. How to behave with decency and with honesty and how you can best relates. To your fellow human beings and I applaud. You for trying to achieve those goals. Let me. Take a moment. Or a few moments. To tell you what motivates me. And the work that I do. As a public servant as a Sentinel. From the state of Vermont. And let me tell you that it goes without saying I am flaws foh throw me being a perfect human being. But all I am motivated by a vision.</p>
 </blockquote>
 
-<h2 id="sentiment-analysis:c99f1888a421b678b37e5694192a42d0">Sentiment Analysis</h2>
+<h2 id="sentiment-analysis">Sentiment Analysis</h2>
 
 <p>Again, there are a variety of tools to do this, including the <a href="http://www.nltk.org/">Natural Language Toolkit Project</a>, a free python library. Taking advantage of a <a href="http://text-processing.com/demo/sentiment/">simple demo site</a> which uses the NLTK, we can see that both Sanders and Trump are polar, but Sanders is more positive.  Who would&rsquo;ve known?</p>
 
@@ -259,11 +335,11 @@ The web browsable API is the one that won me over.</p>
 <li>run a watch process to update files as they&rsquo;re changed</li>
 </ul>
 
-<h2 id="installing-grunt:230cd0b47b3fc52b0f70982618b640aa">Installing grunt</h2>
+<h2 id="installing-grunt">Installing grunt</h2>
 
 <p>Grunt is part of the <a href="https://nodejs.org/">node.js</a> ecosystem, and as such is available via <a href="https://www.npmjs.com/">the node package manager (npm)</a>.  Npm is available on OS X via Homebrew.</p>
 
-<h3 id="basic-npm-concepts:230cd0b47b3fc52b0f70982618b640aa">Basic npm concepts</h3>
+<h3 id="basic-npm-concepts">Basic npm concepts</h3>
 
 <p>There are a few things that we need to understand about npm.  The biggest headache was recognizing the difference between local and global installs and knowing when to use which.</p>
 
@@ -275,7 +351,7 @@ The web browsable API is the one that won me over.</p>
 <li>When installing a package explicitly, there is in an option to add an entry to <code>package.json</code> so that someone else will be able to use <code>npm install</code> and get everything.  Note that this is an option and not the default behavior.</li>
 </ul>
 
-<h3 id="creating-the-package-json-file:230cd0b47b3fc52b0f70982618b640aa">Creating the package.json file</h3>
+<h3 id="creating-the-package-json-file">Creating the package.json file</h3>
 
 <p>According to <a href="http://gruntjs.com/getting-started#package.json">the documentation</a>,
 the command to use is <code>npm init</code>, and it must be run in project root.  Running it starts a dialog on the terminal, asking some mostly irrelevant questions: name (defaults to the name of the project directory), version (defaults to 1.0.0), description, entry point (defaults to index.js), test command, git repository, keywords, author, and license (defaults to ISC).  These questions can be suppressed by using <code>npm init --yes</code>, which defaults everything.</p>
@@ -305,7 +381,7 @@ But since I&rsquo;m <a href="https://www.bignerdranch.com/blog/a-bit-on-warnings
 <p>According to <a href="https://github.com/lodash/lodash/wiki/Changelog#v092">the changelog for lodash</a>,
 version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the &ldquo;upgrade to&rdquo; version of 3.0.0 is a year old already.  This is a red flag; how and why are these dependencies not getting maintained?  That said, it appears that <a href="https://github.com/gruntjs/grunt/issues/1419">an update is on the way</a>.  Will have to ignore this warning for now.</p>
 
-<h3 id="grunt-plugins:230cd0b47b3fc52b0f70982618b640aa">Grunt plugins</h3>
+<h3 id="grunt-plugins">Grunt plugins</h3>
 
 <p>Grunt itself is just the overlord; to do any real work we&rsquo;re going to need some plugins.  After a lot of googling, I&rsquo;ve come up with this list:</p>
 
@@ -324,7 +400,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 <pre><code>npm install grunt grunt-contrib-uglify grunt-contrib-sass grunt-contrib-copy grunt-contrib-clean grunt-contrib-watch --save-dev
 </code></pre>
 
-<h3 id="grunt-command-line:230cd0b47b3fc52b0f70982618b640aa">Grunt command line</h3>
+<h3 id="grunt-command-line">Grunt command line</h3>
 
 <p>There is one more install required if we are to be able to run grunt from the command line.  The package is <code>grunt-cli</code>, and needs to be installed globally so that the grunt executable goes into /usr/local/bin and is available in the system path.</p>
 
@@ -334,7 +410,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 <p>One gotcha is that the global grunt-cli requires a local grunt or it will fail.  Grunt-cli is a wrapper to find the locally installed grunt to whatever project you&rsquo;re in.  The global grunt-cli will not find a global grunt.</p>
 
-<h3 id="summary-of-grunt-installation:230cd0b47b3fc52b0f70982618b640aa">Summary of grunt installation</h3>
+<h3 id="summary-of-grunt-installation">Summary of grunt installation</h3>
 
 <ul>
 <li>Install npm (e.g. <code>brew install npm</code>).</li>
@@ -347,7 +423,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 <p>Once we have <code>package.json</code> as updated by the npm install &ndash;save-dev command, steps 2 and 3 can be replaced by a simple <code>npm install</code>.  We still need to keep step 4; global packages can&rsquo;t go into <code>package.json</code> (npm will ignore <code>--save-dev</code> when <code>-g</code> is specified).</p>
 
-<h3 id="optionally-installing-grunt-cli-locally:230cd0b47b3fc52b0f70982618b640aa">Optionally installing grunt-cli locally</h3>
+<h3 id="optionally-installing-grunt-cli-locally">Optionally installing grunt-cli locally</h3>
 
 <p>Installing <code>grunt-cli</code> locally instead of globally will allow it to be included in <code>package.json</code>, but it has the side effect of not having the grunt executable in the path.  A possible workaround to this side effect is to add a script section to <code>package.json</code> with all the grunts you want to do.</p>
 
@@ -356,9 +432,9 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 <p>Then you can type <code>npm run watch</code> instead of <code>grunt watch</code>.  This may or may not be worth the trouble.</p>
 
-<h2 id="writing-a-gruntfile:230cd0b47b3fc52b0f70982618b640aa">Writing a gruntfile</h2>
+<h2 id="writing-a-gruntfile">Writing a gruntfile</h2>
 
-<h3 id="basic-gruntfile-concept:230cd0b47b3fc52b0f70982618b640aa">Basic gruntfile concept</h3>
+<h3 id="basic-gruntfile-concept">Basic gruntfile concept</h3>
 
 <p>The gruntfile is a bit of javascript initialization that gets run whenever grunt is invoked.  The gruntfile needs to define an initialization function and assign that to the global <code>module.exports</code>.  Within the initialization function, we&rsquo;ll need to list the modules we need (grunt-contrib-uglify, etc.), specify some configuration for each module, define the default task, and optionally define additional tasks.</p>
 
@@ -391,7 +467,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 <script src="https://gist.github.com/ders/3ca946b14641e5efe783.js"></script>
 
-<h3 id="observations:230cd0b47b3fc52b0f70982618b640aa">Observations</h3>
+<h3 id="observations">Observations</h3>
 
 <ul>
 <li>Overall, the quality of documentation is poor.  I had to resort to copying examples and then modifying them by trial and error until I got the results I wanted.  There are many alternate syntaxes, causing further confusion.</li>
@@ -401,7 +477,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 <li>The <code>grunt-contrib-copy</code> plugin doesn&rsquo;t know how to sync. The <code>i</code> and <code>lib</code> directories are copied in their entireties every time there&rsquo;s a change.  There is <a href="https://github.com/tomusdrw/grunt-sync">another plugin</a> which claims to know how to sync, but I haven&rsquo;t tested it.</li>
 </ul>
 
-<h3 id="conclusion:230cd0b47b3fc52b0f70982618b640aa">Conclusion</h3>
+<h3 id="conclusion">Conclusion</h3>
 
 <p>This was a whole lot of trouble to set up a relatively simple build system. Grunt is a powerful tool, and I can see the value of using it when you&rsquo;re already in a node-based project, but it to use it as an isolated build tool is not worth the effort.</p>
 
@@ -429,11 +505,11 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 <p>Count me in on the developers who believe that <a href="http://www.gnu.org/software/make/manual/make.html">GNU make</a> is the best tool for assembling static assets.</p>
 
-<h3 id="the-general-problem:19cc05a9058f195db3905e6197b7999f">The general problem</h3>
+<h3 id="the-general-problem">The general problem</h3>
 
 <p>We need to maintain a set of files B that is derived from another set of files A through some known (and possibly complicated) transformation.  We edit the files in set A but not in set B.  We would like a simple way to (1) create B from A, and (2) update B when A changes, only recreating the parts that are necessary.</p>
 
-<h3 id="the-more-specific-problem:19cc05a9058f195db3905e6197b7999f">The more specific problem</h3>
+<h3 id="the-more-specific-problem">The more specific problem</h3>
 
 <p>B is the set of static assets for a web service, and A is the set of source files used to make them.  Only A will be checked into source control, and only B will be uploaded to the web server.</p>
 
@@ -455,7 +531,7 @@ version 0.9.2 was released in 2012, and the current version is 4.0.0.  Even the 
 
 <p>Other assets such as images and precompiled libraries can be copied from A to B without modification.</p>
 
-<h3 id="what-to-do:19cc05a9058f195db3905e6197b7999f">What to do</h3>
+<h3 id="what-to-do">What to do</h3>
 
 <p>The first thing is to define a directory structure.</p>
 
@@ -515,7 +591,7 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
 
 <script src="https://gist.github.com/ders/627147bf67544c96f8be.js"></script>
 
-<h3 id="how-it-works:19cc05a9058f195db3905e6197b7999f">How it works</h3>
+<h3 id="how-it-works">How it works</h3>
 
 <p>The meat of this makefile is in the pattern rules (lines 43-55).  Quick cheat sheet:  <code>$@</code> = target, <code>$^</code> = all dependencies, <code>$&lt;</code> = the first dependency.  <a href="http://www.gnu.org/software/make/manual/make.html#Automatic-Variables">Details are here.</a></p>
 
@@ -559,7 +635,7 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
 └── Makefile
 </code></pre>
 
-<h3 id="dependencies:19cc05a9058f195db3905e6197b7999f">Dependencies</h3>
+<h3 id="dependencies">Dependencies</h3>
 
 <p>This makefile requires <code>jsmin</code>, <code>sass</code> and <code>watchman-make</code> to be available at the command line.</p>
 
@@ -567,17 +643,17 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
 
 <p>Jsmin is also <a href="https://libraries.io/npm/jsmin">available via npm</a>.</p>
 
-<h3 id="other-features-i-d-like-to-include:19cc05a9058f195db3905e6197b7999f">Other features I&rsquo;d like to include</h3>
+<h3 id="other-features-i-d-like-to-include">Other features I&rsquo;d like to include</h3>
 
 <p>Would be nice to automatically detect @import statements in scss source files and generate dependency lists based on that.  I&rsquo;m aware that the Sass package has it&rsquo;s own watcher that handles dependencies, but using that would mean bypassing a significant part of the makefile, thereby making a mess.</p>
 
 <p>It would be pretty simple to add a <code>make deploy</code> command to rsync the server.  I&rsquo;ll probably do that later.</p>
 
-<h3 id="a-feature-i-excluded-on-purpose:19cc05a9058f195db3905e6197b7999f">A feature I excluded on purpose</h3>
+<h3 id="a-feature-i-excluded-on-purpose">A feature I excluded on purpose</h3>
 
 <p>Many web frameworks automatically append timestamps or version numbers to static assets in order to defeat browser caching.  This adds a whole lot of complexity for a pretty minor benefit.  Once a site is in production, I expect updates to be few and far between, and I&rsquo;m happy to manually add a version number to a target filename as necessary.</p>
 
-<h3 id="credits:19cc05a9058f195db3905e6197b7999f">Credits</h3>
+<h3 id="credits">Credits</h3>
 
 <p>This Makefile was heavily influenced by and owes thanks to <a href="http://west.io/post/2015/04/11-frontend-builds-with-makefiles/">this blog post</a>.  Thank you!</p>
 
@@ -599,13 +675,13 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
                     <div class="post-description">
                         
 
-<h2 id="using-google-sign-in-on-website-x:a9bc523f98a05ffe7a400551ba7208e4">Using Google Sign-in on Website X</h2>
+<h2 id="using-google-sign-in-on-website-x">Using Google Sign-in on Website X</h2>
 
 <p><strong>Disclaimer:</strong>  <a href="https://developers.google.com/identity/sign-in/web/sign-in">Read the docs</a> too.  This post doesn&rsquo;t cover everything.</p>
 
 <p>A week ago I was completely clueless as to how Google sign-in works.  I set out to write about it and learned a few things.</p>
 
-<h3 id="overview:a9bc523f98a05ffe7a400551ba7208e4">Overview</h3>
+<h3 id="overview">Overview</h3>
 
 <p>Using Google sign-in on a website requires first doing the following in the <a href="https://console.developers.google.com/home/dashboard">Google developer&rsquo;s console</a>:</p>
 
@@ -629,7 +705,7 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
 
 <p>If the webpage making the sign-in call is served from a domain that has not been registered in the console, then Joe will see a 400 error (redirect_uri_mismatch) and a picture of a broken robot when trying to sign in.  The error page also exposes the email address of the account that the project is made under.</p>
 
-<h3 id="javascript-details:a9bc523f98a05ffe7a400551ba7208e4">Javascript details</h3>
+<h3 id="javascript-details">Javascript details</h3>
 
 <p>The file platform.js provides the global Google API object called <code>gapi</code> and the auth2 module.  The auth2 module must be explicitly loaded into gapi with the <code>gapi.load</code> method before it&rsquo;s used.  This method provides an optional callback for when/if the module is loaded successfully.</p>
 
@@ -696,7 +772,7 @@ alert(user.isSignedIn());    // false
 
 <p>According to the documentation, <code>GoogleUser.signIn</code> is equivalent to <code>GoogleUser.grant</code>, but my Firebug tells me that there&rsquo;s in fact no method called signIn on the GoogleUser object.  Bad documentation.</p>
 
-<h3 id="what-usually-happens-in-practice:a9bc523f98a05ffe7a400551ba7208e4">What usually happens in practice</h3>
+<h3 id="what-usually-happens-in-practice">What usually happens in practice</h3>
 
 <p>Google provides <a href="https://developers.google.com/identity/sign-in/web/sign-in#add_a_google_sign-in_button">a handy shortcut</a> so that anyone can add Google sign-in to their page without knowing any javascript.  As soon as platform.js is loaded, it checks for the existence of a <code>div.g-signin2</code> (&lt;div class=&ldquo;g-signin2&rdquo;&gt;) and springs into action if found.</p>
 
@@ -709,7 +785,7 @@ alert(user.isSignedIn());    // false
 
 <p>One caution here is that data-longtitle is a string value that gets cast to a boolean, and, as such, the string &ldquo;false&rdquo; will get cast to true.  The way to make longtitle false is set data-longtitle=&quot;&quot; (or to omit it entirely, as false is the default).</p>
 
-<h3 id="involving-the-server-for-website-x:a9bc523f98a05ffe7a400551ba7208e4">Involving the server for website X</h3>
+<h3 id="involving-the-server-for-website-x">Involving the server for website X</h3>
 
 <p>Chances are website X will want to know about Joe&rsquo;s sign-in on the server side.  This will require some javascript to send a token to the server, which the server can then decode to get Joe&rsquo;s information.</p>
 
@@ -720,7 +796,7 @@ alert(user.isSignedIn());    // false
 
 <p>The token is signed to prevent spoofing, and it&rsquo;s up to the server code to <a href="https://developers.google.com/identity/sign-in/web/backend-auth#verify-the-integrity-of-the-id-token">verify its integrity</a>.</p>
 
-<h3 id="scopes:a9bc523f98a05ffe7a400551ba7208e4">Scopes</h3>
+<h3 id="scopes">Scopes</h3>
 
 <p>Scopes are the permissions that we&rsquo;re asking Joe to give to website X.  The default for sign-in is scopes profile and email, and we get Joe&rsquo;s name, email, and picture if available.  <em>(Nerdy detail: the name and picture are not part of any scope; see below.)</em></p>
 
@@ -736,7 +812,7 @@ alert(user.isSignedIn());    // false
 
 <p>Here is <a href="https://developers.google.com/identity/protocols/googlescopes">a list of all known scopes</a>.</p>
 
-<h3 id="fewer-scopes:a9bc523f98a05ffe7a400551ba7208e4">Fewer Scopes</h3>
+<h3 id="fewer-scopes">Fewer Scopes</h3>
 
 <p>The default scopes can be turned off with by sending <code>fetch_basic_profile: false</code> as one of the options to GoogleAuth.init.  (Note that this precludes using the auto magic button.)  In this case, at least one scope must be explicitly specified with the scope parameter.</p>
 
@@ -830,7 +906,7 @@ It beats the pants off of Active Somethingorother when it comes to making clean,
 <li>Datamapper has different representations of the Boolean type, even between different SQLs.</li>
 </ul>
 
-<h3 id="the-missing-feature:136baa383e3072f3c5db5b5786002bc4">The Missing Feature</h3>
+<h3 id="the-missing-feature">The Missing Feature</h3>
 
 <p>The glaringly missing feature is the ability to update a value and know
 whether or not we actually changed anything.</p>
@@ -861,31 +937,31 @@ generating an exception if no records are found.</p>
 Datamapper insists on generating two separate queries for the single
 update statement:</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">SELECT</span> <span style="color: #e6db74">&quot;id&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;size&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;name&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;seen&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;whosaw&quot;</span> <span style="color: #66d9ef">FROM</span> <span style="color: #e6db74">&quot;quarks&quot;</span> <span style="color: #66d9ef">WHERE</span> <span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;id&quot;</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">42</span> <span style="color: #66d9ef">AND</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;f&#39;</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">ORDER</span> <span style="color: #66d9ef">BY</span> <span style="color: #e6db74">&quot;id&quot;</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">SELECT</span> <span style="color: #e6db74">&quot;id&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;size&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;name&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;seen&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;whosaw&quot;</span> <span style="color: #66d9ef">FROM</span> <span style="color: #e6db74">&quot;quarks&quot;</span> <span style="color: #66d9ef">WHERE</span> <span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;id&quot;</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">42</span> <span style="color: #66d9ef">AND</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;f&#39;</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">ORDER</span> <span style="color: #66d9ef">BY</span> <span style="color: #e6db74">&quot;id&quot;</span>
 <span style="color: #66d9ef">UPDATE</span> <span style="color: #e6db74">&quot;quarks&quot;</span> <span style="color: #66d9ef">SET</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;t&#39;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;whosaw&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;ders&#39;</span> <span style="color: #66d9ef">WHERE</span> <span style="color: #e6db74">&quot;id&quot;</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">42</span>
 </pre></div>
-</p>
+
 
 <p>This obviously won&rsquo;t do, as it&rsquo;s not thread-safe.
 Two users running this code at the same time would both believe that they saw the quark first.</p>
 
-<h3 id="the-solution:136baa383e3072f3c5db5b5786002bc4">The Solution</h3>
+<h3 id="the-solution">The Solution</h3>
 
 <p>The solution was to write the update query in SQL.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">da</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">DataMapper</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">repository(</span><span style="color: #e6db74">:default</span><span style="color: #f8f8f2">)</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">adapter</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">da</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">DataMapper</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">repository(</span><span style="color: #e6db74">:default</span><span style="color: #f8f8f2">)</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">adapter</span>
 <span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=&#39;t&#39;, whosaw=&#39;ders&#39; WHERE id=42 AND seen=&#39;f&#39;&quot;</span><span style="color: #f8f8f2">)</span>
 <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">r</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">affected_rows</span> <span style="color: #f92672">&gt;</span> <span style="color: #ae81ff">0</span>
    <span style="color: #f92672">...</span> <span style="color: #75715e"># we saw it first</span>
 </pre></div>
-</p>
+
 
 <p>Kind of defeats the purpose of having an ORM, but it gets the job done.
 And as it turns out, I&rsquo;m
 <a href="http://stackoverflow.com/questions/18650932/how-to-add-a-where-clause-in-update-query-in-datamapper">not the first one</a>
 to run into this issue.</p>
 
-<h3 id="how-i-got-bitten:136baa383e3072f3c5db5b5786002bc4">How I Got Bitten</h3>
+<h3 id="how-i-got-bitten">How I Got Bitten</h3>
 
 <p>Little did I know that the internal mapping of a Boolean field varies
 between SQL implementations.
@@ -896,16 +972,16 @@ started returning 500s.</p>
 
 <p>It&rsquo;s easy enough to change the query to work with MySQL:</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=1, whosaw=&#39;ders&#39; WHERE id=42 AND seen=0&quot;</span><span style="color: #f8f8f2">)</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=1, whosaw=&#39;ders&#39; WHERE id=42 AND seen=0&quot;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
-</p>
+
 
 <p>But then the unit tests fail.</p>
 
 <p>In the end, I wrote this bit of horrible code to keep the tests passing
 and the live server happy.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">t,</span> <span style="color: #f8f8f2">f</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">options</span><span style="color: #f92672">[</span><span style="color: #e6db74">&#39;scheme&#39;</span><span style="color: #f92672">]</span> <span style="color: #f92672">==</span> <span style="color: #e6db74">&#39;sqlite&#39;</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">t,</span> <span style="color: #f8f8f2">f</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">options</span><span style="color: #f92672">[</span><span style="color: #e6db74">&#39;scheme&#39;</span><span style="color: #f92672">]</span> <span style="color: #f92672">==</span> <span style="color: #e6db74">&#39;sqlite&#39;</span>
   <span style="color: #f92672">[</span><span style="color: #e6db74">&quot;&#39;t&#39;&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;&#39;f&#39;&quot;</span><span style="color: #f92672">]</span> <span style="color: #75715e"># sqlite</span>
 <span style="color: #66d9ef">else</span>
   <span style="color: #f92672">[</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">0</span><span style="color: #f92672">]</span> <span style="color: #75715e"># mysql</span>
@@ -915,33 +991,10 @@ and the live server happy.</p>
 
 <span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=#{</span><span style="color: #f8f8f2">t</span><span style="color: #e6db74">}, whosaw=&#39;ders&#39; WHERE id=42 AND seen=#{</span><span style="color: #f8f8f2">f</span><span style="color: #e6db74">}&quot;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
-</p>
+
 
 <p>(There may be a way to extract <code>t</code> and <code>f</code> directly from the
 DataMapper internals, but I&rsquo;m not that good yet.)</p>
-
-                    </div>
-                </section>
-                
-                <h1 class="content-subhead">17 Jan 2014, 12:20</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2014-01-17-try-it/" class="post-title">Python</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        <div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ python
-&gt;&gt;&gt; import this
-</pre></div>
-
-
-<p>Just try it.</p>
 
                     </div>
                 </section>

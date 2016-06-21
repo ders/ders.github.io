@@ -7,7 +7,7 @@
 
     <meta name="description" content="What did I do today?">
 
-    <meta name="generator" content="Hugo 0.15" />
+    <meta name="generator" content="Hugo 0.16" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="awm&#39;s blog &middot; awm&#39;s blog">
@@ -59,6 +59,29 @@
         <div>
             
             <div class="posts">
+                
+                <h1 class="content-subhead">17 Jan 2014, 12:20</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2014-01-17-try-it/" class="post-title">Python</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ python
+&gt;&gt;&gt; import this
+</pre></div>
+
+
+<p>Just try it.</p>
+
+                    </div>
+                </section>
                 
                 <h1 class="content-subhead">10 Jan 2014, 14:55</h1>
                 <section class="post">
@@ -121,16 +144,16 @@ LC_ALL=en_US.UTF-8
 <p>As always, it&rsquo;s also a good idea to make sure you have the latest and
 greatest packages:</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo apt-get update
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo apt-get update
 $ sudo apt-get upgrade
 </pre></div>
-</p>
+
 
 <p>And finally, while we&rsquo;re at it, why not set the timezone?</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo dpkg-reconfigure tzdata
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo dpkg-reconfigure tzdata
 </pre></div>
-</p>
+
 
 <p>Next time I need to set up a new EC2 instance,
 I&rsquo;ll come read my own blog and know exactly what to do.</p>
@@ -316,25 +339,25 @@ Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not p
 
 <p>Imagine the insidious bugs that could creep in here.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">005</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">save</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">005</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">save</span>
  <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span>
 <span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">006</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">Record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">get(</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">)</span>
  <span style="color: #f92672">=&gt;</span> <span style="color: #f92672">...</span>
 <span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">003</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span>
  <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;teamaker&quot;</span>
 </pre></div>
-</p>
+
 
 <p>Simply put, our changes are silently ignored because we&rsquo;ve stupidly disabled what is arguably Data Mapper&rsquo;s most important function.</p>
 
 <p>Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&rsquo;s <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method"><code>#attribute_set</code></a>.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">thing</span><span style="color: #f92672">=</span><span style="color: #f8f8f2">(newthing)</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">thing</span><span style="color: #f92672">=</span><span style="color: #f8f8f2">(newthing)</span>
   <span style="color: #f8f8f2">@oldthing</span> <span style="color: #f92672">||=</span> <span style="color: #f8f8f2">@thing</span>
   <span style="color: #f8f8f2">attribute_set(</span><span style="color: #e6db74">:thing</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">newthing)</span>
 <span style="color: #66d9ef">end</span>
 </pre></div>
-</p>
+
 
 <p>Method <code>#attribute_set</code> keeps track of the changes.  It&rsquo;s what <code>thing=</code> pointed to before we overrode it.</p>
 
@@ -422,23 +445,23 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>In the same video at 3:30, the following match example is given:</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;all&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/tweets&#39;</span><span style="color: #f8f8f2">)</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;all&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/tweets&#39;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
-</p>
+
 
 <p>Note that there is no leading slash on &lsquo;all&rsquo;; this format is consistent throughout the video.</p>
 
 <p>However, when I tried to do the third exercise, the following answer was rejected:</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/zombies&#39;</span><span style="color: #f8f8f2">)</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/zombies&#39;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
-</p>
+
 
 <p>This time the hints told me to do this:</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;/undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/zombies&#39;</span><span style="color: #f8f8f2">)</span>
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;/undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/zombies&#39;</span><span style="color: #f8f8f2">)</span>
 </pre></div>
-</p>
+
 
 <p>Again, I&rsquo;m confused. Do we need (or even want) a leading slash here?</p>
 
@@ -462,7 +485,7 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>Here are some some tools that I like.</p>
 
-<h2 id="rerun:641fb2fef50bdd606c86780f8eb06737">Rerun</h2>
+<h2 id="rerun">Rerun</h2>
 
 <blockquote>
 <p>Rerun launches your program, then watches the filesystem. If a relevant file changes, then it restarts your program.</p>
@@ -470,13 +493,13 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>I had some trouble getting Shotgun configured probably, and I found <a href="https://github.com/alexch/rerun">Rerun</a> to be a simple alternative.  I like it because it can be used for any process you want, not just restarting your web server.</p>
 
-<h2 id="gitk:641fb2fef50bdd606c86780f8eb06737">Gitk</h2>
+<h2 id="gitk">Gitk</h2>
 
 <p><a href="http://gitk.sourceforge.net/">Gitk</a> is a graphical interface for Git.  It shows your entire development tree graphically, great for those of us less fluent in pushes and pulls.  It does a lot of other things too that I don&rsquo;t know about.</p>
 
 <p>Debian-based systems can enjoy Gitk with a simple <code>sudo apt-get install gitk</code>.  Then issue a <code>gitk --all</code> to see everything.</p>
 
-<h2 id="irb:641fb2fef50bdd606c86780f8eb06737">Irb</h2>
+<h2 id="irb">Irb</h2>
 
 <p><a href="http://ruby-doc.org/docs/ProgrammingRuby/html/irb.html">Irb</a> is the Ruby console.  I should actually generalize this and include all consoles.  One of the most valuable checks while coding is to paste snippets of code into the console and see that they do what you think they&rsquo;re doing.</p>
 
@@ -484,7 +507,7 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>Here is <a href="http://samuelmullen.com/2012/07/getting-more-out-of-the-rails-console/">an excellent blog post</a> on the topic.</p>
 
-<h2 id="awesome-print:641fb2fef50bdd606c86780f8eb06737">Awesome Print</h2>
+<h2 id="awesome-print">Awesome Print</h2>
 
 <p>A great companion to the Ruby console is <a href="https://github.com/michaeldv/awesome_print">Awesome Print</a>, a Ruby gem which lets you pretty up the output of array, hashes, and the like while in the console.</p>
 
@@ -499,7 +522,7 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 </pre></div>
 
 
-<h2 id="sass:641fb2fef50bdd606c86780f8eb06737">Sass</h2>
+<h2 id="sass">Sass</h2>
 
 <blockquote>
 <p>Sass makes css fun again.</p>
@@ -563,35 +586,35 @@ Unfortunately, it wasn&rsquo;t clear anywhere how to actually use the validators
 
 <p>Mongoid provides a <code>valid?</code> method on Iqscore objects.  Valid? tells us whether or not the criteria in the <code>validates</code> declarations are met.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :008 &gt; x = Iqscore.new({kid: &quot;George&quot;, iq: 70})
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :008 &gt; x = Iqscore.new({kid: &quot;George&quot;, iq: 70})
  =&gt; #&lt;Iqscore _id: 512c72d5352420234d000003, kid: &quot;George&quot;, iq: 70&gt;
 1.9.3p385 :009 &gt; x.valid?
  =&gt; true
 </pre></div>
-</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :010 &gt; y = Iqscore.new({kid: &quot;Bill&quot;, iq: &quot;unknown&quot;})
+
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :010 &gt; y = Iqscore.new({kid: &quot;Bill&quot;, iq: &quot;unknown&quot;})
  =&gt; #&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;
 1.9.3p385 :011 &gt; y.valid?
  =&gt; false
 </pre></div>
-</p>
+
 
 <p>If it doesn&rsquo;t validate, we can see what&rsquo;s wrong by looking at the <code>errors</code> property.  In this case it tells us that <code>iq</code> is not a number (and it should be).  Note that the message &ldquo;is not a number&rdquo; is in an array, as it&rsquo;s possible for there to be multiple messages for a single field.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :012 &gt; y.errors
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :012 &gt; y.errors
  =&gt; #&lt;ActiveModel::Errors:0x98a31cc @base=#&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;, @messages={:iq=&gt;[&quot;is not a number&quot;]}&gt;
 </pre></div>
-</p>
+
 
 <p>The <code>valid?</code> method is called automatically before any save operation (e.g. <code>save</code> or <code>create</code>), and if it returns false, then the save is not done.  Both <code>save</code> and <code>create</code> return true or false to indicate whether the save was done or not.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :013 &gt; x.save
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :013 &gt; x.save
  =&gt; true
 1.9.3p385 :014 &gt; y.save
  =&gt; false
 </pre></div>
-</p>
+
 
 <p>At this point George is in our database, but Bill isn&rsquo;t.</p>
 
@@ -633,38 +656,12 @@ Unfortunately, it wasn&rsquo;t clear anywhere how to actually use the validators
 
 <p>This also has the interesting side effect that <code>==</code> is not commutative.</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :008 &gt; &quot;password&quot; == q
+<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :008 &gt; &quot;password&quot; == q
  =&gt; false
 </pre></div>
-</p>
+
 
 <p>My junior high math teacher would be disturbed by this.&nbsp; Such is the power of Ruby.</p>
-
-                    </div>
-                </section>
-                
-                <h1 class="content-subhead">22 Feb 2013, 10:41</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2013-02-22-tip-of-the-day/" class="post-title">Tip of the day</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        <p>When running the Mongo shell for the first time, it is necessary to specify the port:</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ mongo 127.0.0.1:27017
-</pre></div>
-
-
-<p>Subsequently it is sufficient just to to say <code>mongo</code>.</p>
-
-<p>Learned the hard way, and by reading <a href="http://stackoverflow.com/a/8509918">this answer</a>.</p>
 
                     </div>
                 </section>

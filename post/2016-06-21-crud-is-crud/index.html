@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD APIs are crud &middot; awm&#39;s blog</title>
+
+    <meta name="description" content="">
+
+    <meta name="generator" content="Hugo 0.16" />
+    <meta name="twitter:card" content="summary">
+    
+    <meta name="twitter:title" content="CRUD APIs are crud &middot; awm&#39;s blog">
+    <meta name="twitter:description" content="">
+
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="CRUD APIs are crud &middot; awm&#39;s blog">
+    <meta property="og:description" content="">
+
+    <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Oxygen:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+    <!--[if lte IE 8]>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+    <!--<![endif]-->
+
+    <link rel="stylesheet" href="https://ders.github.io/css/all.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
+
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io/index.xml" />
+</head>
+<body>
+
+
+<div id="layout" class="pure-g">
+    <div class="sidebar pure-u-1 pure-u-md-1-4">
+    <div class="header">
+        <hgroup>
+            <h1 class="brand-title"><a href="https://ders.github.io">awm&#39;s blog</a></h1>
+            <h2 class="brand-tagline"> What did I do today? </h2>
+        </hgroup>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                
+                
+                <li class="nav-item">
+                    <a class="pure-button" href="https://ders.github.io/index.xml"><i class="fa fa-rss"></i> rss</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+    <div class="content pure-u-1 pure-u-md-3-4">
+        <div>
+            
+            <div class="posts">
+                <h1 class="content-subhead">21 Jun 2016, 17:20</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2016-06-21-crud-is-crud/" class="post-title">CRUD APIs are crud</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-share">
+                        <div class="post-share-links">
+                            <h4 style="">Share</h4>
+                            <a href="#" data-type="facebook" data-url="https://ders.github.io/post/2016-06-21-crud-is-crud/" data-title="CRUD APIs are crud" data-description="" data-media="" class="prettySocial fa fa-facebook"></a>
+                            <a href="#" data-type="googleplus" data-url="https://ders.github.io/post/2016-06-21-crud-is-crud/" data-description="" class="prettySocial fa fa-google-plus"></a>
+                            
+                            
+                        </div>
+                    </div>
+                    <div class="post-description">
+                        
+
+<h2 id="crud-apis-are-crud">CRUD APIs are crud</h2>
+
+<p>I&rsquo;m making the case specifically about <a href="http://web.archive.org/web/20130116005443/http://tomayko.com/writings/rest-to-my-wife">REST</a> APIs, but in fact everything here applies to any API, REST or not.</p>
+
+<p>It&rsquo;s a common paradigm to create a data model as a collection of tables in a relational database and then access the data from some client app (mobile or web).  <a href="https://en.wikipedia.org/wiki/Create,_read,_update_and_delete">CRUD</a> has become a popular way to access the data, perhaps because it&rsquo;s easy to make and easy to explain.</p>
+
+<p>In CRUD, we&rsquo;re essentially giving the caller direct access to INSERT, SELECT, UPDATE and DELETE commands on our SQL database.  Or something analogous if you&rsquo;re into NoSQL.  It comes with some permissions checking, of course, but as far as the capabilities of the API, that&rsquo;s pretty much it.</p>
+
+<p>The worst thing this does is expose the schema to the client, making it difficult to change the internal structure later on.  Want to fix how tags are stored?  Too bad, you&rsquo;re going to break the API.</p>
+
+<p>Besides that, there&rsquo;s a lot of <a href="http://www.agiledata.org/essays/relationalDatabases.html#AdvancedFeatures">database capability</a> that&rsquo;s missing.</p>
+
+<p>What happens when we have some business logic, e.g. in a stored procedure?  We&rsquo;ll have to create a separate endpoint for that.</p>
+
+<p>What happens when we have some limited resource that we need to allocate on a first-come, first-served basis, e.g. room reservations.  Again, we need some special processing to ensure that only one of two simultaneous requests succeed.</p>
+
+<p>What happens when we need some concept of transactions, that when a series of operations can&rsquo;t be completed we revert back to the original state?  Once again, we need to handle this separately.</p>
+
+<p>What happens when we need to enforce some consistency between tables?  In the case of foreign key constraints, it&rsquo;s usually enough just to do the updates in the proper order, but other more complicated constraints will either need their own separate endpoints or will need to be momentarily violated.  And being violated is never acceptable, even for just a moment.</p>
+
+<p>The biggest problem with a CRUD API is that it&rsquo;s <a href="https://lostechies.com/chrispatterson/2014/01/03/crud-is-not-a-service/">shifting all the business logic to the caller</a>, whereas it should instead be invisible to the caller.  Even Microsoft <a href="https://msdn.microsoft.com/en-us/library/ms954638.aspx#soade_topic3">recognized CRUD as an anti-pattern</a>, and that was way back in 2005.  Even when we&rsquo;re only doing read and display, it&rsquo;s often necessary to make several API calls to produce one document, unnecessarily slowing down load times.</p>
+
+<p>The second-biggest problem with a CRUD API is specific to the update operation.  Update does not represent any realistic use case.  When do you ever want to rewrite an entire database row?  We carry this mistake all the way to the UI, where we press <code>edit</code> on our profile, get back all of our data in input fields, change one field, and then write everything back.</p>
+
+<h2 id="apis-that-work">APIs that work</h2>
+
+<p>I&rsquo;m proposing a way to approach APIs, a way that avoids the pitfalls of CRUD.  If you&rsquo;re practicing <a href="http://dddcommunity.org/learning-ddd/what_is_ddd/">domain-driven design (DDD)</a>, this will happen naturally.  (Side note: at our company, we&rsquo;ve been using DDD since day one, but no one here knew there was a buzzword for it.)  None of what I&rsquo;m proposing is new or groundbreaking; it&rsquo;s just the way we should be doing things.</p>
+
+<p>For read operations, there is one API call per display operation.  Everything needed to render the requested view comes back as one bundle.  Dynamic web content that&rsquo;s generated server-side is done this way, and the API can too.  As a bonus, we can use the same API as internal for server-generated pages and as external for client-generated views.</p>
+
+<p>For write operations, there is a one-to-one correspondence between a user action and an API call.  On the backend, one API call is one transaction, and if any part fails, then the whole thing fails.  (Side note: one should never, ever build a system where it&rsquo;s possible for only part of a user action to succeed.  Usability nightmare.)</p>
+
+<p>If we absolutely need some CRUD-style functionality (e.g. updating one&rsquo;s profile), we should make our updates one field at a time.  Not only does this match more closely what the average user will be doing, but it gives us an easy way to manage concurrency: simply require an update call to specify both the old and new value.  If the old value doesn&rsquo;t match, it&rsquo;s an error.</p>
+
+<h2 id="tracking-changes-and-archiving">Tracking changes and archiving</h2>
+
+<p>Tracking changes and archiving are two capabilities that are often added to a data store as an afterthought.  I&rsquo;d like to be proactive and incorporate them into the data design from the beginning.</p>
+
+<p>The simplest way to track changes is with created-at and updated-at fields on every db model, and most database engines have neat ways to auto-update these fields.  This level of tracking is of limited use, however, as we don&rsquo;t know what changed or who changed it.</p>
+
+<p>There are plenty of add-ons to do detailed revision tracking (<a href="https://django-reversion.readthedocs.io/en/stable/">django-reversion</a> is one I like), but I&rsquo;m a little bit concerned about the performance hit.  Also, such add-ons make the created-at and updated-at fields redundant.  That&rsquo;s probably a good thing.</p>
+
+<p>As for archiving, a common technique is to add a boolean field called <code>archived</code> to every model you want to be able to archive.  On this plus side, it&rsquo;s easy not to break references when you have non-archived data that refers to archived data, but <a href="https://en.wikipedia.org/wiki/Design_smell">we really shouldn&rsquo;t have that happening</a>.  On the minus side, we end up adding <code>and not archived</code> to nearly every query.</p>
+
+<p>We also might want to be able to permanently delete some archived material after a certain expiration time.  We&rsquo;d then need an <code>archived_at</code> field as well.</p>
+
+<p>Here&rsquo;s where CRUD fails again:  Archive a record by setting <code>archived</code> to true and write it back.  Unarchive it similarly.  Determine the age of data by reading the created-at and updated-at fields on the model.</p>
+
+<p>I propose that archiving and revision tracking can be implemented together in a way that&rsquo;s clean and transparent to the client.</p>
+
+<p>Instead of adding extra fields to the models, all the archive and tracking information goes into a read/append-only journal, which may or may not be implemented as a database table.</p>
+
+<p>The journal contains one entry for each user action (see above). If there are system actions (e.g. daily aggregations) that get written to the database, those get included as well.  Each entry contains a before-and-after detail of all changes.  Since this before-and-after detail will only ever be accessed as a whole, it&rsquo;s reasonable to make it one json bundle in a text field.</p>
+
+<p>Archiving simply becomes a delete operation, as all the details are archived in the history.  This means, of course, that related data needs to be archived together, which is a good thing.  Furthermore, it&rsquo;s trivial to put a time limit on data retention; simply delete old journal entries.</p>
+
+<p>My next API is going to rock.</p>
+
+                    </div>
+                    
+                </section>
+            </div>
+            <div class="footer">
+    <div class="pure-menu pure-menu-horizontal pure-menu-open">
+        <ul>
+            <li>Powered by <a class="hugo" href="http://hugo.spf13.com/" target="_blank">hugo</a></li>
+        </ul>
+    </div>
+</div>
+<script src="https://ders.github.io/js/all.min.js"></script>
+        </div>
+    </div>
+</div>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '', 'auto');
+ga('send', 'pageview');
+
+</script>
+
+</body>
+</html>

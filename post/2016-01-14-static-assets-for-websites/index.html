@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.15" />
+    <meta name="generator" content="Hugo 0.16" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Static assets for websites &middot; awm&#39;s blog">
@@ -85,11 +85,11 @@
 
 <p>Count me in on the developers who believe that <a href="http://www.gnu.org/software/make/manual/make.html">GNU make</a> is the best tool for assembling static assets.</p>
 
-<h3 id="the-general-problem:19cc05a9058f195db3905e6197b7999f">The general problem</h3>
+<h3 id="the-general-problem">The general problem</h3>
 
 <p>We need to maintain a set of files B that is derived from another set of files A through some known (and possibly complicated) transformation.  We edit the files in set A but not in set B.  We would like a simple way to (1) create B from A, and (2) update B when A changes, only recreating the parts that are necessary.</p>
 
-<h3 id="the-more-specific-problem:19cc05a9058f195db3905e6197b7999f">The more specific problem</h3>
+<h3 id="the-more-specific-problem">The more specific problem</h3>
 
 <p>B is the set of static assets for a web service, and A is the set of source files used to make them.  Only A will be checked into source control, and only B will be uploaded to the web server.</p>
 
@@ -111,7 +111,7 @@
 
 <p>Other assets such as images and precompiled libraries can be copied from A to B without modification.</p>
 
-<h3 id="what-to-do:19cc05a9058f195db3905e6197b7999f">What to do</h3>
+<h3 id="what-to-do">What to do</h3>
 
 <p>The first thing is to define a directory structure.</p>
 
@@ -171,7 +171,7 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
 
 <script src="https://gist.github.com/ders/627147bf67544c96f8be.js"></script>
 
-<h3 id="how-it-works:19cc05a9058f195db3905e6197b7999f">How it works</h3>
+<h3 id="how-it-works">How it works</h3>
 
 <p>The meat of this makefile is in the pattern rules (lines 43-55).  Quick cheat sheet:  <code>$@</code> = target, <code>$^</code> = all dependencies, <code>$&lt;</code> = the first dependency.  <a href="http://www.gnu.org/software/make/manual/make.html#Automatic-Variables">Details are here.</a></p>
 
@@ -215,7 +215,7 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
 └── Makefile
 </code></pre>
 
-<h3 id="dependencies:19cc05a9058f195db3905e6197b7999f">Dependencies</h3>
+<h3 id="dependencies">Dependencies</h3>
 
 <p>This makefile requires <code>jsmin</code>, <code>sass</code> and <code>watchman-make</code> to be available at the command line.</p>
 
@@ -223,17 +223,17 @@ $(PUB)/blueberry.css: $(CSS)/blueberry.scss $(CSS)/fruit.scss
 
 <p>Jsmin is also <a href="https://libraries.io/npm/jsmin">available via npm</a>.</p>
 
-<h3 id="other-features-i-d-like-to-include:19cc05a9058f195db3905e6197b7999f">Other features I&rsquo;d like to include</h3>
+<h3 id="other-features-i-d-like-to-include">Other features I&rsquo;d like to include</h3>
 
 <p>Would be nice to automatically detect @import statements in scss source files and generate dependency lists based on that.  I&rsquo;m aware that the Sass package has it&rsquo;s own watcher that handles dependencies, but using that would mean bypassing a significant part of the makefile, thereby making a mess.</p>
 
 <p>It would be pretty simple to add a <code>make deploy</code> command to rsync the server.  I&rsquo;ll probably do that later.</p>
 
-<h3 id="a-feature-i-excluded-on-purpose:19cc05a9058f195db3905e6197b7999f">A feature I excluded on purpose</h3>
+<h3 id="a-feature-i-excluded-on-purpose">A feature I excluded on purpose</h3>
 
 <p>Many web frameworks automatically append timestamps or version numbers to static assets in order to defeat browser caching.  This adds a whole lot of complexity for a pretty minor benefit.  Once a site is in production, I expect updates to be few and far between, and I&rsquo;m happy to manually add a version number to a target filename as necessary.</p>
 
-<h3 id="credits:19cc05a9058f195db3905e6197b7999f">Credits</h3>
+<h3 id="credits">Credits</h3>
 
 <p>This Makefile was heavily influenced by and owes thanks to <a href="http://west.io/post/2015/04/11-frontend-builds-with-makefiles/">this blog post</a>.  Thank you!</p>
 

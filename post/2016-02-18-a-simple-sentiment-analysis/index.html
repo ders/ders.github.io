@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.15" />
+    <meta name="generator" content="Hugo 0.16" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="A simple sentiment analysis of two US presidential candidates &middot; awm&#39;s blog">
@@ -95,13 +95,13 @@
 <li>Feed the transcript into a sentiment analyzer.</li>
 </ul>
 
-<h2 id="the-original-content:c99f1888a421b678b37e5694192a42d0">The original content</h2>
+<h2 id="the-original-content">The original content</h2>
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/qOQCw7Hcwic" frameborder="0" allowfullscreen></iframe>
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/p5ZB8Lg1tcA" frameborder="0" allowfullscreen></iframe>
 
-<h2 id="extracting-a-5-minute-audio-clip:c99f1888a421b678b37e5694192a42d0">Extracting a 5-minute audio clip</h2>
+<h2 id="extracting-a-5-minute-audio-clip">Extracting a 5-minute audio clip</h2>
 
 <p>There are many ways to do this.  One way is to download the video using a browser add-on.  Browser add-ons are easy to find but are also fickle, as they make it easy to download material in violation of copyright.  And if you&rsquo;re downloading from YouTube, you&rsquo;re violating their terms of service, even if you&rsquo;re not infringing on copyright.  (We maintain that this exercise falls under <a href="https://en.wikipedia.org/wiki/Fair_use">fair use</a>.)</p>
 
@@ -119,7 +119,7 @@
 
 <p>Both <code>ffmpeg</code> and <code>flac</code> are available via homebrew.</p>
 
-<h2 id="generating-a-transcript:c99f1888a421b678b37e5694192a42d0">Generating a transcript</h2>
+<h2 id="generating-a-transcript">Generating a transcript</h2>
 
 <p>The IBM Watson Developer Cloud has a <a href="http://www.ibm.com/smarterplanet/us/en/ibmwatson/developercloud/speech-to-text.html">speech-to-text</a> service which is available through an API and also has a <a href="https://speech-to-text-demo.mybluemix.net/">demo page</a>.  In theory, one can get limited free access to the API after going through a mildly annoying sign-up process, but in practice I was unable to convince the API to accept the credentials I&rsquo;d obtained.</p>
 
@@ -137,7 +137,7 @@
 <p>President Falwell and. David. Ok thank you very much for inviting my wife Jane and. Ought to be with you this morning we appreciate the invitation. Very much. And let me start off by acknowledging what I think. All of you already know. And that is the views. That many here at liberty university have. And all I. On a number of important issues. A very very different. I believe in women&rsquo;s rights dnmt. In the light of the woman to control her own body dnmt. I believe in gay rights. And now. Those of my views. And it is no secret. But I came here today. Because I believe from the bottom of my heart. That it is vitally important for those of us. Who hold different views. To be able to engage in any civil discourse. Who often in our country and I think both sides. Bear responsibility for us. There is too much shouting at each other. There is too much making fun of each other. Now in my view then are you can say this is somebody who whose voice is hoarse because I have given dozens of speeches. And the last few months it is easy. To go out and talk to people who agree with you are missing Greensboro North Carolina just last night. Alright. We are nine thousand people out. Mostly they agreed with me tonight. We&rsquo;re going to be a Manassas and thousands out they agree with me. It&rsquo;s not a whole lot to do. That&rsquo;s what politicians by and large do we go out and we talk to people who agree with us. But it is harder. But not less important. For us to try and communicate with those who do not agree with us on every issue. After. And it is important to see where if possible and I do believe it&rsquo;s possible we can find common grounds. No liberty university. Is a religious school obviously. Pn. All of you are proud of the. You already school. Which as all of us in our own way. Tries to understand the meaning of morality. What does it mean. To live a moral life. And you try to understand in this very complicated modern world that we live in. What the words of the Bible me in today&rsquo;s society. You are in school which tries to teach its students. How to behave with decency and with honesty and how you can best relates. To your fellow human beings and I applaud. You for trying to achieve those goals. Let me. Take a moment. Or a few moments. To tell you what motivates me. And the work that I do. As a public servant as a Sentinel. From the state of Vermont. And let me tell you that it goes without saying I am flaws foh throw me being a perfect human being. But all I am motivated by a vision.</p>
 </blockquote>
 
-<h2 id="sentiment-analysis:c99f1888a421b678b37e5694192a42d0">Sentiment Analysis</h2>
+<h2 id="sentiment-analysis">Sentiment Analysis</h2>
 
 <p>Again, there are a variety of tools to do this, including the <a href="http://www.nltk.org/">Natural Language Toolkit Project</a>, a free python library. Taking advantage of a <a href="http://text-processing.com/demo/sentiment/">simple demo site</a> which uses the NLTK, we can see that both Sanders and Trump are polar, but Sanders is more positive.  Who would&rsquo;ve known?</p>
 
