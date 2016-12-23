@@ -99,8 +99,8 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>In MySQL, I would write:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">SELECT</span> <span style="color: #f92672">*</span> <span style="color: #66d9ef">FROM</span> <span style="color: #f92672">`</span><span style="color: #f8f8f2">things</span><span style="color: #f92672">`</span> <span style="color: #66d9ef">ORDER</span> <span style="color: #66d9ef">BY</span> <span style="color: #f92672">`</span><span style="color: #66d9ef">position</span><span style="color: #f92672">`=</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">`</span><span style="color: #66d9ef">position</span><span style="color: #f92672">`</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">`</span><span style="color: #f8f8f2">id</span><span style="color: #f92672">`</span> <span style="color: #66d9ef">DESC</span>
-</pre></div>
+
+SELECT * FROM `things` ORDER BY `position`=0, `position`, `id` DESC
 
 
 <p>Free donuts to the first person who can make a DataMapper version of this.</p>

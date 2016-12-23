@@ -60,6 +60,130 @@
             
             <div class="posts">
                 
+                <h1 class="content-subhead">27 Jan 2014, 10:07</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2014-01-27-why-you-should-always-understand-whats-going-on-under-the-hood/" class="post-title">Why you should always understand what&#39;s going on under the hood</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        
+
+<p>This is about how I got bitten by <a href="http://datamapper.org/">DataMapper</a>.
+No infection and I didn&rsquo;t get rabies, but it still hurt.</p>
+
+<p>I should mention that overall I think DataMapper is pretty good.
+It has most of the core features that an ORM should have without unneeded complexity.
+It beats the pants off of Active Somethingorother when it comes to making clean, backend-independent models.</p>
+
+<p>Unfortunately <em>most of the core features</em> isn&rsquo;t quite <em>all of the core features</em>, and when you really need that one missing piece, that&rsquo;s when the trouble starts.</p>
+
+<p>What bit me was the combination of two unrelated things:</p>
+
+<ul>
+<li>I needed an atomic update with conditions attached.</li>
+<li>Datamapper has different representations of the Boolean type, even between different SQLs.</li>
+</ul>
+
+<h3 id="the-missing-feature">The Missing Feature</h3>
+
+<p>The glaringly missing feature is the ability to update a value and know
+whether or not we actually changed anything.</p>
+
+<p>In SQL this would look like this:</p>
+
+
+UPDATE "quarks" SET "seen" = 't', "whosaw" = 'ders' WHERE "id" = 42 AND "seen" = 'f'
+
+
+<p>Then I would get the number of affected rows to see if a change was made
+(i.e. whether or not the quark had already been seen).</p>
+
+<p>So let&rsquo;s try it with DataMapper:</p>
+
+
+Quark.all(:id => 42, :seen => false).update(:seen => true, :whosaw => 'ders')
+
+
+<p>Two problems here.
+The first problem is that the return value is always true, and we don&rsquo;t
+get to see how many rows were updated.
+This isn&rsquo;t too big a deal;
+we can work around it by using <code>Quark.first</code> instead of <code>Quark.all</code>,
+generating an exception if no records are found.</p>
+
+<p>The second problem is the dealbreaker.
+Datamapper insists on generating two separate queries for the single
+update statement:</p>
+
+
+SELECT "id", "size", "name", "seen", "whosaw" FROM "quarks" WHERE ("id" = 42 AND "seen" = 'f') ORDER BY "id"
+UPDATE "quarks" SET "seen" = 't', "whosaw" = 'ders' WHERE "id" = 42
+
+
+<p>This obviously won&rsquo;t do, as it&rsquo;s not thread-safe.
+Two users running this code at the same time would both believe that they saw the quark first.</p>
+
+<h3 id="the-solution">The Solution</h3>
+
+<p>The solution was to write the update query in SQL.</p>
+
+
+da = DataMapper.repository(:default).adapter
+r = da.execute("UPDATE quarks SET seen='t', whosaw='ders' WHERE id=42 AND seen='f'")
+if r.affected_rows > 0
+   ... # we saw it first
+
+
+<p>Kind of defeats the purpose of having an ORM, but it gets the job done.
+And as it turns out, I&rsquo;m
+<a href="http://stackoverflow.com/questions/18650932/how-to-add-a-where-clause-in-update-query-in-datamapper">not the first one</a>
+to run into this issue.</p>
+
+<h3 id="how-i-got-bitten">How I Got Bitten</h3>
+
+<p>Little did I know that the internal mapping of a Boolean field varies
+between SQL implementations.
+For Sqlite and Postgres, it&rsquo;s a character field with <code>'t'</code> and <code>'f'</code> values, whereas for MySQL it&rsquo;s the integers 1 and 0.</p>
+
+<p>In my case the unit tests all passed, but the live server (with a MySQL backend)
+started returning 500s.</p>
+
+<p>It&rsquo;s easy enough to change the query to work with MySQL:</p>
+
+
+r = da.execute("UPDATE quarks SET seen=1, whosaw='ders' WHERE id=42 AND seen=0")
+
+
+<p>But then the unit tests fail.</p>
+
+<p>In the end, I wrote this bit of horrible code to keep the tests passing
+and the live server happy.</p>
+
+
+t, f = if da.options['scheme'] == 'sqlite'
+  ["'t'", "'f'"] # sqlite
+else
+  [1, 0] # mysql
+end
+
+  ...
+
+r = da.execute("UPDATE quarks SET seen=#{t}, whosaw='ders' WHERE id=42 AND seen=#{f}")
+
+
+<p>(There may be a way to extract <code>t</code> and <code>f</code> directly from the
+DataMapper internals, but I&rsquo;m not that good yet.)</p>
+
+                    </div>
+                </section>
+                
                 <h1 class="content-subhead">17 Jan 2014, 12:20</h1>
                 <section class="post">
                     <header class="post-header">
@@ -73,9 +197,9 @@
                     </header>
 
                     <div class="post-description">
-                        <div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ python
-&gt;&gt;&gt; import this
-</pre></div>
+                        
+$ python
+>>> import this
 
 
 <p>Just try it.</p>
@@ -99,7 +223,8 @@
                         <p>Every time I start a new EC2 Ubuntu instance, I&rsquo;m confronted with the following
 warning when I ssh in:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">_____________________________________________________________________
+
+_____________________________________________________________________
 WARNING! Your environment specifies an invalid locale.
  This can affect your user experience significantly, including the
  ability to manage packages. You may install the locales by running:
@@ -109,11 +234,10 @@ WARNING! Your environment specifies an invalid locale.
    sudo locale-gen UTF-8
 
 To see all available language packs, run:
-   apt-cache search &quot;^language-pack-[a-z][a-z]$&quot;
+   apt-cache search "^language-pack-[a-z][a-z]$"
 To disable this message for all users, run:
    sudo touch /var/lib/cloud/instance/locale-check.skip
 _____________________________________________________________________
-</pre></div>
 
 
 <p>Furthermore, a variety of package installations fail with some complaint
@@ -134,25 +258,25 @@ case of a new EC2 instance, these variables are not set at all.</p>
 that the default installation only sets <code>LANG</code>.</p>
 
 <p>/etc/default/locale
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">LANG=en_US.UTF-8
+
+LANG=en_US.UTF-8
 LANGUAGE=en_US
 LC_CTYPE=en_US.UTF-8
 LC_ALL=en_US.UTF-8
-</pre></div>
 </p>
 
 <p>As always, it&rsquo;s also a good idea to make sure you have the latest and
 greatest packages:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo apt-get update
+
+$ sudo apt-get update
 $ sudo apt-get upgrade
-</pre></div>
 
 
 <p>And finally, while we&rsquo;re at it, why not set the timezone?</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo dpkg-reconfigure tzdata
-</pre></div>
+
+$ sudo dpkg-reconfigure tzdata
 
 
 <p>Next time I need to set up a new EC2 instance,
@@ -317,46 +441,46 @@ Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not p
 
 <p>There is a possible workaround, suggested by some.  Override the setter for the attribute and save the old value for later use.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">thing</span><span style="color: #f92672">=</span><span style="color: #f8f8f2">(newthing)</span>
-  <span style="color: #f8f8f2">@oldthing</span> <span style="color: #f92672">||=</span> <span style="color: #f8f8f2">@thing</span>
-  <span style="color: #f8f8f2">@thing</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">newthing</span>
-<span style="color: #66d9ef">end</span>
-</pre></div>
+
+def thing=(newthing)
+  @oldthing ||= @thing
+  @thing = newthing
+end
 
 
 <p>I&rsquo;m not going to link to the people who suggested this, though, because it&rsquo;s a terrible suggestion.  Since we&rsquo;ve overridden Data Mapper&rsquo;s setter for attribute <code>thing</code>, Data Mapper no longer knows that we&rsquo;ve changed its value.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">001</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">Record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">get(</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">)</span>
- <span style="color: #f92672">=&gt;</span> <span style="color: #f92672">...</span>
-<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">002</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span>
- <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;teamaker&quot;</span>
-<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">003</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&quot;coffeemaker&quot;</span>
- <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;coffeemaker&quot;</span>
-<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">004</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">attribute_dirty?(</span><span style="color: #e6db74">:thing</span><span style="color: #f8f8f2">)</span>
- <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">false</span>
-</pre></div>
+
+1.9.3-p392 :001 > record = Record.get(1)
+ => ...
+1.9.3-p392 :002 > record.thing
+ => "teamaker"
+1.9.3-p392 :003 > record.thing = "coffeemaker"
+ => "coffeemaker"
+1.9.3-p392 :004 > record.attribute_dirty?(:thing)
+ => false
 
 
 <p>Imagine the insidious bugs that could creep in here.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">005</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">save</span>
- <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span>
-<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">006</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">Record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">get(</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">)</span>
- <span style="color: #f92672">=&gt;</span> <span style="color: #f92672">...</span>
-<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">003</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">record</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">thing</span>
- <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;teamaker&quot;</span>
-</pre></div>
+
+1.9.3-p392 :005 > record.save
+ => true
+1.9.3-p392 :006 > record = Record.get(1)
+ => ...
+1.9.3-p392 :003 > record.thing
+ => "teamaker"
 
 
 <p>Simply put, our changes are silently ignored because we&rsquo;ve stupidly disabled what is arguably Data Mapper&rsquo;s most important function.</p>
 
 <p>Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&rsquo;s <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method"><code>#attribute_set</code></a>.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">thing</span><span style="color: #f92672">=</span><span style="color: #f8f8f2">(newthing)</span>
-  <span style="color: #f8f8f2">@oldthing</span> <span style="color: #f92672">||=</span> <span style="color: #f8f8f2">@thing</span>
-  <span style="color: #f8f8f2">attribute_set(</span><span style="color: #e6db74">:thing</span><span style="color: #f8f8f2">,</span> <span style="color: #f8f8f2">newthing)</span>
-<span style="color: #66d9ef">end</span>
-</pre></div>
+
+def thing=(newthing)
+  @oldthing ||= @thing
+  attribute_set(:thing, newthing)
+end
 
 
 <p>Method <code>#attribute_set</code> keeps track of the changes.  It&rsquo;s what <code>thing=</code> pointed to before we overrode it.</p>
@@ -395,8 +519,8 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>In MySQL, I would write:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">SELECT</span> <span style="color: #f92672">*</span> <span style="color: #66d9ef">FROM</span> <span style="color: #f92672">`</span><span style="color: #f8f8f2">things</span><span style="color: #f92672">`</span> <span style="color: #66d9ef">ORDER</span> <span style="color: #66d9ef">BY</span> <span style="color: #f92672">`</span><span style="color: #66d9ef">position</span><span style="color: #f92672">`=</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">`</span><span style="color: #66d9ef">position</span><span style="color: #f92672">`</span><span style="color: #f8f8f2">,</span> <span style="color: #f92672">`</span><span style="color: #f8f8f2">id</span><span style="color: #f92672">`</span> <span style="color: #66d9ef">DESC</span>
-</pre></div>
+
+SELECT * FROM `things` ORDER BY `position`=0, `position`, `id` DESC
 
 
 <p>Free donuts to the first person who can make a DataMapper version of this.</p>
@@ -423,44 +547,44 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>In the level 5 video at 2:10, the following match example is given:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;new_tweet&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;Tweets#new&quot;</span>
-</pre></div>
+
+match 'new_tweet' => "Tweets#new"
 
 
 <p>Note the uppercase T on Tweets.  This T is uppercase throughout the video.</p>
 
 <p>However, when I tried to do the second exercise for this level, the following answer was rejected:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;Zombies#undead&quot;</span>
-</pre></div>
+
+match 'undead' => "Zombies#undead"
 
 
 <p>The hints told me to do this:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;zombies#undead&quot;</span>
-</pre></div>
+
+match 'undead' => "zombies#undead"
 
 
 <p>with a lower case z, which was accepted.  Now I&rsquo;m confused.  Do we need a capital letter here or not?</p>
 
 <p>In the same video at 3:30, the following match example is given:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;all&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/tweets&#39;</span><span style="color: #f8f8f2">)</span>
-</pre></div>
+
+match 'all' => redirect('/tweets')
 
 
 <p>Note that there is no leading slash on &lsquo;all&rsquo;; this format is consistent throughout the video.</p>
 
 <p>However, when I tried to do the third exercise, the following answer was rejected:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/zombies&#39;</span><span style="color: #f8f8f2">)</span>
-</pre></div>
+
+match 'undead' => redirect('/zombies')
 
 
 <p>This time the hints told me to do this:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;/undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/zombies&#39;</span><span style="color: #f8f8f2">)</span>
-</pre></div>
+
+match '/undead' => redirect('/zombies')
 
 
 <p>Again, I&rsquo;m confused. Do we need (or even want) a leading slash here?</p>
@@ -511,15 +635,15 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>A great companion to the Ruby console is <a href="https://github.com/michaeldv/awesome_print">Awesome Print</a>, a Ruby gem which lets you pretty up the output of array, hashes, and the like while in the console.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">001</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">{</span><span style="color: #e6db74">:name</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;Hong Gildong&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:age</span> <span style="color: #f92672">=&gt;</span> <span style="color: #ae81ff">10</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:interests</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">nil</span><span style="color: #f8f8f2">}</span>
- <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">{</span><span style="color: #e6db74">:name</span><span style="color: #f92672">=&gt;</span><span style="color: #e6db74">&quot;Hong Gildong&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:age</span><span style="color: #f92672">=&gt;</span><span style="color: #ae81ff">10</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:interests</span><span style="color: #f92672">=&gt;</span><span style="color: #66d9ef">nil</span><span style="color: #f8f8f2">}</span>
-<span style="color: #ae81ff">1</span><span style="color: #f92672">.</span><span style="color: #ae81ff">9</span><span style="color: #f92672">.</span><span style="color: #ae81ff">3</span><span style="color: #f92672">-</span><span style="color: #f8f8f2">p392</span> <span style="color: #f8f8f2">:</span><span style="color: #ae81ff">002</span> <span style="color: #f92672">&gt;</span> <span style="color: #f8f8f2">ap</span> <span style="color: #f8f8f2">_</span>
-<span style="color: #f8f8f2">{</span>
-         <span style="color: #e6db74">:name</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;Hong Gildong&quot;</span><span style="color: #f8f8f2">,</span>
-          <span style="color: #e6db74">:age</span> <span style="color: #f92672">=&gt;</span> <span style="color: #ae81ff">10</span><span style="color: #f8f8f2">,</span>
-    <span style="color: #e6db74">:interests</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">nil</span>
-<span style="color: #f8f8f2">}</span>
-</pre></div>
+
+1.9.3-p392 :001 > {:name => "Hong Gildong", :age => 10, :interests => nil}
+ => {:name=>"Hong Gildong", :age=>10, :interests=>nil}
+1.9.3-p392 :002 > ap _
+{
+         :name => "Hong Gildong",
+          :age => 10,
+    :interests => nil
+}
 
 
 <h2 id="sass">Sass</h2>
@@ -568,100 +692,55 @@ Unfortunately, it wasn&rsquo;t clear anywhere how to actually use the validators
 
 <p>Let&rsquo;s define a minimal class <code>Iqscore</code>.  (The name of the collection will be <code>iqscores</code>; this is a weird behavior of Mongoid whereby class names must be singular and Mongoid will pluralize them for you when naming the collection.)</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">require</span> <span style="color: #e6db74">&quot;mongoid&quot;</span>
 
-<span style="color: #66d9ef">class</span> <span style="color: #a6e22e">Iqscore</span>
+require "mongoid"
 
-  <span style="color: #66d9ef">include</span> <span style="color: #66d9ef">Mongoid</span><span style="color: #f92672">::</span><span style="color: #66d9ef">Document</span>
+class Iqscore
 
-  <span style="color: #f8f8f2">field</span> <span style="color: #e6db74">:kid</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:type</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">String</span>
-  <span style="color: #f8f8f2">field</span> <span style="color: #e6db74">:iq</span><span style="color: #f8f8f2">,</span>  <span style="color: #e6db74">:type</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">Integer</span>
+  include Mongoid::Document
 
-  <span style="color: #f8f8f2">validates</span> <span style="color: #e6db74">:kid</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:presence</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:uniqueness</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span>
-  <span style="color: #f8f8f2">validates</span> <span style="color: #e6db74">:iq</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:numericality</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span>
+  field :kid, :type => String
+  field :iq,  :type => Integer
 
-<span style="color: #66d9ef">end</span>
-</pre></div>
+  validates :kid, :presence => true, :uniqueness => true
+  validates :iq, :numericality => true
+
+end
 
 
 <p>Mongoid provides a <code>valid?</code> method on Iqscore objects.  Valid? tells us whether or not the criteria in the <code>validates</code> declarations are met.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :008 &gt; x = Iqscore.new({kid: &quot;George&quot;, iq: 70})
- =&gt; #&lt;Iqscore _id: 512c72d5352420234d000003, kid: &quot;George&quot;, iq: 70&gt;
-1.9.3p385 :009 &gt; x.valid?
- =&gt; true
-</pre></div>
+
+1.9.3p385 :008 > x = Iqscore.new({kid: "George", iq: 70})
+ => #<Iqscore _id: 512c72d5352420234d000003, kid: "George", iq: 70>
+1.9.3p385 :009 > x.valid?
+ => true
 
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :010 &gt; y = Iqscore.new({kid: &quot;Bill&quot;, iq: &quot;unknown&quot;})
- =&gt; #&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;
-1.9.3p385 :011 &gt; y.valid?
- =&gt; false
-</pre></div>
+
+1.9.3p385 :010 > y = Iqscore.new({kid: "Bill", iq: "unknown"})
+ => #<Iqscore _id: 512c736e352420234d000004, kid: "Bill", iq: 0>
+1.9.3p385 :011 > y.valid?
+ => false
 
 
 <p>If it doesn&rsquo;t validate, we can see what&rsquo;s wrong by looking at the <code>errors</code> property.  In this case it tells us that <code>iq</code> is not a number (and it should be).  Note that the message &ldquo;is not a number&rdquo; is in an array, as it&rsquo;s possible for there to be multiple messages for a single field.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :012 &gt; y.errors
- =&gt; #&lt;ActiveModel::Errors:0x98a31cc @base=#&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;, @messages={:iq=&gt;[&quot;is not a number&quot;]}&gt;
-</pre></div>
+
+1.9.3p385 :012 > y.errors
+ => #<ActiveModel::Errors:0x98a31cc @base=#<Iqscore _id: 512c736e352420234d000004, kid: "Bill", iq: 0>, @messages={:iq=>["is not a number"]}>
 
 
 <p>The <code>valid?</code> method is called automatically before any save operation (e.g. <code>save</code> or <code>create</code>), and if it returns false, then the save is not done.  Both <code>save</code> and <code>create</code> return true or false to indicate whether the save was done or not.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :013 &gt; x.save
- =&gt; true
-1.9.3p385 :014 &gt; y.save
- =&gt; false
-</pre></div>
+
+1.9.3p385 :013 > x.save
+ => true
+1.9.3p385 :014 > y.save
+ => false
 
 
 <p>At this point George is in our database, but Bill isn&rsquo;t.</p>
-
-                    </div>
-                </section>
-                
-                <h1 class="content-subhead">22 Feb 2013, 18:20</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2013-02-22-power/" class="post-title">Power</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        <p>Finished a user athentication system today using <a href="http://bcrypt-ruby.rubyforge.org/classes/BCrypt/Password.html">BCrypt::Password</a>.</p>
-
-<p>There was an Aha! moment when I realized that they&rsquo;ve defined the <code>==</code> operator to return true when the password matches, not when the strings are equal (as a novice like me might expect).</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :002 &gt; secret = BCrypt::Password.create(&quot;password&quot;)
- =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
-</pre></div>
-
-
-<p>The hashed secret is saved in the database.&nbsp; It&rsquo;s later retrieved and checked against the user input using <code>==</code>.</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :005 &gt; secret
- =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
-1.9.3p385 :006 &gt; q = BCrypt::Password.new(secret)
- =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
-1.9.3p385 :007 &gt; q == &quot;password&quot;
- =&gt; true
-</pre></div>
-
-
-<p>This also has the interesting side effect that <code>==</code> is not commutative.</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :008 &gt; &quot;password&quot; == q
- =&gt; false
-</pre></div>
-
-
-<p>My junior high math teacher would be disturbed by this.&nbsp; Such is the power of Ruby.</p>
 
                     </div>
                 </section>

@@ -1,0 +1,441 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A lean, clean Golang machine &middot; awm&#39;s blog</title>
+
+    <meta name="description" content="">
+
+    <meta name="generator" content="Hugo 0.16" />
+    <meta name="twitter:card" content="summary">
+    
+    <meta name="twitter:title" content="A lean, clean Golang machine &middot; awm&#39;s blog">
+    <meta name="twitter:description" content="">
+
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="A lean, clean Golang machine &middot; awm&#39;s blog">
+    <meta property="og:description" content="">
+
+    <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Oxygen:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+    <!--[if lte IE 8]>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+    <!--<![endif]-->
+
+    <link rel="stylesheet" href="https://ders.github.io/css/all.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
+
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io/index.xml" />
+</head>
+<body>
+
+
+<div id="layout" class="pure-g">
+    <div class="sidebar pure-u-1 pure-u-md-1-4">
+    <div class="header">
+        <hgroup>
+            <h1 class="brand-title"><a href="https://ders.github.io">awm&#39;s blog</a></h1>
+            <h2 class="brand-tagline"> What did I do today? </h2>
+        </hgroup>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                
+                
+                <li class="nav-item">
+                    <a class="pure-button" href="https://ders.github.io/index.xml"><i class="fa fa-rss"></i> rss</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+    <div class="content pure-u-1 pure-u-md-3-4">
+        <div>
+            
+            <div class="posts">
+                <h1 class="content-subhead">23 Dec 2016, 14:49</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2016-12-23-lean-clean-golang-machine/" class="post-title">A lean, clean Golang machine</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-share">
+                        <div class="post-share-links">
+                            <h4 style="">Share</h4>
+                            <a href="#" data-type="facebook" data-url="https://ders.github.io/post/2016-12-23-lean-clean-golang-machine/" data-title="A lean, clean Golang machine" data-description="" data-media="" class="prettySocial fa fa-facebook"></a>
+                            <a href="#" data-type="googleplus" data-url="https://ders.github.io/post/2016-12-23-lean-clean-golang-machine/" data-description="" class="prettySocial fa fa-google-plus"></a>
+                            
+                            
+                        </div>
+                    </div>
+                    <div class="post-description">
+                        
+
+<p>Writing a <a href="https://golang.org/">Go</a> package that interacts with a relational
+data store such as Postgres is full of messiness.</p>
+
+<p>Those of us who appreciate the strong-typedness of Go probably also appreciate
+the strong-typedness of SQL, and vice versa.  Unfortunately, communication
+between Go and SQL is less than ideal. This is due partly to the mostly
+free-form text format of data exchange (queries) and partly to some subtle
+differences in data types.</p>
+
+<p>Database nulls are a particular headache, leading to the contortions of defining
+types such <a href="https://golang.org/pkg/database/sql/#NullString">NullString</a>,
+<a href="https://golang.org/pkg/database/sql/#NullInt64">NullInt64</a>, and
+<a href="https://golang.org/pkg/database/sql/#NullBool">NullBool</a>, and an extra check
+is required every time you want distinguish a null from a zero value.</p>
+
+<p>Why not use an ORM? There has been
+<a href="http://www.hydrogen18.com/blog/golang-orms-and-why-im-still-not-using-one.html">a lot written</a>
+<a href="https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/">on this already</a>,
+but in a nutshell, the level of generality required means that
+<a href="https://godoc.org/github.com/jinzhu/gorm">pretty much everything is an interface{}</a>
+with runtime checks to cast stuff into the types you need, and at this point
+we&rsquo;ve lost the benefits of Go&rsquo;s strong typing and may as well write our whole
+application in Ruby.</p>
+
+<p>I&rsquo;ve found that programmers who appreciate the power and control that comes from
+writing in a low-level compiled language such as Go also appreciate the power
+can control that comes from writing queries yourself in SQL.</p>
+
+<h2 id="so-what-s-the-problem-really">So what&rsquo;s the problem, really?</h2>
+
+<p>The real headache of <a href="https://golang.org/pkg/database/sql/">Go + SQL</a> is the
+volume of boilerplate code that goes with even relatively simple operations.</p>
+
+<p>(1) Run a query that doesn&rsquo;t return any results.</p>
+
+<pre><code>_, err := db.Exec(query, ...args)
+if err != nil {
+	return err
+}
+</code></pre>
+
+<p>(1a) Run a query that doesn&rsquo;t return any results, but we want to know how many
+rows were changed.</p>
+
+<pre><code>res, err := db.Exec(query, ...args)
+if err != nil {
+	return err
+}
+count, err := res.RowsAffected()
+if err != nil {
+	return err
+}
+</code></pre>
+
+<p>(1b) Run a query that doesn&rsquo;t return any results, and we&rsquo;d like to catch and
+process integrity violations (e.g. duplicate entry on a unique field). This one
+requires some database-specific code; the example here is for Postgres.</p>
+
+<pre><code>_, err := db.Exec(query, ...args)
+duplicate := false
+if err != nil {
+	if pgerr, ok := err.(*pq.Error); ok {
+		duplicate = pgerr.Code.Class().Name() == &quot;integrity_constraint_violation&quot;
+	}
+	if !duplicate {
+		return err
+	}
+}
+</code></pre>
+
+<p>(1c) Run a query that doesn&rsquo;t return any results, and we&rsquo;d like to catch and
+process data exceptions (e.g. number out of range). This uses the same strategy as 1b and can be combined with it.</p>
+
+<p>(2) Run a query that returns one row.</p>
+
+<pre><code>err := db.QueryRow(query, ...args).Scan(&amp;arg1, &amp;arg2, ... )
+if err != nil {
+	return err
+}
+</code></pre>
+
+<p>(2a) Run a query that returns one row, and we&rsquo;d like to catch and process the
+case where no rows are returned.</p>
+
+<pre><code>err := db.QueryRow(query, ...args).Scan(&amp;arg1, &amp;arg2, ... )
+noRows := err == ErrNoRows
+if err != nil &amp;&amp; !noRows {
+	return err
+}
+</code></pre>
+
+<p>(3) Run a query that returns multiple rows.</p>
+
+<pre><code>rows, err := db.Query(query, ...args)
+if err != nil {
+	return err
+}
+defer rows.Close()
+for rows.Next() {
+	err := rows.Scan(&amp;arg1, &amp;arg2, ... )
+	if err != nil {
+		return err
+	}
+}
+err = rows.Err()
+if err != nil {
+	return err
+}
+</code></pre>
+
+<p>None of these is particularly bad as far as boilerplate goes, but unless we&rsquo;re
+writing an ORM (and we&rsquo;ve already decided we&rsquo;re not), we&rsquo;re going to have tens,
+perhaps hundreds of these scattered throughout our application.  Add to that an
+other <code>if err != nil</code> every time we start a transaction, and I&rsquo;m thinking
+there&rsquo;s got to be a better way.</p>
+
+<h2 id="organizing-database-access-around-high-level-functionality">Organizing database access around high-level functionality</h2>
+
+<p>We would like to follow the
+<a href="http://martinfowler.com/eaaCatalog/unitOfWork.html">unit of work</a>
+pattern and create something akin to the
+<a href="http://docs.sqlalchemy.org/en/latest/orm/session_basics.html">session model</a>
+of SQLAlchemy.</p>
+
+<p>A simple example of a unit of work is a password reset, which checks for an
+email match, and then generates, saves, and returns a reset code. This will
+involve a minimum of two queries, which need to be in the same transaction.
+(Much more complicated units of work are possible, of course, both read-only
+and read-write.)</p>
+
+<p>Our goal then is to find a way to have just one copy of all the boilerplate above and be able to substitute queries and argument lists as needed.</p>
+
+<p>I&rsquo;m going to propose that it&rsquo;s straightforward to implement such a thing Go
+by defining a custom transaction handler which extends
+<a href="https://golang.org/pkg/database/sql/#Tx">the one in database/sql</a>.
+This is done within the package that uses it.</p>
+
+<pre><code>type Tx struct {
+	sql.Tx
+}
+</code></pre>
+
+<p>We extend <code>sql.Tx</code> with methods to (a) convert all database errors to panics so
+that we can catch and process them all in one place, and (b) easily iterate over
+result sets.</p>
+
+<p>To accomplish (a), we add the methods <code>MustExec</code>, <code>MustQuery</code>, and <code>MustQueryRow</code>.
+These are identical to <code>Exec</code>, <code>Query</code>, and <code>QueryRow</code> except that they panic
+instead of returning an error code. Also, in the case of <code>MustQuery</code> and <code>MustQueryRow</code>,
+they return custom <code>Rows</code> and <code>Row</code> objects that have similar extensions.</p>
+
+<p>To accomplish (b), we add the method <code>Each</code> to the custom <code>Rows</code> object returned
+by <code>MustQuery</code>.  Method <code>Each</code> iterates over the result set and calls a
+callback function for each row.</p>
+
+<p>The <code>ourError</code> type is used to wrap errors that we want to convert back to error
+codes. It distinguishes them from other kinds of panics (e.g. out of memory).</p>
+
+<pre><code>type ourError struct {
+	err error
+}
+
+func (tx Tx) MustExec(query string, args ...interface{}) sql.Result {
+	res, err := tx.Exec(query, args...)
+	if err != nil {
+		panic(ourError{err})
+	}
+	return res
+}
+
+func (tx Tx) MustQuery(query string, args ...interface{}) *Rows {
+	rows, err := tx.Query(query, args...)
+	if err != nil {
+		panic(ourError{err})
+	}
+	return &amp;Rows{*rows}
+}
+
+func (tx Tx) MustQueryRow(query string, args ...interface{}) *Row {
+	row := tx.QueryRow(query, args...)
+	return &amp;Row{*row}
+}
+</code></pre>
+
+<p>The custom <code>Row</code> and <code>Rows</code> types are defined analogously.
+<code>Row</code> is extended with a <code>MustScan</code> method:</p>
+
+<pre><code>type Row struct {
+	sql.Row
+}
+
+func (row Row) MustScan(args ...interface{}) {
+	err := row.Scan(args...)
+	if err != nil {
+		panic(ourError{err})
+	}
+}
+</code></pre>
+
+<p><code>Rows</code> is extended with a <code>MustScan</code> method and also with the <code>Each</code> iterator
+described above.</p>
+
+<pre><code>type Rows struct {
+	sql.Rows
+}
+
+func (rows Rows) MustScan(args ...interface{}) {
+	err := rows.Scan(args...)
+	if err != nil {
+		panic(ourError{err})
+	}
+}
+
+func (rows *Rows) Each(f func(*Rows)) {
+	defer rows.Close()
+	for rows.Next() {
+		f(rows)
+	}
+	err := rows.Err()
+	if err != nil {
+		panic(ourError{err})
+	}
+}
+</code></pre>
+
+<p>Now to make it all work, we define a custom transaction function.  It
+sets up the transaction, provides the custom transaction handler to our
+callback, and then catches the panics.</p>
+
+<pre><code>func Xaction(db *sql.DB, f func(*Tx)) (err error) {
+
+	var tx *sql.Tx
+	tx, err = db.Begin()
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			if ourerr, ok := r.(ourError); ok {
+				// This panic of from tx.Fail() or the equivalent.  Unwrap it,
+				// process it, and return it as an error code.
+				tx.Rollback()
+				err = ourerr.err
+				if err == sql.ErrNoRows {
+					err = ErrDoesNotExist
+				} else if pgerr, ok := err.(*pq.Error); ok {
+					switch pgerr.Code.Class().Name() {
+					case &quot;data_exception&quot;:
+						err = ErrInvalidValue
+					case &quot;integrity_constraint_violation&quot;:
+						// This could be lots of things: foreign key violation,
+						// non-null constraint violation, etc., but we're generally
+						// checking those in advance. As long as our code is in
+						// order, unique constraints will be the only things we're
+						// actually relying on the database to check for us.
+						err = ErrDuplicate
+					}
+				}
+			} else {
+				// not our panic, so propagate it
+				panic(r)
+			}
+		}
+	}()
+
+	f(&amp;Tx{*tx}) // this runs the queries
+
+	tx.Commit()
+	return
+}
+</code></pre>
+
+<p>This covers all of our boilerplate needs except for (1a) above.
+To accommodate (1a), we could extend <code>sql.Result</code> the same way we extended
+the others, but I haven&rsquo;t really needed it yet, so I&rsquo;ll leave it as an
+exercise for the reader,</p>
+
+<p>One final method that&rsquo;s there just to make everything neat and tidy is a <code>Fail</code>
+method on the transaction which can be used to return an arbitrary error.</p>
+
+<pre><code>func (tx Tx) Fail(err error) {
+	panic(ourError{err})
+}
+</code></pre>
+
+<h2 id="the-result">The result</h2>
+
+<p>Our application code is now a lot neater.</p>
+
+<pre><code>err := Xaction(func(tx *Tx) {
+
+	// Run a query that doesn't return any results.
+	tx.MustExec(query1, ...args)
+
+	// Run a query that returns one row.
+	tx.MustQueryRow(query2, ...args).MustScan(&amp;arg1, &amp;arg2, ... )
+
+	// Run a query that returns multiple rows.
+	tx.MustQuery(query3, ...args).Each(func(r *Rows) {
+		r.MustScan(&amp;arg1, &amp;arg2, ... )
+	})
+})
+
+if err != nil {
+	switch err {
+
+	case ErrDoesNotExist:
+		// query2 returned no rows
+
+	case ErrInvalidValue:
+		// data exception
+
+	case ErrDuplicate:
+		// integrity violation
+
+	default:
+		return err
+	}
+}
+</code></pre>
+
+<p>And since this is an extension to the stock transaction handler rather than
+a replacement for it, we can still use the original non-must methods for
+any edge case that might require a different kind of error handling.</p>
+
+                    </div>
+                    
+                </section>
+            </div>
+            <div class="footer">
+    <div class="pure-menu pure-menu-horizontal pure-menu-open">
+        <ul>
+            <li>Powered by <a class="hugo" href="http://hugo.spf13.com/" target="_blank">hugo</a></li>
+        </ul>
+    </div>
+</div>
+<script src="https://ders.github.io/js/all.min.js"></script>
+        </div>
+    </div>
+</div>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '', 'auto');
+ga('send', 'pageview');
+
+</script>
+
+</body>
+</html>

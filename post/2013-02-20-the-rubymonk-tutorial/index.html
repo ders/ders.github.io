@@ -86,38 +86,38 @@ They are very well written and do an excellent job of guiding the user through p
 
 <p>Today I found a couple of careless coding errors in the <a href="http://rubymonk.com/learning/books/4/chapters/44-collections/lessons/98-iterate-filtrate-and-transform">section on using Array#inject</a> (subscription required).  The first is an illustration of inject to do a simple sum of array elements.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f92672">[</span><span style="color: #ae81ff">4</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">8</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">15</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">16</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">23</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">42</span><span style="color: #f92672">].</span><span style="color: #f8f8f2">inject(</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">do</span> <span style="color: #f92672">|</span><span style="color: #f8f8f2">accumulator,</span> <span style="color: #f8f8f2">iterated</span><span style="color: #f92672">|</span>
-  <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">+=</span> <span style="color: #f8f8f2">iterated</span>
-  <span style="color: #f8f8f2">accumulator</span>
-<span style="color: #66d9ef">end</span>
-</pre></div>
+
+[4, 8, 15, 16, 23, 42].inject(0) do |accumulator, iterated|
+  accumulator += iterated
+  accumulator
+end
 
 
 <p>In fact, the assignment statement here is superfluous, as the inject
 function assigns the return value of the block to the accumulator automatically.
 It would suffice to do:</p>
 
-<p><div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f92672">[</span><span style="color: #ae81ff">4</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">8</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">15</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">16</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">23</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">42</span><span style="color: #f92672">].</span><span style="color: #f8f8f2">inject(</span><span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">do</span> <span style="color: #f92672">|</span><span style="color: #f8f8f2">accumulator,</span> <span style="color: #f8f8f2">iterated</span><span style="color: #f92672">|</span>
-  <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">+</span> <span style="color: #f8f8f2">iterated</span>
-<span style="color: #66d9ef">end</span>
-</pre></div>
-</p>
+
+[4, 8, 15, 16, 23, 42].inject(0) do |accumulator, iterated|
+  accumulator + iterated
+end
+
 
 <p>The second error is in an illustration of the behavior of inject.
 The function below is supposed to mimic the behavior of the one above.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">def</span> <span style="color: #a6e22e">custom_inject</span><span style="color: #f8f8f2">(array,</span> <span style="color: #f8f8f2">default</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">nil</span><span style="color: #f8f8f2">)</span>
-  <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">default</span> <span style="color: #f92672">||</span> <span style="color: #f8f8f2">array</span><span style="color: #f92672">[</span><span style="color: #ae81ff">0</span><span style="color: #f92672">]</span>
 
-  <span style="color: #f8f8f2">array</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">each</span> <span style="color: #66d9ef">do</span> <span style="color: #f92672">|</span><span style="color: #f8f8f2">element</span><span style="color: #f92672">|</span>
-    <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">accumulator</span> <span style="color: #f92672">+</span> <span style="color: #f8f8f2">element</span>
-  <span style="color: #66d9ef">end</span>
+def custom_inject(array, default = nil)
+  accumulator = default || array[0]
 
-  <span style="color: #f8f8f2">accumulator</span>
-<span style="color: #66d9ef">end</span>
+  array.each do |element|
+    accumulator = accumulator + element
+  end
 
-<span style="color: #f8f8f2">p</span> <span style="color: #f8f8f2">custom_inject(</span><span style="color: #f92672">[</span><span style="color: #ae81ff">4</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">8</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">15</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">16</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">23</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">42</span><span style="color: #f92672">]</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">0</span><span style="color: #f8f8f2">)</span>
-</pre></div>
+  accumulator
+end
+
+p custom_inject([4, 8, 15, 16, 23, 42], 0)
 
 
 <p>The <code>custom_inject</code> function, however, fails for the case where the default value is not given.  It fails by counting the first array element twice.</p>

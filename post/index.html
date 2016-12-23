@@ -60,6 +60,350 @@
             
             <div class="posts">
                 
+                <h1 class="content-subhead">23 Dec 2016, 14:49</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2016-12-23-lean-clean-golang-machine/" class="post-title">A lean, clean Golang machine</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        
+
+<p>Writing a <a href="https://golang.org/">Go</a> package that interacts with a relational
+data store such as Postgres is full of messiness.</p>
+
+<p>Those of us who appreciate the strong-typedness of Go probably also appreciate
+the strong-typedness of SQL, and vice versa.  Unfortunately, communication
+between Go and SQL is less than ideal. This is due partly to the mostly
+free-form text format of data exchange (queries) and partly to some subtle
+differences in data types.</p>
+
+<p>Database nulls are a particular headache, leading to the contortions of defining
+types such <a href="https://golang.org/pkg/database/sql/#NullString">NullString</a>,
+<a href="https://golang.org/pkg/database/sql/#NullInt64">NullInt64</a>, and
+<a href="https://golang.org/pkg/database/sql/#NullBool">NullBool</a>, and an extra check
+is required every time you want distinguish a null from a zero value.</p>
+
+<p>Why not use an ORM? There has been
+<a href="http://www.hydrogen18.com/blog/golang-orms-and-why-im-still-not-using-one.html">a lot written</a>
+<a href="https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/">on this already</a>,
+but in a nutshell, the level of generality required means that
+<a href="https://godoc.org/github.com/jinzhu/gorm">pretty much everything is an interface{}</a>
+with runtime checks to cast stuff into the types you need, and at this point
+we&rsquo;ve lost the benefits of Go&rsquo;s strong typing and may as well write our whole
+application in Ruby.</p>
+
+<p>I&rsquo;ve found that programmers who appreciate the power and control that comes from
+writing in a low-level compiled language such as Go also appreciate the power
+can control that comes from writing queries yourself in SQL.</p>
+
+<h2 id="so-what-s-the-problem-really">So what&rsquo;s the problem, really?</h2>
+
+<p>The real headache of <a href="https://golang.org/pkg/database/sql/">Go + SQL</a> is the
+volume of boilerplate code that goes with even relatively simple operations.</p>
+
+<p>(1) Run a query that doesn&rsquo;t return any results.</p>
+
+<pre><code>_, err := db.Exec(query, ...args)
+if err != nil {
+	return err
+}
+</code></pre>
+
+<p>(1a) Run a query that doesn&rsquo;t return any results, but we want to know how many
+rows were changed.</p>
+
+<pre><code>res, err := db.Exec(query, ...args)
+if err != nil {
+	return err
+}
+count, err := res.RowsAffected()
+if err != nil {
+	return err
+}
+</code></pre>
+
+<p>(1b) Run a query that doesn&rsquo;t return any results, and we&rsquo;d like to catch and
+process integrity violations (e.g. duplicate entry on a unique field). This one
+requires some database-specific code; the example here is for Postgres.</p>
+
+<pre><code>_, err := db.Exec(query, ...args)
+duplicate := false
+if err != nil {
+	if pgerr, ok := err.(*pq.Error); ok {
+		duplicate = pgerr.Code.Class().Name() == &quot;integrity_constraint_violation&quot;
+	}
+	if !duplicate {
+		return err
+	}
+}
+</code></pre>
+
+<p>(1c) Run a query that doesn&rsquo;t return any results, and we&rsquo;d like to catch and
+process data exceptions (e.g. number out of range). This uses the same strategy as 1b and can be combined with it.</p>
+
+<p>(2) Run a query that returns one row.</p>
+
+<pre><code>err := db.QueryRow(query, ...args).Scan(&amp;arg1, &amp;arg2, ... )
+if err != nil {
+	return err
+}
+</code></pre>
+
+<p>(2a) Run a query that returns one row, and we&rsquo;d like to catch and process the
+case where no rows are returned.</p>
+
+<pre><code>err := db.QueryRow(query, ...args).Scan(&amp;arg1, &amp;arg2, ... )
+noRows := err == ErrNoRows
+if err != nil &amp;&amp; !noRows {
+	return err
+}
+</code></pre>
+
+<p>(3) Run a query that returns multiple rows.</p>
+
+<pre><code>rows, err := db.Query(query, ...args)
+if err != nil {
+	return err
+}
+defer rows.Close()
+for rows.Next() {
+	err := rows.Scan(&amp;arg1, &amp;arg2, ... )
+	if err != nil {
+		return err
+	}
+}
+err = rows.Err()
+if err != nil {
+	return err
+}
+</code></pre>
+
+<p>None of these is particularly bad as far as boilerplate goes, but unless we&rsquo;re
+writing an ORM (and we&rsquo;ve already decided we&rsquo;re not), we&rsquo;re going to have tens,
+perhaps hundreds of these scattered throughout our application.  Add to that an
+other <code>if err != nil</code> every time we start a transaction, and I&rsquo;m thinking
+there&rsquo;s got to be a better way.</p>
+
+<h2 id="organizing-database-access-around-high-level-functionality">Organizing database access around high-level functionality</h2>
+
+<p>We would like to follow the
+<a href="http://martinfowler.com/eaaCatalog/unitOfWork.html">unit of work</a>
+pattern and create something akin to the
+<a href="http://docs.sqlalchemy.org/en/latest/orm/session_basics.html">session model</a>
+of SQLAlchemy.</p>
+
+<p>A simple example of a unit of work is a password reset, which checks for an
+email match, and then generates, saves, and returns a reset code. This will
+involve a minimum of two queries, which need to be in the same transaction.
+(Much more complicated units of work are possible, of course, both read-only
+and read-write.)</p>
+
+<p>Our goal then is to find a way to have just one copy of all the boilerplate above and be able to substitute queries and argument lists as needed.</p>
+
+<p>I&rsquo;m going to propose that it&rsquo;s straightforward to implement such a thing Go
+by defining a custom transaction handler which extends
+<a href="https://golang.org/pkg/database/sql/#Tx">the one in database/sql</a>.
+This is done within the package that uses it.</p>
+
+<pre><code>type Tx struct {
+	sql.Tx
+}
+</code></pre>
+
+<p>We extend <code>sql.Tx</code> with methods to (a) convert all database errors to panics so
+that we can catch and process them all in one place, and (b) easily iterate over
+result sets.</p>
+
+<p>To accomplish (a), we add the methods <code>MustExec</code>, <code>MustQuery</code>, and <code>MustQueryRow</code>.
+These are identical to <code>Exec</code>, <code>Query</code>, and <code>QueryRow</code> except that they panic
+instead of returning an error code. Also, in the case of <code>MustQuery</code> and <code>MustQueryRow</code>,
+they return custom <code>Rows</code> and <code>Row</code> objects that have similar extensions.</p>
+
+<p>To accomplish (b), we add the method <code>Each</code> to the custom <code>Rows</code> object returned
+by <code>MustQuery</code>.  Method <code>Each</code> iterates over the result set and calls a
+callback function for each row.</p>
+
+<p>The <code>ourError</code> type is used to wrap errors that we want to convert back to error
+codes. It distinguishes them from other kinds of panics (e.g. out of memory).</p>
+
+<pre><code>type ourError struct {
+	err error
+}
+
+func (tx Tx) MustExec(query string, args ...interface{}) sql.Result {
+	res, err := tx.Exec(query, args...)
+	if err != nil {
+		panic(ourError{err})
+	}
+	return res
+}
+
+func (tx Tx) MustQuery(query string, args ...interface{}) *Rows {
+	rows, err := tx.Query(query, args...)
+	if err != nil {
+		panic(ourError{err})
+	}
+	return &amp;Rows{*rows}
+}
+
+func (tx Tx) MustQueryRow(query string, args ...interface{}) *Row {
+	row := tx.QueryRow(query, args...)
+	return &amp;Row{*row}
+}
+</code></pre>
+
+<p>The custom <code>Row</code> and <code>Rows</code> types are defined analogously.
+<code>Row</code> is extended with a <code>MustScan</code> method:</p>
+
+<pre><code>type Row struct {
+	sql.Row
+}
+
+func (row Row) MustScan(args ...interface{}) {
+	err := row.Scan(args...)
+	if err != nil {
+		panic(ourError{err})
+	}
+}
+</code></pre>
+
+<p><code>Rows</code> is extended with a <code>MustScan</code> method and also with the <code>Each</code> iterator
+described above.</p>
+
+<pre><code>type Rows struct {
+	sql.Rows
+}
+
+func (rows Rows) MustScan(args ...interface{}) {
+	err := rows.Scan(args...)
+	if err != nil {
+		panic(ourError{err})
+	}
+}
+
+func (rows *Rows) Each(f func(*Rows)) {
+	defer rows.Close()
+	for rows.Next() {
+		f(rows)
+	}
+	err := rows.Err()
+	if err != nil {
+		panic(ourError{err})
+	}
+}
+</code></pre>
+
+<p>Now to make it all work, we define a custom transaction function.  It
+sets up the transaction, provides the custom transaction handler to our
+callback, and then catches the panics.</p>
+
+<pre><code>func Xaction(db *sql.DB, f func(*Tx)) (err error) {
+
+	var tx *sql.Tx
+	tx, err = db.Begin()
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			if ourerr, ok := r.(ourError); ok {
+				// This panic of from tx.Fail() or the equivalent.  Unwrap it,
+				// process it, and return it as an error code.
+				tx.Rollback()
+				err = ourerr.err
+				if err == sql.ErrNoRows {
+					err = ErrDoesNotExist
+				} else if pgerr, ok := err.(*pq.Error); ok {
+					switch pgerr.Code.Class().Name() {
+					case &quot;data_exception&quot;:
+						err = ErrInvalidValue
+					case &quot;integrity_constraint_violation&quot;:
+						// This could be lots of things: foreign key violation,
+						// non-null constraint violation, etc., but we're generally
+						// checking those in advance. As long as our code is in
+						// order, unique constraints will be the only things we're
+						// actually relying on the database to check for us.
+						err = ErrDuplicate
+					}
+				}
+			} else {
+				// not our panic, so propagate it
+				panic(r)
+			}
+		}
+	}()
+
+	f(&amp;Tx{*tx}) // this runs the queries
+
+	tx.Commit()
+	return
+}
+</code></pre>
+
+<p>This covers all of our boilerplate needs except for (1a) above.
+To accommodate (1a), we could extend <code>sql.Result</code> the same way we extended
+the others, but I haven&rsquo;t really needed it yet, so I&rsquo;ll leave it as an
+exercise for the reader,</p>
+
+<p>One final method that&rsquo;s there just to make everything neat and tidy is a <code>Fail</code>
+method on the transaction which can be used to return an arbitrary error.</p>
+
+<pre><code>func (tx Tx) Fail(err error) {
+	panic(ourError{err})
+}
+</code></pre>
+
+<h2 id="the-result">The result</h2>
+
+<p>Our application code is now a lot neater.</p>
+
+<pre><code>err := Xaction(func(tx *Tx) {
+
+	// Run a query that doesn't return any results.
+	tx.MustExec(query1, ...args)
+
+	// Run a query that returns one row.
+	tx.MustQueryRow(query2, ...args).MustScan(&amp;arg1, &amp;arg2, ... )
+
+	// Run a query that returns multiple rows.
+	tx.MustQuery(query3, ...args).Each(func(r *Rows) {
+		r.MustScan(&amp;arg1, &amp;arg2, ... )
+	})
+})
+
+if err != nil {
+	switch err {
+
+	case ErrDoesNotExist:
+		// query2 returned no rows
+
+	case ErrInvalidValue:
+		// data exception
+
+	case ErrDuplicate:
+		// integrity violation
+
+	default:
+		return err
+	}
+}
+</code></pre>
+
+<p>And since this is an extension to the stock transaction handler rather than
+a replacement for it, we can still use the original non-must methods for
+any edge case that might require a different kind of error handling.</p>
+
+                    </div>
+                </section>
+                
                 <h1 class="content-subhead">21 Jun 2016, 17:20</h1>
                 <section class="post">
                     <header class="post-header">
@@ -871,130 +1215,6 @@ they are designed to process.</p>
 
                     <div class="post-description">
                         <p>Trying out <a href="http://gohugo.io/">Hugo</a> as a new blog engine.  If you&rsquo;re reading this, then I&rsquo;ve succeeded.</p>
-
-                    </div>
-                </section>
-                
-                <h1 class="content-subhead">27 Jan 2014, 10:07</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2014-01-27-why-you-should-always-understand-whats-going-on-under-the-hood/" class="post-title">Why you should always understand what&#39;s going on under the hood</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        
-
-<p>This is about how I got bitten by <a href="http://datamapper.org/">DataMapper</a>.
-No infection and I didn&rsquo;t get rabies, but it still hurt.</p>
-
-<p>I should mention that overall I think DataMapper is pretty good.
-It has most of the core features that an ORM should have without unneeded complexity.
-It beats the pants off of Active Somethingorother when it comes to making clean, backend-independent models.</p>
-
-<p>Unfortunately <em>most of the core features</em> isn&rsquo;t quite <em>all of the core features</em>, and when you really need that one missing piece, that&rsquo;s when the trouble starts.</p>
-
-<p>What bit me was the combination of two unrelated things:</p>
-
-<ul>
-<li>I needed an atomic update with conditions attached.</li>
-<li>Datamapper has different representations of the Boolean type, even between different SQLs.</li>
-</ul>
-
-<h3 id="the-missing-feature">The Missing Feature</h3>
-
-<p>The glaringly missing feature is the ability to update a value and know
-whether or not we actually changed anything.</p>
-
-<p>In SQL this would look like this:</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">UPDATE</span> <span style="color: #e6db74">&quot;quarks&quot;</span> <span style="color: #66d9ef">SET</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;t&#39;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;whosaw&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;ders&#39;</span> <span style="color: #66d9ef">WHERE</span> <span style="color: #e6db74">&quot;id&quot;</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">42</span> <span style="color: #66d9ef">AND</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;f&#39;</span>
-</pre></div>
-
-
-<p>Then I would get the number of affected rows to see if a change was made
-(i.e. whether or not the quark had already been seen).</p>
-
-<p>So let&rsquo;s try it with DataMapper:</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">Quark</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">all(</span><span style="color: #e6db74">:id</span> <span style="color: #f92672">=&gt;</span> <span style="color: #ae81ff">42</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:seen</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">false</span><span style="color: #f8f8f2">)</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">update(</span><span style="color: #e6db74">:seen</span> <span style="color: #f92672">=&gt;</span> <span style="color: #66d9ef">true</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">:whosaw</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&#39;ders&#39;</span><span style="color: #f8f8f2">)</span>
-</pre></div>
-
-
-<p>Two problems here.
-The first problem is that the return value is always true, and we don&rsquo;t
-get to see how many rows were updated.
-This isn&rsquo;t too big a deal;
-we can work around it by using <code>Quark.first</code> instead of <code>Quark.all</code>,
-generating an exception if no records are found.</p>
-
-<p>The second problem is the dealbreaker.
-Datamapper insists on generating two separate queries for the single
-update statement:</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #66d9ef">SELECT</span> <span style="color: #e6db74">&quot;id&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;size&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;name&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;seen&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;whosaw&quot;</span> <span style="color: #66d9ef">FROM</span> <span style="color: #e6db74">&quot;quarks&quot;</span> <span style="color: #66d9ef">WHERE</span> <span style="color: #f8f8f2">(</span><span style="color: #e6db74">&quot;id&quot;</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">42</span> <span style="color: #66d9ef">AND</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;f&#39;</span><span style="color: #f8f8f2">)</span> <span style="color: #66d9ef">ORDER</span> <span style="color: #66d9ef">BY</span> <span style="color: #e6db74">&quot;id&quot;</span>
-<span style="color: #66d9ef">UPDATE</span> <span style="color: #e6db74">&quot;quarks&quot;</span> <span style="color: #66d9ef">SET</span> <span style="color: #e6db74">&quot;seen&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;t&#39;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;whosaw&quot;</span> <span style="color: #f92672">=</span> <span style="color: #e6db74">&#39;ders&#39;</span> <span style="color: #66d9ef">WHERE</span> <span style="color: #e6db74">&quot;id&quot;</span> <span style="color: #f92672">=</span> <span style="color: #ae81ff">42</span>
-</pre></div>
-
-
-<p>This obviously won&rsquo;t do, as it&rsquo;s not thread-safe.
-Two users running this code at the same time would both believe that they saw the quark first.</p>
-
-<h3 id="the-solution">The Solution</h3>
-
-<p>The solution was to write the update query in SQL.</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">da</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">DataMapper</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">repository(</span><span style="color: #e6db74">:default</span><span style="color: #f8f8f2">)</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">adapter</span>
-<span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=&#39;t&#39;, whosaw=&#39;ders&#39; WHERE id=42 AND seen=&#39;f&#39;&quot;</span><span style="color: #f8f8f2">)</span>
-<span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">r</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">affected_rows</span> <span style="color: #f92672">&gt;</span> <span style="color: #ae81ff">0</span>
-   <span style="color: #f92672">...</span> <span style="color: #75715e"># we saw it first</span>
-</pre></div>
-
-
-<p>Kind of defeats the purpose of having an ORM, but it gets the job done.
-And as it turns out, I&rsquo;m
-<a href="http://stackoverflow.com/questions/18650932/how-to-add-a-where-clause-in-update-query-in-datamapper">not the first one</a>
-to run into this issue.</p>
-
-<h3 id="how-i-got-bitten">How I Got Bitten</h3>
-
-<p>Little did I know that the internal mapping of a Boolean field varies
-between SQL implementations.
-For Sqlite and Postgres, it&rsquo;s a character field with <code>'t'</code> and <code>'f'</code> values, whereas for MySQL it&rsquo;s the integers 1 and 0.</p>
-
-<p>In my case the unit tests all passed, but the live server (with a MySQL backend)
-started returning 500s.</p>
-
-<p>It&rsquo;s easy enough to change the query to work with MySQL:</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=1, whosaw=&#39;ders&#39; WHERE id=42 AND seen=0&quot;</span><span style="color: #f8f8f2">)</span>
-</pre></div>
-
-
-<p>But then the unit tests fail.</p>
-
-<p>In the end, I wrote this bit of horrible code to keep the tests passing
-and the live server happy.</p>
-
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">t,</span> <span style="color: #f8f8f2">f</span> <span style="color: #f92672">=</span> <span style="color: #66d9ef">if</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">options</span><span style="color: #f92672">[</span><span style="color: #e6db74">&#39;scheme&#39;</span><span style="color: #f92672">]</span> <span style="color: #f92672">==</span> <span style="color: #e6db74">&#39;sqlite&#39;</span>
-  <span style="color: #f92672">[</span><span style="color: #e6db74">&quot;&#39;t&#39;&quot;</span><span style="color: #f8f8f2">,</span> <span style="color: #e6db74">&quot;&#39;f&#39;&quot;</span><span style="color: #f92672">]</span> <span style="color: #75715e"># sqlite</span>
-<span style="color: #66d9ef">else</span>
-  <span style="color: #f92672">[</span><span style="color: #ae81ff">1</span><span style="color: #f8f8f2">,</span> <span style="color: #ae81ff">0</span><span style="color: #f92672">]</span> <span style="color: #75715e"># mysql</span>
-<span style="color: #66d9ef">end</span>
-
-  <span style="color: #f92672">...</span>
-
-<span style="color: #f8f8f2">r</span> <span style="color: #f92672">=</span> <span style="color: #f8f8f2">da</span><span style="color: #f92672">.</span><span style="color: #f8f8f2">execute(</span><span style="color: #e6db74">&quot;UPDATE quarks SET seen=#{</span><span style="color: #f8f8f2">t</span><span style="color: #e6db74">}, whosaw=&#39;ders&#39; WHERE id=42 AND seen=#{</span><span style="color: #f8f8f2">f</span><span style="color: #e6db74">}&quot;</span><span style="color: #f8f8f2">)</span>
-</pre></div>
-
-
-<p>(There may be a way to extract <code>t</code> and <code>f</code> directly from the
-DataMapper internals, but I&rsquo;m not that good yet.)</p>
 
                     </div>
                 </section>

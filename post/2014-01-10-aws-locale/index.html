@@ -84,7 +84,8 @@
                         <p>Every time I start a new EC2 Ubuntu instance, I&rsquo;m confronted with the following
 warning when I ssh in:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">_____________________________________________________________________
+
+_____________________________________________________________________
 WARNING! Your environment specifies an invalid locale.
  This can affect your user experience significantly, including the
  ability to manage packages. You may install the locales by running:
@@ -94,11 +95,10 @@ WARNING! Your environment specifies an invalid locale.
    sudo locale-gen UTF-8
 
 To see all available language packs, run:
-   apt-cache search &quot;^language-pack-[a-z][a-z]$&quot;
+   apt-cache search "^language-pack-[a-z][a-z]$"
 To disable this message for all users, run:
    sudo touch /var/lib/cloud/instance/locale-check.skip
 _____________________________________________________________________
-</pre></div>
 
 
 <p>Furthermore, a variety of package installations fail with some complaint
@@ -119,25 +119,25 @@ case of a new EC2 instance, these variables are not set at all.</p>
 that the default installation only sets <code>LANG</code>.</p>
 
 <p>/etc/default/locale
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">LANG=en_US.UTF-8
+
+LANG=en_US.UTF-8
 LANGUAGE=en_US
 LC_CTYPE=en_US.UTF-8
 LC_ALL=en_US.UTF-8
-</pre></div>
 </p>
 
 <p>As always, it&rsquo;s also a good idea to make sure you have the latest and
 greatest packages:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo apt-get update
+
+$ sudo apt-get update
 $ sudo apt-get upgrade
-</pre></div>
 
 
 <p>And finally, while we&rsquo;re at it, why not set the timezone?</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">$ sudo dpkg-reconfigure tzdata
-</pre></div>
+
+$ sudo dpkg-reconfigure tzdata
 
 
 <p>Next time I need to set up a new EC2 instance,

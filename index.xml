@@ -6,8 +6,344 @@
     <description>Recent content on awm&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Tue, 21 Jun 2016 17:20:00 +0900</lastBuildDate>
+    <lastBuildDate>Fri, 23 Dec 2016 14:49:00 +0900</lastBuildDate>
     <atom:link href="https://ders.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>A lean, clean Golang machine</title>
+      <link>https://ders.github.io/post/2016-12-23-lean-clean-golang-machine/</link>
+      <pubDate>Fri, 23 Dec 2016 14:49:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2016-12-23-lean-clean-golang-machine/</guid>
+      <description>
+
+&lt;p&gt;Writing a &lt;a href=&#34;https://golang.org/&#34;&gt;Go&lt;/a&gt; package that interacts with a relational
+data store such as Postgres is full of messiness.&lt;/p&gt;
+
+&lt;p&gt;Those of us who appreciate the strong-typedness of Go probably also appreciate
+the strong-typedness of SQL, and vice versa.  Unfortunately, communication
+between Go and SQL is less than ideal. This is due partly to the mostly
+free-form text format of data exchange (queries) and partly to some subtle
+differences in data types.&lt;/p&gt;
+
+&lt;p&gt;Database nulls are a particular headache, leading to the contortions of defining
+types such &lt;a href=&#34;https://golang.org/pkg/database/sql/#NullString&#34;&gt;NullString&lt;/a&gt;,
+&lt;a href=&#34;https://golang.org/pkg/database/sql/#NullInt64&#34;&gt;NullInt64&lt;/a&gt;, and
+&lt;a href=&#34;https://golang.org/pkg/database/sql/#NullBool&#34;&gt;NullBool&lt;/a&gt;, and an extra check
+is required every time you want distinguish a null from a zero value.&lt;/p&gt;
+
+&lt;p&gt;Why not use an ORM? There has been
+&lt;a href=&#34;http://www.hydrogen18.com/blog/golang-orms-and-why-im-still-not-using-one.html&#34;&gt;a lot written&lt;/a&gt;
+&lt;a href=&#34;https://blog.codinghorror.com/object-relational-mapping-is-the-vietnam-of-computer-science/&#34;&gt;on this already&lt;/a&gt;,
+but in a nutshell, the level of generality required means that
+&lt;a href=&#34;https://godoc.org/github.com/jinzhu/gorm&#34;&gt;pretty much everything is an interface{}&lt;/a&gt;
+with runtime checks to cast stuff into the types you need, and at this point
+we&amp;rsquo;ve lost the benefits of Go&amp;rsquo;s strong typing and may as well write our whole
+application in Ruby.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;ve found that programmers who appreciate the power and control that comes from
+writing in a low-level compiled language such as Go also appreciate the power
+can control that comes from writing queries yourself in SQL.&lt;/p&gt;
+
+&lt;h2 id=&#34;so-what-s-the-problem-really&#34;&gt;So what&amp;rsquo;s the problem, really?&lt;/h2&gt;
+
+&lt;p&gt;The real headache of &lt;a href=&#34;https://golang.org/pkg/database/sql/&#34;&gt;Go + SQL&lt;/a&gt; is the
+volume of boilerplate code that goes with even relatively simple operations.&lt;/p&gt;
+
+&lt;p&gt;(1) Run a query that doesn&amp;rsquo;t return any results.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;_, err := db.Exec(query, ...args)
+if err != nil {
+	return err
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(1a) Run a query that doesn&amp;rsquo;t return any results, but we want to know how many
+rows were changed.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;res, err := db.Exec(query, ...args)
+if err != nil {
+	return err
+}
+count, err := res.RowsAffected()
+if err != nil {
+	return err
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(1b) Run a query that doesn&amp;rsquo;t return any results, and we&amp;rsquo;d like to catch and
+process integrity violations (e.g. duplicate entry on a unique field). This one
+requires some database-specific code; the example here is for Postgres.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;_, err := db.Exec(query, ...args)
+duplicate := false
+if err != nil {
+	if pgerr, ok := err.(*pq.Error); ok {
+		duplicate = pgerr.Code.Class().Name() == &amp;quot;integrity_constraint_violation&amp;quot;
+	}
+	if !duplicate {
+		return err
+	}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(1c) Run a query that doesn&amp;rsquo;t return any results, and we&amp;rsquo;d like to catch and
+process data exceptions (e.g. number out of range). This uses the same strategy as 1b and can be combined with it.&lt;/p&gt;
+
+&lt;p&gt;(2) Run a query that returns one row.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;err := db.QueryRow(query, ...args).Scan(&amp;amp;arg1, &amp;amp;arg2, ... )
+if err != nil {
+	return err
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(2a) Run a query that returns one row, and we&amp;rsquo;d like to catch and process the
+case where no rows are returned.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;err := db.QueryRow(query, ...args).Scan(&amp;amp;arg1, &amp;amp;arg2, ... )
+noRows := err == ErrNoRows
+if err != nil &amp;amp;&amp;amp; !noRows {
+	return err
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;(3) Run a query that returns multiple rows.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;rows, err := db.Query(query, ...args)
+if err != nil {
+	return err
+}
+defer rows.Close()
+for rows.Next() {
+	err := rows.Scan(&amp;amp;arg1, &amp;amp;arg2, ... )
+	if err != nil {
+		return err
+	}
+}
+err = rows.Err()
+if err != nil {
+	return err
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;None of these is particularly bad as far as boilerplate goes, but unless we&amp;rsquo;re
+writing an ORM (and we&amp;rsquo;ve already decided we&amp;rsquo;re not), we&amp;rsquo;re going to have tens,
+perhaps hundreds of these scattered throughout our application.  Add to that an
+other &lt;code&gt;if err != nil&lt;/code&gt; every time we start a transaction, and I&amp;rsquo;m thinking
+there&amp;rsquo;s got to be a better way.&lt;/p&gt;
+
+&lt;h2 id=&#34;organizing-database-access-around-high-level-functionality&#34;&gt;Organizing database access around high-level functionality&lt;/h2&gt;
+
+&lt;p&gt;We would like to follow the
+&lt;a href=&#34;http://martinfowler.com/eaaCatalog/unitOfWork.html&#34;&gt;unit of work&lt;/a&gt;
+pattern and create something akin to the
+&lt;a href=&#34;http://docs.sqlalchemy.org/en/latest/orm/session_basics.html&#34;&gt;session model&lt;/a&gt;
+of SQLAlchemy.&lt;/p&gt;
+
+&lt;p&gt;A simple example of a unit of work is a password reset, which checks for an
+email match, and then generates, saves, and returns a reset code. This will
+involve a minimum of two queries, which need to be in the same transaction.
+(Much more complicated units of work are possible, of course, both read-only
+and read-write.)&lt;/p&gt;
+
+&lt;p&gt;Our goal then is to find a way to have just one copy of all the boilerplate above and be able to substitute queries and argument lists as needed.&lt;/p&gt;
+
+&lt;p&gt;I&amp;rsquo;m going to propose that it&amp;rsquo;s straightforward to implement such a thing Go
+by defining a custom transaction handler which extends
+&lt;a href=&#34;https://golang.org/pkg/database/sql/#Tx&#34;&gt;the one in database/sql&lt;/a&gt;.
+This is done within the package that uses it.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;type Tx struct {
+	sql.Tx
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;We extend &lt;code&gt;sql.Tx&lt;/code&gt; with methods to (a) convert all database errors to panics so
+that we can catch and process them all in one place, and (b) easily iterate over
+result sets.&lt;/p&gt;
+
+&lt;p&gt;To accomplish (a), we add the methods &lt;code&gt;MustExec&lt;/code&gt;, &lt;code&gt;MustQuery&lt;/code&gt;, and &lt;code&gt;MustQueryRow&lt;/code&gt;.
+These are identical to &lt;code&gt;Exec&lt;/code&gt;, &lt;code&gt;Query&lt;/code&gt;, and &lt;code&gt;QueryRow&lt;/code&gt; except that they panic
+instead of returning an error code. Also, in the case of &lt;code&gt;MustQuery&lt;/code&gt; and &lt;code&gt;MustQueryRow&lt;/code&gt;,
+they return custom &lt;code&gt;Rows&lt;/code&gt; and &lt;code&gt;Row&lt;/code&gt; objects that have similar extensions.&lt;/p&gt;
+
+&lt;p&gt;To accomplish (b), we add the method &lt;code&gt;Each&lt;/code&gt; to the custom &lt;code&gt;Rows&lt;/code&gt; object returned
+by &lt;code&gt;MustQuery&lt;/code&gt;.  Method &lt;code&gt;Each&lt;/code&gt; iterates over the result set and calls a
+callback function for each row.&lt;/p&gt;
+
+&lt;p&gt;The &lt;code&gt;ourError&lt;/code&gt; type is used to wrap errors that we want to convert back to error
+codes. It distinguishes them from other kinds of panics (e.g. out of memory).&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;type ourError struct {
+	err error
+}
+
+func (tx Tx) MustExec(query string, args ...interface{}) sql.Result {
+	res, err := tx.Exec(query, args...)
+	if err != nil {
+		panic(ourError{err})
+	}
+	return res
+}
+
+func (tx Tx) MustQuery(query string, args ...interface{}) *Rows {
+	rows, err := tx.Query(query, args...)
+	if err != nil {
+		panic(ourError{err})
+	}
+	return &amp;amp;Rows{*rows}
+}
+
+func (tx Tx) MustQueryRow(query string, args ...interface{}) *Row {
+	row := tx.QueryRow(query, args...)
+	return &amp;amp;Row{*row}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;The custom &lt;code&gt;Row&lt;/code&gt; and &lt;code&gt;Rows&lt;/code&gt; types are defined analogously.
+&lt;code&gt;Row&lt;/code&gt; is extended with a &lt;code&gt;MustScan&lt;/code&gt; method:&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;type Row struct {
+	sql.Row
+}
+
+func (row Row) MustScan(args ...interface{}) {
+	err := row.Scan(args...)
+	if err != nil {
+		panic(ourError{err})
+	}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;&lt;code&gt;Rows&lt;/code&gt; is extended with a &lt;code&gt;MustScan&lt;/code&gt; method and also with the &lt;code&gt;Each&lt;/code&gt; iterator
+described above.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;type Rows struct {
+	sql.Rows
+}
+
+func (rows Rows) MustScan(args ...interface{}) {
+	err := rows.Scan(args...)
+	if err != nil {
+		panic(ourError{err})
+	}
+}
+
+func (rows *Rows) Each(f func(*Rows)) {
+	defer rows.Close()
+	for rows.Next() {
+		f(rows)
+	}
+	err := rows.Err()
+	if err != nil {
+		panic(ourError{err})
+	}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;Now to make it all work, we define a custom transaction function.  It
+sets up the transaction, provides the custom transaction handler to our
+callback, and then catches the panics.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;func Xaction(db *sql.DB, f func(*Tx)) (err error) {
+
+	var tx *sql.Tx
+	tx, err = db.Begin()
+	if err != nil {
+		return
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			if ourerr, ok := r.(ourError); ok {
+				// This panic of from tx.Fail() or the equivalent.  Unwrap it,
+				// process it, and return it as an error code.
+				tx.Rollback()
+				err = ourerr.err
+				if err == sql.ErrNoRows {
+					err = ErrDoesNotExist
+				} else if pgerr, ok := err.(*pq.Error); ok {
+					switch pgerr.Code.Class().Name() {
+					case &amp;quot;data_exception&amp;quot;:
+						err = ErrInvalidValue
+					case &amp;quot;integrity_constraint_violation&amp;quot;:
+						// This could be lots of things: foreign key violation,
+						// non-null constraint violation, etc., but we&#39;re generally
+						// checking those in advance. As long as our code is in
+						// order, unique constraints will be the only things we&#39;re
+						// actually relying on the database to check for us.
+						err = ErrDuplicate
+					}
+				}
+			} else {
+				// not our panic, so propagate it
+				panic(r)
+			}
+		}
+	}()
+
+	f(&amp;amp;Tx{*tx}) // this runs the queries
+
+	tx.Commit()
+	return
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;This covers all of our boilerplate needs except for (1a) above.
+To accommodate (1a), we could extend &lt;code&gt;sql.Result&lt;/code&gt; the same way we extended
+the others, but I haven&amp;rsquo;t really needed it yet, so I&amp;rsquo;ll leave it as an
+exercise for the reader,&lt;/p&gt;
+
+&lt;p&gt;One final method that&amp;rsquo;s there just to make everything neat and tidy is a &lt;code&gt;Fail&lt;/code&gt;
+method on the transaction which can be used to return an arbitrary error.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;func (tx Tx) Fail(err error) {
+	panic(ourError{err})
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;h2 id=&#34;the-result&#34;&gt;The result&lt;/h2&gt;
+
+&lt;p&gt;Our application code is now a lot neater.&lt;/p&gt;
+
+&lt;pre&gt;&lt;code&gt;err := Xaction(func(tx *Tx) {
+
+	// Run a query that doesn&#39;t return any results.
+	tx.MustExec(query1, ...args)
+
+	// Run a query that returns one row.
+	tx.MustQueryRow(query2, ...args).MustScan(&amp;amp;arg1, &amp;amp;arg2, ... )
+
+	// Run a query that returns multiple rows.
+	tx.MustQuery(query3, ...args).Each(func(r *Rows) {
+		r.MustScan(&amp;amp;arg1, &amp;amp;arg2, ... )
+	})
+})
+
+if err != nil {
+	switch err {
+
+	case ErrDoesNotExist:
+		// query2 returned no rows
+
+	case ErrInvalidValue:
+		// data exception
+
+	case ErrDuplicate:
+		// integrity violation
+
+	default:
+		return err
+	}
+}
+&lt;/code&gt;&lt;/pre&gt;
+
+&lt;p&gt;And since this is an extension to the stock transaction handler rather than
+a replacement for it, we can still use the original non-must methods for
+any edge case that might require a different kind of error handling.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>CRUD APIs are crud</title>
@@ -783,8 +1119,8 @@ whether or not we actually changed anything.&lt;/p&gt;
 
 &lt;p&gt;In SQL this would look like this:&lt;/p&gt;
 
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;UPDATE&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;quarks&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;SET&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;t&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;whosaw&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;ders&amp;#39;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;WHERE&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;42&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;AND&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;f&amp;#39;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
+
+UPDATE &#34;quarks&#34; SET &#34;seen&#34; = &#39;t&#39;, &#34;whosaw&#34; = &#39;ders&#39; WHERE &#34;id&#34; = 42 AND &#34;seen&#34; = &#39;f&#39;
 
 
 &lt;p&gt;Then I would get the number of affected rows to see if a change was made
@@ -792,8 +1128,8 @@ whether or not we actually changed anything.&lt;/p&gt;
 
 &lt;p&gt;So let&amp;rsquo;s try it with DataMapper:&lt;/p&gt;
 
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;Quark&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;all(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;:id&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;42&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:seen&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;false&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;update(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;:seen&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;true&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;:whosaw&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;ders&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
+
+Quark.all(:id =&gt; 42, :seen =&gt; false).update(:seen =&gt; true, :whosaw =&gt; &#39;ders&#39;)
 
 
 &lt;p&gt;Two problems here.
@@ -807,9 +1143,9 @@ generating an exception if no records are found.&lt;/p&gt;
 Datamapper insists on generating two separate queries for the single
 update statement:&lt;/p&gt;
 
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;SELECT&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;size&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;name&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;whosaw&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;FROM&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;quarks&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;WHERE&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;42&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;AND&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;f&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;ORDER&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;BY&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt;
-&lt;span style=&#34;color: #66d9ef&#34;&gt;UPDATE&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;quarks&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;SET&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;seen&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;t&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;whosaw&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;ders&amp;#39;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;WHERE&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;id&amp;quot;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;42&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
+
+SELECT &#34;id&#34;, &#34;size&#34;, &#34;name&#34;, &#34;seen&#34;, &#34;whosaw&#34; FROM &#34;quarks&#34; WHERE (&#34;id&#34; = 42 AND &#34;seen&#34; = &#39;f&#39;) ORDER BY &#34;id&#34;
+UPDATE &#34;quarks&#34; SET &#34;seen&#34; = &#39;t&#39;, &#34;whosaw&#34; = &#39;ders&#39; WHERE &#34;id&#34; = 42
 
 
 &lt;p&gt;This obviously won&amp;rsquo;t do, as it&amp;rsquo;s not thread-safe.
@@ -819,11 +1155,11 @@ Two users running this code at the same time would both believe that they saw th
 
 &lt;p&gt;The solution was to write the update query in SQL.&lt;/p&gt;
 
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;DataMapper&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;repository(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;:default&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;adapter&lt;/span&gt;
-&lt;span style=&#34;color: #f8f8f2&#34;&gt;r&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;execute(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;UPDATE quarks SET seen=&amp;#39;t&amp;#39;, whosaw=&amp;#39;ders&amp;#39; WHERE id=42 AND seen=&amp;#39;f&amp;#39;&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-&lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;r&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;affected_rows&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;
-   &lt;span style=&#34;color: #f92672&#34;&gt;...&lt;/span&gt; &lt;span style=&#34;color: #75715e&#34;&gt;# we saw it first&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
+
+da = DataMapper.repository(:default).adapter
+r = da.execute(&#34;UPDATE quarks SET seen=&#39;t&#39;, whosaw=&#39;ders&#39; WHERE id=42 AND seen=&#39;f&#39;&#34;)
+if r.affected_rows &gt; 0
+   ... # we saw it first
 
 
 &lt;p&gt;Kind of defeats the purpose of having an ORM, but it gets the job done.
@@ -842,8 +1178,8 @@ started returning 500s.&lt;/p&gt;
 
 &lt;p&gt;It&amp;rsquo;s easy enough to change the query to work with MySQL:&lt;/p&gt;
 
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;r&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;execute(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;UPDATE quarks SET seen=1, whosaw=&amp;#39;ders&amp;#39; WHERE id=42 AND seen=0&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
+
+r = da.execute(&#34;UPDATE quarks SET seen=1, whosaw=&#39;ders&#39; WHERE id=42 AND seen=0&#34;)
 
 
 &lt;p&gt;But then the unit tests fail.&lt;/p&gt;
@@ -851,16 +1187,16 @@ started returning 500s.&lt;/p&gt;
 &lt;p&gt;In the end, I wrote this bit of horrible code to keep the tests passing
 and the live server happy.&lt;/p&gt;
 
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;t,&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;f&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;if&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;options&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;scheme&amp;#39;&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;==&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;#39;sqlite&amp;#39;&lt;/span&gt;
-  &lt;span style=&#34;color: #f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;&amp;#39;t&amp;#39;&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;&amp;#39;f&amp;#39;&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color: #75715e&#34;&gt;# sqlite&lt;/span&gt;
-&lt;span style=&#34;color: #66d9ef&#34;&gt;else&lt;/span&gt;
-  &lt;span style=&#34;color: #f92672&#34;&gt;[&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #ae81ff&#34;&gt;0&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;]&lt;/span&gt; &lt;span style=&#34;color: #75715e&#34;&gt;# mysql&lt;/span&gt;
-&lt;span style=&#34;color: #66d9ef&#34;&gt;end&lt;/span&gt;
 
-  &lt;span style=&#34;color: #f92672&#34;&gt;...&lt;/span&gt;
+t, f = if da.options[&#39;scheme&#39;] == &#39;sqlite&#39;
+  [&#34;&#39;t&#39;&#34;, &#34;&#39;f&#39;&#34;] # sqlite
+else
+  [1, 0] # mysql
+end
 
-&lt;span style=&#34;color: #f8f8f2&#34;&gt;r&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;da&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;execute(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;UPDATE quarks SET seen=#{&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;t&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;}, whosaw=&amp;#39;ders&amp;#39; WHERE id=42 AND seen=#{&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;f&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;}&amp;quot;&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
+  ...
+
+r = da.execute(&#34;UPDATE quarks SET seen=#{t}, whosaw=&#39;ders&#39; WHERE id=42 AND seen=#{f}&#34;)
 
 
 &lt;p&gt;(There may be a way to extract &lt;code&gt;t&lt;/code&gt; and &lt;code&gt;f&lt;/code&gt; directly from the
@@ -874,9 +1210,9 @@ DataMapper internals, but I&amp;rsquo;m not that good yet.)&lt;/p&gt;
       <pubDate>Fri, 17 Jan 2014 12:20:00 +0900</pubDate>
       
       <guid>https://ders.github.io/post/2014-01-17-try-it/</guid>
-      <description>&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;$ python
-&amp;gt;&amp;gt;&amp;gt; import this
-&lt;/pre&gt;&lt;/div&gt;
+      <description>
+$ python
+&gt;&gt;&gt; import this
 
 
 &lt;p&gt;Just try it.&lt;/p&gt;
@@ -892,7 +1228,8 @@ DataMapper internals, but I&amp;rsquo;m not that good yet.)&lt;/p&gt;
       <description>&lt;p&gt;Every time I start a new EC2 Ubuntu instance, I&amp;rsquo;m confronted with the following
 warning when I ssh in:&lt;/p&gt;
 
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;_____________________________________________________________________
+
+_____________________________________________________________________
 WARNING! Your environment specifies an invalid locale.
  This can affect your user experience significantly, including the
  ability to manage packages. You may install the locales by running:
@@ -902,11 +1239,10 @@ WARNING! Your environment specifies an invalid locale.
    sudo locale-gen UTF-8
 
 To see all available language packs, run:
-   apt-cache search &amp;quot;^language-pack-[a-z][a-z]$&amp;quot;
+   apt-cache search &#34;^language-pack-[a-z][a-z]$&#34;
 To disable this message for all users, run:
    sudo touch /var/lib/cloud/instance/locale-check.skip
 _____________________________________________________________________
-&lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Furthermore, a variety of package installations fail with some complaint
@@ -927,25 +1263,25 @@ case of a new EC2 instance, these variables are not set at all.&lt;/p&gt;
 that the default installation only sets &lt;code&gt;LANG&lt;/code&gt;.&lt;/p&gt;
 
 &lt;p&gt;/etc/default/locale
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;LANG=en_US.UTF-8
+
+LANG=en_US.UTF-8
 LANGUAGE=en_US
 LC_CTYPE=en_US.UTF-8
 LC_ALL=en_US.UTF-8
-&lt;/pre&gt;&lt;/div&gt;
 &lt;/p&gt;
 
 &lt;p&gt;As always, it&amp;rsquo;s also a good idea to make sure you have the latest and
 greatest packages:&lt;/p&gt;
 
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;$ sudo apt-get update
+
+$ sudo apt-get update
 $ sudo apt-get upgrade
-&lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;And finally, while we&amp;rsquo;re at it, why not set the timezone?&lt;/p&gt;
 
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;$ sudo dpkg-reconfigure tzdata
-&lt;/pre&gt;&lt;/div&gt;
+
+$ sudo dpkg-reconfigure tzdata
 
 
 &lt;p&gt;Next time I need to set up a new EC2 instance,
@@ -1065,70 +1401,6 @@ In New York at the time, looking at the train itself was the &lt;em&gt;only&lt;/
 Had I gone to London with this one simple bit of information &amp;ndash; that there is train information displayed above the platform &amp;ndash; I could have saved myself this small embarrassment and the possibility of getting on the wrong train.&lt;/p&gt;
 
 &lt;p&gt;This, my friends, is an exact parallel of what&amp;rsquo;s happening in my workplace nowadays.&lt;/p&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>More Data Mapper</title>
-      <link>https://ders.github.io/post/2013-04-16-more-data-mapper/</link>
-      <pubDate>Tue, 16 Apr 2013 14:05:00 +0900</pubDate>
-      
-      <guid>https://ders.github.io/post/2013-04-16-more-data-mapper/</guid>
-      <description>&lt;p&gt;One of the basic functions of &lt;a href=&#34;http://datamapper.org/&#34;&gt;Data Mapper&lt;/a&gt; is to remember which attributes in the model have been modified so that it&amp;rsquo;s easy to determine what (if anything) needs to be updated in the database.
-Data Mapper checks automatically on a call to &lt;a href=&#34;http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#save-instance_method&#34;&gt;&lt;code&gt;#save&lt;/code&gt;&lt;/a&gt; and only writes what needs to be written.
-It also provides methods &lt;a href=&#34;http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#dirty%3F-instance_method&#34;&gt;&lt;code&gt;#dirty?&lt;/code&gt;&lt;/a&gt; and &lt;a href=&#34;http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_dirty%3F-instance_method&#34;&gt;&lt;code&gt;#attribute_dirty?&lt;/code&gt;&lt;/a&gt;, which tell you whether or not a record or a particular attribute has changed.&lt;/p&gt;
-
-&lt;p&gt;Unfortunately, while it&amp;rsquo;s easy to find out whether or not an attribute has changed, there is no easy way to see what the old value was.
-It&amp;rsquo;s obviously keeping the old value somewhere.  We know this because when you change an attribute back to the old value, it recognizes that you&amp;rsquo;ve done so and considers it unchanged.&lt;/p&gt;
-
-&lt;p&gt;There is a method called &lt;a href=&#34;http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#dirty_attributes-instance_method&#34;&gt;&lt;code&gt;#dirty_attributes&lt;/code&gt;&lt;/a&gt;, which returns a hash of changed attributes, but the keys to this hash are hashes themselves and in a format that&amp;rsquo;s used only internally in Data Mapper, making it a needlessly inconvenient method to use.
-Also, I&amp;rsquo;d like to avoid &lt;code&gt;#dirty_attributes&lt;/code&gt; as it&amp;rsquo;s not part of the public API.&lt;/p&gt;
-
-&lt;p&gt;There is a possible workaround, suggested by some.  Override the setter for the attribute and save the old value for later use.&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;def&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;thing&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(newthing)&lt;/span&gt;
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;@oldthing&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;||=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;@thing&lt;/span&gt;
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;@thing&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;newthing&lt;/span&gt;
-&lt;span style=&#34;color: #66d9ef&#34;&gt;end&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;I&amp;rsquo;m not going to link to the people who suggested this, though, because it&amp;rsquo;s a terrible suggestion.  Since we&amp;rsquo;ve overridden Data Mapper&amp;rsquo;s setter for attribute &lt;code&gt;thing&lt;/code&gt;, Data Mapper no longer knows that we&amp;rsquo;ve changed its value.&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;001&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;record&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;Record&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;get(&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
- &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;...&lt;/span&gt;
-&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;002&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;record&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;thing&lt;/span&gt;
- &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;teamaker&amp;quot;&lt;/span&gt;
-&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;003&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;record&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;thing&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;coffeemaker&amp;quot;&lt;/span&gt;
- &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;coffeemaker&amp;quot;&lt;/span&gt;
-&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;004&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;record&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;attribute_dirty?(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;:thing&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
- &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;false&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;Imagine the insidious bugs that could creep in here.&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;005&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;record&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;save&lt;/span&gt;
- &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;true&lt;/span&gt;
-&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;006&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;record&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt; &lt;span style=&#34;color: #66d9ef&#34;&gt;Record&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;get(&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;)&lt;/span&gt;
- &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;...&lt;/span&gt;
-&lt;span style=&#34;color: #ae81ff&#34;&gt;1&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;9&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;3&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;-&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;p392&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;:&lt;/span&gt;&lt;span style=&#34;color: #ae81ff&#34;&gt;003&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;record&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;.&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;thing&lt;/span&gt;
- &lt;span style=&#34;color: #f92672&#34;&gt;=&amp;gt;&lt;/span&gt; &lt;span style=&#34;color: #e6db74&#34;&gt;&amp;quot;teamaker&amp;quot;&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;Simply put, our changes are silently ignored because we&amp;rsquo;ve stupidly disabled what is arguably Data Mapper&amp;rsquo;s most important function.&lt;/p&gt;
-
-&lt;p&gt;Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&amp;rsquo;s &lt;a href=&#34;http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method&#34;&gt;&lt;code&gt;#attribute_set&lt;/code&gt;&lt;/a&gt;.&lt;/p&gt;
-
-&lt;div class=&#34;highlight&#34; style=&#34;background: #272822&#34;&gt;&lt;pre style=&#34;line-height: 125%&#34;&gt;&lt;span style=&#34;color: #66d9ef&#34;&gt;def&lt;/span&gt; &lt;span style=&#34;color: #a6e22e&#34;&gt;thing&lt;/span&gt;&lt;span style=&#34;color: #f92672&#34;&gt;=&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;(newthing)&lt;/span&gt;
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;@oldthing&lt;/span&gt; &lt;span style=&#34;color: #f92672&#34;&gt;||=&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;@thing&lt;/span&gt;
-  &lt;span style=&#34;color: #f8f8f2&#34;&gt;attribute_set(&lt;/span&gt;&lt;span style=&#34;color: #e6db74&#34;&gt;:thing&lt;/span&gt;&lt;span style=&#34;color: #f8f8f2&#34;&gt;,&lt;/span&gt; &lt;span style=&#34;color: #f8f8f2&#34;&gt;newthing)&lt;/span&gt;
-&lt;span style=&#34;color: #66d9ef&#34;&gt;end&lt;/span&gt;
-&lt;/pre&gt;&lt;/div&gt;
-
-
-&lt;p&gt;Method &lt;code&gt;#attribute_set&lt;/code&gt; keeps track of the changes.  It&amp;rsquo;s what &lt;code&gt;thing=&lt;/code&gt; pointed to before we overrode it.&lt;/p&gt;
 </description>
     </item>
     

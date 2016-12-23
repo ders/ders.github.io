@@ -85,27 +85,27 @@
 
 <p>There was an Aha! moment when I realized that they&rsquo;ve defined the <code>==</code> operator to return true when the password matches, not when the strings are equal (as a novice like me might expect).</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :002 &gt; secret = BCrypt::Password.create(&quot;password&quot;)
- =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
-</pre></div>
+
+1.9.3p385 :002 > secret = BCrypt::Password.create("password")
+ => "$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe"
 
 
 <p>The hashed secret is saved in the database.&nbsp; It&rsquo;s later retrieved and checked against the user input using <code>==</code>.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :005 &gt; secret
- =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
-1.9.3p385 :006 &gt; q = BCrypt::Password.new(secret)
- =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
-1.9.3p385 :007 &gt; q == &quot;password&quot;
- =&gt; true
-</pre></div>
+
+1.9.3p385 :005 > secret
+ => "$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe"
+1.9.3p385 :006 > q = BCrypt::Password.new(secret)
+ => "$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe"
+1.9.3p385 :007 > q == "password"
+ => true
 
 
 <p>This also has the interesting side effect that <code>==</code> is not commutative.</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%">1.9.3p385 :008 &gt; &quot;password&quot; == q
- =&gt; false
-</pre></div>
+
+1.9.3p385 :008 > "password" == q
+ => false
 
 
 <p>My junior high math teacher would be disturbed by this.&nbsp; Such is the power of Ruby.</p>

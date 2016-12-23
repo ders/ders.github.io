@@ -87,44 +87,44 @@
 
 <p>In the level 5 video at 2:10, the following match example is given:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;new_tweet&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;Tweets#new&quot;</span>
-</pre></div>
+
+match 'new_tweet' => "Tweets#new"
 
 
 <p>Note the uppercase T on Tweets.  This T is uppercase throughout the video.</p>
 
 <p>However, when I tried to do the second exercise for this level, the following answer was rejected:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;Zombies#undead&quot;</span>
-</pre></div>
+
+match 'undead' => "Zombies#undead"
 
 
 <p>The hints told me to do this:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #e6db74">&quot;zombies#undead&quot;</span>
-</pre></div>
+
+match 'undead' => "zombies#undead"
 
 
 <p>with a lower case z, which was accepted.  Now I&rsquo;m confused.  Do we need a capital letter here or not?</p>
 
 <p>In the same video at 3:30, the following match example is given:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;all&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/tweets&#39;</span><span style="color: #f8f8f2">)</span>
-</pre></div>
+
+match 'all' => redirect('/tweets')
 
 
 <p>Note that there is no leading slash on &lsquo;all&rsquo;; this format is consistent throughout the video.</p>
 
 <p>However, when I tried to do the third exercise, the following answer was rejected:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/zombies&#39;</span><span style="color: #f8f8f2">)</span>
-</pre></div>
+
+match 'undead' => redirect('/zombies')
 
 
 <p>This time the hints told me to do this:</p>
 
-<div class="highlight" style="background: #272822"><pre style="line-height: 125%"><span style="color: #f8f8f2">match</span> <span style="color: #e6db74">&#39;/undead&#39;</span> <span style="color: #f92672">=&gt;</span> <span style="color: #f8f8f2">redirect(</span><span style="color: #e6db74">&#39;/zombies&#39;</span><span style="color: #f8f8f2">)</span>
-</pre></div>
+
+match '/undead' => redirect('/zombies')
 
 
 <p>Again, I&rsquo;m confused. Do we need (or even want) a leading slash here?</p>
