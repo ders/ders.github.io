@@ -7,7 +7,7 @@
 
     <meta name="description" content="What did I do today?">
 
-    <meta name="generator" content="Hugo 0.16" />
+    <meta name="generator" content="Hugo 0.18.1" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Posts &middot; awm&#39;s blog">
@@ -98,18 +98,16 @@ whether or not we actually changed anything.</p>
 
 <p>In SQL this would look like this:</p>
 
-
-UPDATE "quarks" SET "seen" = 't', "whosaw" = 'ders' WHERE "id" = 42 AND "seen" = 'f'
-
+<pre><code>UPDATE &quot;quarks&quot; SET &quot;seen&quot; = 't', &quot;whosaw&quot; = 'ders' WHERE &quot;id&quot; = 42 AND &quot;seen&quot; = 'f'
+</code></pre>
 
 <p>Then I would get the number of affected rows to see if a change was made
 (i.e. whether or not the quark had already been seen).</p>
 
 <p>So let&rsquo;s try it with DataMapper:</p>
 
-
-Quark.all(:id => 42, :seen => false).update(:seen => true, :whosaw => 'ders')
-
+<pre><code>Quark.all(:id =&gt; 42, :seen =&gt; false).update(:seen =&gt; true, :whosaw =&gt; 'ders')
+</code></pre>
 
 <p>Two problems here.
 The first problem is that the return value is always true, and we don&rsquo;t
@@ -122,10 +120,9 @@ generating an exception if no records are found.</p>
 Datamapper insists on generating two separate queries for the single
 update statement:</p>
 
-
-SELECT "id", "size", "name", "seen", "whosaw" FROM "quarks" WHERE ("id" = 42 AND "seen" = 'f') ORDER BY "id"
-UPDATE "quarks" SET "seen" = 't', "whosaw" = 'ders' WHERE "id" = 42
-
+<pre><code>SELECT &quot;id&quot;, &quot;size&quot;, &quot;name&quot;, &quot;seen&quot;, &quot;whosaw&quot; FROM &quot;quarks&quot; WHERE (&quot;id&quot; = 42 AND &quot;seen&quot; = 'f') ORDER BY &quot;id&quot;
+UPDATE &quot;quarks&quot; SET &quot;seen&quot; = 't', &quot;whosaw&quot; = 'ders' WHERE &quot;id&quot; = 42
+</code></pre>
 
 <p>This obviously won&rsquo;t do, as it&rsquo;s not thread-safe.
 Two users running this code at the same time would both believe that they saw the quark first.</p>
@@ -134,12 +131,11 @@ Two users running this code at the same time would both believe that they saw th
 
 <p>The solution was to write the update query in SQL.</p>
 
-
-da = DataMapper.repository(:default).adapter
-r = da.execute("UPDATE quarks SET seen='t', whosaw='ders' WHERE id=42 AND seen='f'")
-if r.affected_rows > 0
+<pre><code>da = DataMapper.repository(:default).adapter
+r = da.execute(&quot;UPDATE quarks SET seen='t', whosaw='ders' WHERE id=42 AND seen='f'&quot;)
+if r.affected_rows &gt; 0
    ... # we saw it first
-
+</code></pre>
 
 <p>Kind of defeats the purpose of having an ORM, but it gets the job done.
 And as it turns out, I&rsquo;m
@@ -157,26 +153,24 @@ started returning 500s.</p>
 
 <p>It&rsquo;s easy enough to change the query to work with MySQL:</p>
 
-
-r = da.execute("UPDATE quarks SET seen=1, whosaw='ders' WHERE id=42 AND seen=0")
-
+<pre><code>r = da.execute(&quot;UPDATE quarks SET seen=1, whosaw='ders' WHERE id=42 AND seen=0&quot;)
+</code></pre>
 
 <p>But then the unit tests fail.</p>
 
 <p>In the end, I wrote this bit of horrible code to keep the tests passing
 and the live server happy.</p>
 
-
-t, f = if da.options['scheme'] == 'sqlite'
-  ["'t'", "'f'"] # sqlite
+<pre><code>t, f = if da.options['scheme'] == 'sqlite'
+  [&quot;'t'&quot;, &quot;'f'&quot;] # sqlite
 else
   [1, 0] # mysql
 end
 
   ...
 
-r = da.execute("UPDATE quarks SET seen=#{t}, whosaw='ders' WHERE id=42 AND seen=#{f}")
-
+r = da.execute(&quot;UPDATE quarks SET seen=#{t}, whosaw='ders' WHERE id=42 AND seen=#{f}&quot;)
+</code></pre>
 
 <p>(There may be a way to extract <code>t</code> and <code>f</code> directly from the
 DataMapper internals, but I&rsquo;m not that good yet.)</p>
@@ -197,10 +191,9 @@ DataMapper internals, but I&rsquo;m not that good yet.)</p>
                     </header>
 
                     <div class="post-description">
-                        
-$ python
->>> import this
-
+                        <pre><code>$ python
+&gt;&gt;&gt; import this
+</code></pre>
 
 <p>Just try it.</p>
 
@@ -223,8 +216,7 @@ $ python
                         <p>Every time I start a new EC2 Ubuntu instance, I&rsquo;m confronted with the following
 warning when I ssh in:</p>
 
-
-_____________________________________________________________________
+<pre><code>_____________________________________________________________________
 WARNING! Your environment specifies an invalid locale.
  This can affect your user experience significantly, including the
  ability to manage packages. You may install the locales by running:
@@ -234,11 +226,11 @@ WARNING! Your environment specifies an invalid locale.
    sudo locale-gen UTF-8
 
 To see all available language packs, run:
-   apt-cache search "^language-pack-[a-z][a-z]$"
+   apt-cache search &quot;^language-pack-[a-z][a-z]$&quot;
 To disable this message for all users, run:
    sudo touch /var/lib/cloud/instance/locale-check.skip
 _____________________________________________________________________
-
+</code></pre>
 
 <p>Furthermore, a variety of package installations fail with some complaint
 related to the locale, the default language, or both.
@@ -257,27 +249,25 @@ case of a new EC2 instance, these variables are not set at all.</p>
 <code>/etc/default/locale</code> so that these variables always get set. I&rsquo;ve found
 that the default installation only sets <code>LANG</code>.</p>
 
-<p>/etc/default/locale
+<p>/etc/default/locale</p>
 
-LANG=en_US.UTF-8
+<pre><code>LANG=en_US.UTF-8
 LANGUAGE=en_US
 LC_CTYPE=en_US.UTF-8
 LC_ALL=en_US.UTF-8
-</p>
+</code></pre>
 
 <p>As always, it&rsquo;s also a good idea to make sure you have the latest and
 greatest packages:</p>
 
-
-$ sudo apt-get update
+<pre><code>$ sudo apt-get update
 $ sudo apt-get upgrade
-
+</code></pre>
 
 <p>And finally, while we&rsquo;re at it, why not set the timezone?</p>
 
-
-$ sudo dpkg-reconfigure tzdata
-
+<pre><code>$ sudo dpkg-reconfigure tzdata
+</code></pre>
 
 <p>Next time I need to set up a new EC2 instance,
 I&rsquo;ll come read my own blog and know exactly what to do.</p>
@@ -441,47 +431,43 @@ Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not p
 
 <p>There is a possible workaround, suggested by some.  Override the setter for the attribute and save the old value for later use.</p>
 
-
-def thing=(newthing)
+<pre><code>def thing=(newthing)
   @oldthing ||= @thing
   @thing = newthing
 end
-
+</code></pre>
 
 <p>I&rsquo;m not going to link to the people who suggested this, though, because it&rsquo;s a terrible suggestion.  Since we&rsquo;ve overridden Data Mapper&rsquo;s setter for attribute <code>thing</code>, Data Mapper no longer knows that we&rsquo;ve changed its value.</p>
 
-
-1.9.3-p392 :001 > record = Record.get(1)
- => ...
-1.9.3-p392 :002 > record.thing
- => "teamaker"
-1.9.3-p392 :003 > record.thing = "coffeemaker"
- => "coffeemaker"
-1.9.3-p392 :004 > record.attribute_dirty?(:thing)
- => false
-
+<pre><code>1.9.3-p392 :001 &gt; record = Record.get(1)
+ =&gt; ...
+1.9.3-p392 :002 &gt; record.thing
+ =&gt; &quot;teamaker&quot;
+1.9.3-p392 :003 &gt; record.thing = &quot;coffeemaker&quot;
+ =&gt; &quot;coffeemaker&quot;
+1.9.3-p392 :004 &gt; record.attribute_dirty?(:thing)
+ =&gt; false
+</code></pre>
 
 <p>Imagine the insidious bugs that could creep in here.</p>
 
-
-1.9.3-p392 :005 > record.save
- => true
-1.9.3-p392 :006 > record = Record.get(1)
- => ...
-1.9.3-p392 :003 > record.thing
- => "teamaker"
-
+<pre><code>1.9.3-p392 :005 &gt; record.save
+ =&gt; true
+1.9.3-p392 :006 &gt; record = Record.get(1)
+ =&gt; ...
+1.9.3-p392 :003 &gt; record.thing
+ =&gt; &quot;teamaker&quot;
+</code></pre>
 
 <p>Simply put, our changes are silently ignored because we&rsquo;ve stupidly disabled what is arguably Data Mapper&rsquo;s most important function.</p>
 
 <p>Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&rsquo;s <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method"><code>#attribute_set</code></a>.</p>
 
-
-def thing=(newthing)
+<pre><code>def thing=(newthing)
   @oldthing ||= @thing
   attribute_set(:thing, newthing)
 end
-
+</code></pre>
 
 <p>Method <code>#attribute_set</code> keeps track of the changes.  It&rsquo;s what <code>thing=</code> pointed to before we overrode it.</p>
 
@@ -519,9 +505,8 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>In MySQL, I would write:</p>
 
-
-SELECT * FROM `things` ORDER BY `position`=0, `position`, `id` DESC
-
+<pre><code>SELECT * FROM `things` ORDER BY `position`=0, `position`, `id` DESC
+</code></pre>
 
 <p>Free donuts to the first person who can make a DataMapper version of this.</p>
 
@@ -547,118 +532,41 @@ SELECT * FROM `things` ORDER BY `position`=0, `position`, `id` DESC
 
 <p>In the level 5 video at 2:10, the following match example is given:</p>
 
-
-match 'new_tweet' => "Tweets#new"
-
+<pre><code>match 'new_tweet' =&gt; &quot;Tweets#new&quot;
+</code></pre>
 
 <p>Note the uppercase T on Tweets.  This T is uppercase throughout the video.</p>
 
 <p>However, when I tried to do the second exercise for this level, the following answer was rejected:</p>
 
-
-match 'undead' => "Zombies#undead"
-
+<pre><code>match 'undead' =&gt; &quot;Zombies#undead&quot;
+</code></pre>
 
 <p>The hints told me to do this:</p>
 
-
-match 'undead' => "zombies#undead"
-
+<pre><code>match 'undead' =&gt; &quot;zombies#undead&quot;
+</code></pre>
 
 <p>with a lower case z, which was accepted.  Now I&rsquo;m confused.  Do we need a capital letter here or not?</p>
 
 <p>In the same video at 3:30, the following match example is given:</p>
 
-
-match 'all' => redirect('/tweets')
-
+<pre><code>match 'all' =&gt; redirect('/tweets')
+</code></pre>
 
 <p>Note that there is no leading slash on &lsquo;all&rsquo;; this format is consistent throughout the video.</p>
 
 <p>However, when I tried to do the third exercise, the following answer was rejected:</p>
 
-
-match 'undead' => redirect('/zombies')
-
+<pre><code>match 'undead' =&gt; redirect('/zombies')
+</code></pre>
 
 <p>This time the hints told me to do this:</p>
 
-
-match '/undead' => redirect('/zombies')
-
+<pre><code>match '/undead' =&gt; redirect('/zombies')
+</code></pre>
 
 <p>Again, I&rsquo;m confused. Do we need (or even want) a leading slash here?</p>
-
-                    </div>
-                </section>
-                
-                <h1 class="content-subhead">15 Mar 2013, 16:59</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2013-03-15-good-tools/" class="post-title">Good Tools</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        
-
-<p>Here are some some tools that I like.</p>
-
-<h2 id="rerun">Rerun</h2>
-
-<blockquote>
-<p>Rerun launches your program, then watches the filesystem. If a relevant file changes, then it restarts your program.</p>
-</blockquote>
-
-<p>I had some trouble getting Shotgun configured probably, and I found <a href="https://github.com/alexch/rerun">Rerun</a> to be a simple alternative.  I like it because it can be used for any process you want, not just restarting your web server.</p>
-
-<h2 id="gitk">Gitk</h2>
-
-<p><a href="http://gitk.sourceforge.net/">Gitk</a> is a graphical interface for Git.  It shows your entire development tree graphically, great for those of us less fluent in pushes and pulls.  It does a lot of other things too that I don&rsquo;t know about.</p>
-
-<p>Debian-based systems can enjoy Gitk with a simple <code>sudo apt-get install gitk</code>.  Then issue a <code>gitk --all</code> to see everything.</p>
-
-<h2 id="irb">Irb</h2>
-
-<p><a href="http://ruby-doc.org/docs/ProgrammingRuby/html/irb.html">Irb</a> is the Ruby console.  I should actually generalize this and include all consoles.  One of the most valuable checks while coding is to paste snippets of code into the console and see that they do what you think they&rsquo;re doing.</p>
-
-<p>Make an <code>.irbrc</code> startup file for a richer experience.  Rails users can get a the console with the full Rails evnironment with <code>rails c</code>.</p>
-
-<p>Here is <a href="http://samuelmullen.com/2012/07/getting-more-out-of-the-rails-console/">an excellent blog post</a> on the topic.</p>
-
-<h2 id="awesome-print">Awesome Print</h2>
-
-<p>A great companion to the Ruby console is <a href="https://github.com/michaeldv/awesome_print">Awesome Print</a>, a Ruby gem which lets you pretty up the output of array, hashes, and the like while in the console.</p>
-
-
-1.9.3-p392 :001 > {:name => "Hong Gildong", :age => 10, :interests => nil}
- => {:name=>"Hong Gildong", :age=>10, :interests=>nil}
-1.9.3-p392 :002 > ap _
-{
-         :name => "Hong Gildong",
-          :age => 10,
-    :interests => nil
-}
-
-
-<h2 id="sass">Sass</h2>
-
-<blockquote>
-<p>Sass makes css fun again.</p>
-</blockquote>
-
-<p><a href="http://sass-lang.com/">Sass</a> is a nifty program that adds some badly-needed css functionality, such as variables, nesting and inheritance.  But the really nifty thing is how it&rsquo;s accomplished.</p>
-
-<p>You make a <code>.scss</code> file and Sass converts it to an equivalent <code>.css</code> that any browser, even IE, can understand.  Sass even has a stealth mode, where it will regenerate the css when your scss is updated.</p>
-
-<p>Sass is packaged as a Ruby gem, but you&rsquo;re not limited to using it on Ruby projects, since in the end all you need on your server (obviously) are the css files it generates locally.</p>
-
-<p>It&rsquo;s likely that a lot of Sass&rsquo;s functionality will eventually become standard css.  But for now, we&rsquo;ve got Sass.</p>
 
                     </div>
                 </section>
@@ -692,55 +600,92 @@ Unfortunately, it wasn&rsquo;t clear anywhere how to actually use the validators
 
 <p>Let&rsquo;s define a minimal class <code>Iqscore</code>.  (The name of the collection will be <code>iqscores</code>; this is a weird behavior of Mongoid whereby class names must be singular and Mongoid will pluralize them for you when naming the collection.)</p>
 
-
-require "mongoid"
+<pre><code>require &quot;mongoid&quot;
 
 class Iqscore
 
   include Mongoid::Document
 
-  field :kid, :type => String
-  field :iq,  :type => Integer
+  field :kid, :type =&gt; String
+  field :iq,  :type =&gt; Integer
 
-  validates :kid, :presence => true, :uniqueness => true
-  validates :iq, :numericality => true
+  validates :kid, :presence =&gt; true, :uniqueness =&gt; true
+  validates :iq, :numericality =&gt; true
 
 end
-
+</code></pre>
 
 <p>Mongoid provides a <code>valid?</code> method on Iqscore objects.  Valid? tells us whether or not the criteria in the <code>validates</code> declarations are met.</p>
 
+<pre><code>1.9.3p385 :008 &gt; x = Iqscore.new({kid: &quot;George&quot;, iq: 70})
+ =&gt; #&lt;Iqscore _id: 512c72d5352420234d000003, kid: &quot;George&quot;, iq: 70&gt;
+1.9.3p385 :009 &gt; x.valid?
+ =&gt; true
+</code></pre>
 
-1.9.3p385 :008 > x = Iqscore.new({kid: "George", iq: 70})
- => #<Iqscore _id: 512c72d5352420234d000003, kid: "George", iq: 70>
-1.9.3p385 :009 > x.valid?
- => true
-
-
-
-1.9.3p385 :010 > y = Iqscore.new({kid: "Bill", iq: "unknown"})
- => #<Iqscore _id: 512c736e352420234d000004, kid: "Bill", iq: 0>
-1.9.3p385 :011 > y.valid?
- => false
-
+<pre><code>1.9.3p385 :010 &gt; y = Iqscore.new({kid: &quot;Bill&quot;, iq: &quot;unknown&quot;})
+ =&gt; #&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;
+1.9.3p385 :011 &gt; y.valid?
+ =&gt; false
+</code></pre>
 
 <p>If it doesn&rsquo;t validate, we can see what&rsquo;s wrong by looking at the <code>errors</code> property.  In this case it tells us that <code>iq</code> is not a number (and it should be).  Note that the message &ldquo;is not a number&rdquo; is in an array, as it&rsquo;s possible for there to be multiple messages for a single field.</p>
 
-
-1.9.3p385 :012 > y.errors
- => #<ActiveModel::Errors:0x98a31cc @base=#<Iqscore _id: 512c736e352420234d000004, kid: "Bill", iq: 0>, @messages={:iq=>["is not a number"]}>
-
+<pre><code>1.9.3p385 :012 &gt; y.errors
+ =&gt; #&lt;ActiveModel::Errors:0x98a31cc @base=#&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;, @messages={:iq=&gt;[&quot;is not a number&quot;]}&gt;
+</code></pre>
 
 <p>The <code>valid?</code> method is called automatically before any save operation (e.g. <code>save</code> or <code>create</code>), and if it returns false, then the save is not done.  Both <code>save</code> and <code>create</code> return true or false to indicate whether the save was done or not.</p>
 
-
-1.9.3p385 :013 > x.save
- => true
-1.9.3p385 :014 > y.save
- => false
-
+<pre><code>1.9.3p385 :013 &gt; x.save
+ =&gt; true
+1.9.3p385 :014 &gt; y.save
+ =&gt; false
+</code></pre>
 
 <p>At this point George is in our database, but Bill isn&rsquo;t.</p>
+
+                    </div>
+                </section>
+                
+                <h1 class="content-subhead">22 Feb 2013, 18:20</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2013-02-22-power/" class="post-title">Power</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>Finished a user athentication system today using <a href="http://bcrypt-ruby.rubyforge.org/classes/BCrypt/Password.html">BCrypt::Password</a>.</p>
+
+<p>There was an Aha! moment when I realized that they&rsquo;ve defined the <code>==</code> operator to return true when the password matches, not when the strings are equal (as a novice like me might expect).</p>
+
+<pre><code>1.9.3p385 :002 &gt; secret = BCrypt::Password.create(&quot;password&quot;)
+ =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
+</code></pre>
+
+<p>The hashed secret is saved in the database.&nbsp; It&rsquo;s later retrieved and checked against the user input using <code>==</code>.</p>
+
+<pre><code>1.9.3p385 :005 &gt; secret
+ =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
+1.9.3p385 :006 &gt; q = BCrypt::Password.new(secret)
+ =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
+1.9.3p385 :007 &gt; q == &quot;password&quot;
+ =&gt; true
+</code></pre>
+
+<p>This also has the interesting side effect that <code>==</code> is not commutative.</p>
+
+<pre><code>1.9.3p385 :008 &gt; &quot;password&quot; == q
+ =&gt; false
+</code></pre>
+
+<p>My junior high math teacher would be disturbed by this.&nbsp; Such is the power of Ruby.</p>
 
                     </div>
                 </section>

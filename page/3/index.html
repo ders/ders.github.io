@@ -7,7 +7,7 @@
 
     <meta name="description" content="What did I do today?">
 
-    <meta name="generator" content="Hugo 0.16" />
+    <meta name="generator" content="Hugo 0.18.1" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="awm&#39;s blog &middot; awm&#39;s blog">
@@ -60,77 +60,6 @@
             
             <div class="posts">
                 
-                <h1 class="content-subhead">22 Feb 2013, 18:20</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2013-02-22-power/" class="post-title">Power</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        <p>Finished a user athentication system today using <a href="http://bcrypt-ruby.rubyforge.org/classes/BCrypt/Password.html">BCrypt::Password</a>.</p>
-
-<p>There was an Aha! moment when I realized that they&rsquo;ve defined the <code>==</code> operator to return true when the password matches, not when the strings are equal (as a novice like me might expect).</p>
-
-
-1.9.3p385 :002 > secret = BCrypt::Password.create("password")
- => "$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe"
-
-
-<p>The hashed secret is saved in the database.&nbsp; It&rsquo;s later retrieved and checked against the user input using <code>==</code>.</p>
-
-
-1.9.3p385 :005 > secret
- => "$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe"
-1.9.3p385 :006 > q = BCrypt::Password.new(secret)
- => "$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe"
-1.9.3p385 :007 > q == "password"
- => true
-
-
-<p>This also has the interesting side effect that <code>==</code> is not commutative.</p>
-
-
-1.9.3p385 :008 > "password" == q
- => false
-
-
-<p>My junior high math teacher would be disturbed by this.&nbsp; Such is the power of Ruby.</p>
-
-                    </div>
-                </section>
-                
-                <h1 class="content-subhead">22 Feb 2013, 10:41</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2013-02-22-tip-of-the-day/" class="post-title">Tip of the day</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        <p>When running the Mongo shell for the first time, it is necessary to specify the port:</p>
-
-
-$ mongo 127.0.0.1:27017
-
-
-<p>Subsequently it is sufficient just to to say <code>mongo</code>.</p>
-
-<p>Learned the hard way, and by reading <a href="http://stackoverflow.com/a/8509918">this answer</a>.</p>
-
-                    </div>
-                </section>
-                
                 <h1 class="content-subhead">20 Feb 2013, 10:58</h1>
                 <section class="post">
                     <header class="post-header">
@@ -149,28 +78,25 @@ They are very well written and do an excellent job of guiding the user through p
 
 <p>Today I found a couple of careless coding errors in the <a href="http://rubymonk.com/learning/books/4/chapters/44-collections/lessons/98-iterate-filtrate-and-transform">section on using Array#inject</a> (subscription required).  The first is an illustration of inject to do a simple sum of array elements.</p>
 
-
-[4, 8, 15, 16, 23, 42].inject(0) do |accumulator, iterated|
+<pre><code>[4, 8, 15, 16, 23, 42].inject(0) do |accumulator, iterated|
   accumulator += iterated
   accumulator
 end
-
+</code></pre>
 
 <p>In fact, the assignment statement here is superfluous, as the inject
 function assigns the return value of the block to the accumulator automatically.
 It would suffice to do:</p>
 
-
-[4, 8, 15, 16, 23, 42].inject(0) do |accumulator, iterated|
+<pre><code>[4, 8, 15, 16, 23, 42].inject(0) do |accumulator, iterated|
   accumulator + iterated
 end
-
+</code></pre>
 
 <p>The second error is in an illustration of the behavior of inject.
 The function below is supposed to mimic the behavior of the one above.</p>
 
-
-def custom_inject(array, default = nil)
+<pre><code>def custom_inject(array, default = nil)
   accumulator = default || array[0]
 
   array.each do |element|
@@ -181,7 +107,7 @@ def custom_inject(array, default = nil)
 end
 
 p custom_inject([4, 8, 15, 16, 23, 42], 0)
-
+</code></pre>
 
 <p>The <code>custom_inject</code> function, however, fails for the case where the default value is not given.  It fails by counting the first array element twice.</p>
 

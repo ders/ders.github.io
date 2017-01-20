@@ -7,7 +7,7 @@
 
     <meta name="description" content="What did I do today?">
 
-    <meta name="generator" content="Hugo 0.16" />
+    <meta name="generator" content="Hugo 0.18.1" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Posts &middot; awm&#39;s blog">
@@ -351,7 +351,7 @@ callback, and then catches the panics.</p>
 <p>This covers all of our boilerplate needs except for (1a) above.
 To accommodate (1a), we could extend <code>sql.Result</code> the same way we extended
 the others, but I haven&rsquo;t really needed it yet, so I&rsquo;ll leave it as an
-exercise for the reader,</p>
+exercise for the reader.</p>
 
 <p>One final method that&rsquo;s there just to make everything neat and tidy is a <code>Fail</code>
 method on the transaction which can be used to return an arbitrary error.</p>

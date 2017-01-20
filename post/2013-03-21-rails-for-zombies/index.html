@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.16" />
+    <meta name="generator" content="Hugo 0.18.1" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Rails for Zombies &middot; awm&#39;s blog">
@@ -87,45 +87,39 @@
 
 <p>In the level 5 video at 2:10, the following match example is given:</p>
 
-
-match 'new_tweet' => "Tweets#new"
-
+<pre><code>match 'new_tweet' =&gt; &quot;Tweets#new&quot;
+</code></pre>
 
 <p>Note the uppercase T on Tweets.  This T is uppercase throughout the video.</p>
 
 <p>However, when I tried to do the second exercise for this level, the following answer was rejected:</p>
 
-
-match 'undead' => "Zombies#undead"
-
+<pre><code>match 'undead' =&gt; &quot;Zombies#undead&quot;
+</code></pre>
 
 <p>The hints told me to do this:</p>
 
-
-match 'undead' => "zombies#undead"
-
+<pre><code>match 'undead' =&gt; &quot;zombies#undead&quot;
+</code></pre>
 
 <p>with a lower case z, which was accepted.  Now I&rsquo;m confused.  Do we need a capital letter here or not?</p>
 
 <p>In the same video at 3:30, the following match example is given:</p>
 
-
-match 'all' => redirect('/tweets')
-
+<pre><code>match 'all' =&gt; redirect('/tweets')
+</code></pre>
 
 <p>Note that there is no leading slash on &lsquo;all&rsquo;; this format is consistent throughout the video.</p>
 
 <p>However, when I tried to do the third exercise, the following answer was rejected:</p>
 
-
-match 'undead' => redirect('/zombies')
-
+<pre><code>match 'undead' =&gt; redirect('/zombies')
+</code></pre>
 
 <p>This time the hints told me to do this:</p>
 
-
-match '/undead' => redirect('/zombies')
-
+<pre><code>match '/undead' =&gt; redirect('/zombies')
+</code></pre>
 
 <p>Again, I&rsquo;m confused. Do we need (or even want) a leading slash here?</p>
 

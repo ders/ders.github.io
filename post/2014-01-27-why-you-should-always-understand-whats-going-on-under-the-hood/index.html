@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.16" />
+    <meta name="generator" content="Hugo 0.18.1" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Why you should always understand what&#39;s going on under the hood &middot; awm&#39;s blog">
@@ -106,18 +106,16 @@ whether or not we actually changed anything.</p>
 
 <p>In SQL this would look like this:</p>
 
-
-UPDATE "quarks" SET "seen" = 't', "whosaw" = 'ders' WHERE "id" = 42 AND "seen" = 'f'
-
+<pre><code>UPDATE &quot;quarks&quot; SET &quot;seen&quot; = 't', &quot;whosaw&quot; = 'ders' WHERE &quot;id&quot; = 42 AND &quot;seen&quot; = 'f'
+</code></pre>
 
 <p>Then I would get the number of affected rows to see if a change was made
 (i.e. whether or not the quark had already been seen).</p>
 
 <p>So let&rsquo;s try it with DataMapper:</p>
 
-
-Quark.all(:id => 42, :seen => false).update(:seen => true, :whosaw => 'ders')
-
+<pre><code>Quark.all(:id =&gt; 42, :seen =&gt; false).update(:seen =&gt; true, :whosaw =&gt; 'ders')
+</code></pre>
 
 <p>Two problems here.
 The first problem is that the return value is always true, and we don&rsquo;t
@@ -130,10 +128,9 @@ generating an exception if no records are found.</p>
 Datamapper insists on generating two separate queries for the single
 update statement:</p>
 
-
-SELECT "id", "size", "name", "seen", "whosaw" FROM "quarks" WHERE ("id" = 42 AND "seen" = 'f') ORDER BY "id"
-UPDATE "quarks" SET "seen" = 't', "whosaw" = 'ders' WHERE "id" = 42
-
+<pre><code>SELECT &quot;id&quot;, &quot;size&quot;, &quot;name&quot;, &quot;seen&quot;, &quot;whosaw&quot; FROM &quot;quarks&quot; WHERE (&quot;id&quot; = 42 AND &quot;seen&quot; = 'f') ORDER BY &quot;id&quot;
+UPDATE &quot;quarks&quot; SET &quot;seen&quot; = 't', &quot;whosaw&quot; = 'ders' WHERE &quot;id&quot; = 42
+</code></pre>
 
 <p>This obviously won&rsquo;t do, as it&rsquo;s not thread-safe.
 Two users running this code at the same time would both believe that they saw the quark first.</p>
@@ -142,12 +139,11 @@ Two users running this code at the same time would both believe that they saw th
 
 <p>The solution was to write the update query in SQL.</p>
 
-
-da = DataMapper.repository(:default).adapter
-r = da.execute("UPDATE quarks SET seen='t', whosaw='ders' WHERE id=42 AND seen='f'")
-if r.affected_rows > 0
+<pre><code>da = DataMapper.repository(:default).adapter
+r = da.execute(&quot;UPDATE quarks SET seen='t', whosaw='ders' WHERE id=42 AND seen='f'&quot;)
+if r.affected_rows &gt; 0
    ... # we saw it first
-
+</code></pre>
 
 <p>Kind of defeats the purpose of having an ORM, but it gets the job done.
 And as it turns out, I&rsquo;m
@@ -165,26 +161,24 @@ started returning 500s.</p>
 
 <p>It&rsquo;s easy enough to change the query to work with MySQL:</p>
 
-
-r = da.execute("UPDATE quarks SET seen=1, whosaw='ders' WHERE id=42 AND seen=0")
-
+<pre><code>r = da.execute(&quot;UPDATE quarks SET seen=1, whosaw='ders' WHERE id=42 AND seen=0&quot;)
+</code></pre>
 
 <p>But then the unit tests fail.</p>
 
 <p>In the end, I wrote this bit of horrible code to keep the tests passing
 and the live server happy.</p>
 
-
-t, f = if da.options['scheme'] == 'sqlite'
-  ["'t'", "'f'"] # sqlite
+<pre><code>t, f = if da.options['scheme'] == 'sqlite'
+  [&quot;'t'&quot;, &quot;'f'&quot;] # sqlite
 else
   [1, 0] # mysql
 end
 
   ...
 
-r = da.execute("UPDATE quarks SET seen=#{t}, whosaw='ders' WHERE id=42 AND seen=#{f}")
-
+r = da.execute(&quot;UPDATE quarks SET seen=#{t}, whosaw='ders' WHERE id=42 AND seen=#{f}&quot;)
+</code></pre>
 
 <p>(There may be a way to extract <code>t</code> and <code>f</code> directly from the
 DataMapper internals, but I&rsquo;m not that good yet.)</p>

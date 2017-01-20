@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.16" />
+    <meta name="generator" content="Hugo 0.18.1" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Data Mapper &middot; awm&#39;s blog">
@@ -99,9 +99,8 @@ After all, DataMapper is generating SQL queries from the models I write, so if i
 
 <p>In MySQL, I would write:</p>
 
-
-SELECT * FROM `things` ORDER BY `position`=0, `position`, `id` DESC
-
+<pre><code>SELECT * FROM `things` ORDER BY `position`=0, `position`, `id` DESC
+</code></pre>
 
 <p>Free donuts to the first person who can make a DataMapper version of this.</p>
 

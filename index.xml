@@ -2,7 +2,7 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>awm&#39;s blog</title>
-    <link>https://ders.github.io/</link>
+    <link>https://ders.github.io/index.xml</link>
     <description>Recent content on awm&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
@@ -293,7 +293,7 @@ callback, and then catches the panics.&lt;/p&gt;
 &lt;p&gt;This covers all of our boilerplate needs except for (1a) above.
 To accommodate (1a), we could extend &lt;code&gt;sql.Result&lt;/code&gt; the same way we extended
 the others, but I haven&amp;rsquo;t really needed it yet, so I&amp;rsquo;ll leave it as an
-exercise for the reader,&lt;/p&gt;
+exercise for the reader.&lt;/p&gt;
 
 &lt;p&gt;One final method that&amp;rsquo;s there just to make everything neat and tidy is a &lt;code&gt;Fail&lt;/code&gt;
 method on the transaction which can be used to return an arbitrary error.&lt;/p&gt;
@@ -1119,18 +1119,16 @@ whether or not we actually changed anything.&lt;/p&gt;
 
 &lt;p&gt;In SQL this would look like this:&lt;/p&gt;
 
-
-UPDATE &#34;quarks&#34; SET &#34;seen&#34; = &#39;t&#39;, &#34;whosaw&#34; = &#39;ders&#39; WHERE &#34;id&#34; = 42 AND &#34;seen&#34; = &#39;f&#39;
-
+&lt;pre&gt;&lt;code&gt;UPDATE &amp;quot;quarks&amp;quot; SET &amp;quot;seen&amp;quot; = &#39;t&#39;, &amp;quot;whosaw&amp;quot; = &#39;ders&#39; WHERE &amp;quot;id&amp;quot; = 42 AND &amp;quot;seen&amp;quot; = &#39;f&#39;
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;Then I would get the number of affected rows to see if a change was made
 (i.e. whether or not the quark had already been seen).&lt;/p&gt;
 
 &lt;p&gt;So let&amp;rsquo;s try it with DataMapper:&lt;/p&gt;
 
-
-Quark.all(:id =&gt; 42, :seen =&gt; false).update(:seen =&gt; true, :whosaw =&gt; &#39;ders&#39;)
-
+&lt;pre&gt;&lt;code&gt;Quark.all(:id =&amp;gt; 42, :seen =&amp;gt; false).update(:seen =&amp;gt; true, :whosaw =&amp;gt; &#39;ders&#39;)
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;Two problems here.
 The first problem is that the return value is always true, and we don&amp;rsquo;t
@@ -1143,10 +1141,9 @@ generating an exception if no records are found.&lt;/p&gt;
 Datamapper insists on generating two separate queries for the single
 update statement:&lt;/p&gt;
 
-
-SELECT &#34;id&#34;, &#34;size&#34;, &#34;name&#34;, &#34;seen&#34;, &#34;whosaw&#34; FROM &#34;quarks&#34; WHERE (&#34;id&#34; = 42 AND &#34;seen&#34; = &#39;f&#39;) ORDER BY &#34;id&#34;
-UPDATE &#34;quarks&#34; SET &#34;seen&#34; = &#39;t&#39;, &#34;whosaw&#34; = &#39;ders&#39; WHERE &#34;id&#34; = 42
-
+&lt;pre&gt;&lt;code&gt;SELECT &amp;quot;id&amp;quot;, &amp;quot;size&amp;quot;, &amp;quot;name&amp;quot;, &amp;quot;seen&amp;quot;, &amp;quot;whosaw&amp;quot; FROM &amp;quot;quarks&amp;quot; WHERE (&amp;quot;id&amp;quot; = 42 AND &amp;quot;seen&amp;quot; = &#39;f&#39;) ORDER BY &amp;quot;id&amp;quot;
+UPDATE &amp;quot;quarks&amp;quot; SET &amp;quot;seen&amp;quot; = &#39;t&#39;, &amp;quot;whosaw&amp;quot; = &#39;ders&#39; WHERE &amp;quot;id&amp;quot; = 42
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;This obviously won&amp;rsquo;t do, as it&amp;rsquo;s not thread-safe.
 Two users running this code at the same time would both believe that they saw the quark first.&lt;/p&gt;
@@ -1155,12 +1152,11 @@ Two users running this code at the same time would both believe that they saw th
 
 &lt;p&gt;The solution was to write the update query in SQL.&lt;/p&gt;
 
-
-da = DataMapper.repository(:default).adapter
-r = da.execute(&#34;UPDATE quarks SET seen=&#39;t&#39;, whosaw=&#39;ders&#39; WHERE id=42 AND seen=&#39;f&#39;&#34;)
-if r.affected_rows &gt; 0
+&lt;pre&gt;&lt;code&gt;da = DataMapper.repository(:default).adapter
+r = da.execute(&amp;quot;UPDATE quarks SET seen=&#39;t&#39;, whosaw=&#39;ders&#39; WHERE id=42 AND seen=&#39;f&#39;&amp;quot;)
+if r.affected_rows &amp;gt; 0
    ... # we saw it first
-
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;Kind of defeats the purpose of having an ORM, but it gets the job done.
 And as it turns out, I&amp;rsquo;m
@@ -1178,26 +1174,24 @@ started returning 500s.&lt;/p&gt;
 
 &lt;p&gt;It&amp;rsquo;s easy enough to change the query to work with MySQL:&lt;/p&gt;
 
-
-r = da.execute(&#34;UPDATE quarks SET seen=1, whosaw=&#39;ders&#39; WHERE id=42 AND seen=0&#34;)
-
+&lt;pre&gt;&lt;code&gt;r = da.execute(&amp;quot;UPDATE quarks SET seen=1, whosaw=&#39;ders&#39; WHERE id=42 AND seen=0&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;But then the unit tests fail.&lt;/p&gt;
 
 &lt;p&gt;In the end, I wrote this bit of horrible code to keep the tests passing
 and the live server happy.&lt;/p&gt;
 
-
-t, f = if da.options[&#39;scheme&#39;] == &#39;sqlite&#39;
-  [&#34;&#39;t&#39;&#34;, &#34;&#39;f&#39;&#34;] # sqlite
+&lt;pre&gt;&lt;code&gt;t, f = if da.options[&#39;scheme&#39;] == &#39;sqlite&#39;
+  [&amp;quot;&#39;t&#39;&amp;quot;, &amp;quot;&#39;f&#39;&amp;quot;] # sqlite
 else
   [1, 0] # mysql
 end
 
   ...
 
-r = da.execute(&#34;UPDATE quarks SET seen=#{t}, whosaw=&#39;ders&#39; WHERE id=42 AND seen=#{f}&#34;)
-
+r = da.execute(&amp;quot;UPDATE quarks SET seen=#{t}, whosaw=&#39;ders&#39; WHERE id=42 AND seen=#{f}&amp;quot;)
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;(There may be a way to extract &lt;code&gt;t&lt;/code&gt; and &lt;code&gt;f&lt;/code&gt; directly from the
 DataMapper internals, but I&amp;rsquo;m not that good yet.)&lt;/p&gt;
@@ -1210,10 +1204,9 @@ DataMapper internals, but I&amp;rsquo;m not that good yet.)&lt;/p&gt;
       <pubDate>Fri, 17 Jan 2014 12:20:00 +0900</pubDate>
       
       <guid>https://ders.github.io/post/2014-01-17-try-it/</guid>
-      <description>
-$ python
-&gt;&gt;&gt; import this
-
+      <description>&lt;pre&gt;&lt;code&gt;$ python
+&amp;gt;&amp;gt;&amp;gt; import this
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;Just try it.&lt;/p&gt;
 </description>
@@ -1228,8 +1221,7 @@ $ python
       <description>&lt;p&gt;Every time I start a new EC2 Ubuntu instance, I&amp;rsquo;m confronted with the following
 warning when I ssh in:&lt;/p&gt;
 
-
-_____________________________________________________________________
+&lt;pre&gt;&lt;code&gt;_____________________________________________________________________
 WARNING! Your environment specifies an invalid locale.
  This can affect your user experience significantly, including the
  ability to manage packages. You may install the locales by running:
@@ -1239,11 +1231,11 @@ WARNING! Your environment specifies an invalid locale.
    sudo locale-gen UTF-8
 
 To see all available language packs, run:
-   apt-cache search &#34;^language-pack-[a-z][a-z]$&#34;
+   apt-cache search &amp;quot;^language-pack-[a-z][a-z]$&amp;quot;
 To disable this message for all users, run:
    sudo touch /var/lib/cloud/instance/locale-check.skip
 _____________________________________________________________________
-
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;Furthermore, a variety of package installations fail with some complaint
 related to the locale, the default language, or both.
@@ -1262,27 +1254,25 @@ case of a new EC2 instance, these variables are not set at all.&lt;/p&gt;
 &lt;code&gt;/etc/default/locale&lt;/code&gt; so that these variables always get set. I&amp;rsquo;ve found
 that the default installation only sets &lt;code&gt;LANG&lt;/code&gt;.&lt;/p&gt;
 
-&lt;p&gt;/etc/default/locale
+&lt;p&gt;/etc/default/locale&lt;/p&gt;
 
-LANG=en_US.UTF-8
+&lt;pre&gt;&lt;code&gt;LANG=en_US.UTF-8
 LANGUAGE=en_US
 LC_CTYPE=en_US.UTF-8
 LC_ALL=en_US.UTF-8
-&lt;/p&gt;
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;As always, it&amp;rsquo;s also a good idea to make sure you have the latest and
 greatest packages:&lt;/p&gt;
 
-
-$ sudo apt-get update
+&lt;pre&gt;&lt;code&gt;$ sudo apt-get update
 $ sudo apt-get upgrade
-
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;And finally, while we&amp;rsquo;re at it, why not set the timezone?&lt;/p&gt;
 
-
-$ sudo dpkg-reconfigure tzdata
-
+&lt;pre&gt;&lt;code&gt;$ sudo dpkg-reconfigure tzdata
+&lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;Next time I need to set up a new EC2 instance,
 I&amp;rsquo;ll come read my own blog and know exactly what to do.&lt;/p&gt;

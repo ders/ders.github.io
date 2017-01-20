@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.16" />
+    <meta name="generator" content="Hugo 0.18.1" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="Validating data with Mongoid &middot; awm&#39;s blog">
@@ -97,53 +97,48 @@ Unfortunately, it wasn&rsquo;t clear anywhere how to actually use the validators
 
 <p>Let&rsquo;s define a minimal class <code>Iqscore</code>.  (The name of the collection will be <code>iqscores</code>; this is a weird behavior of Mongoid whereby class names must be singular and Mongoid will pluralize them for you when naming the collection.)</p>
 
-
-require "mongoid"
+<pre><code>require &quot;mongoid&quot;
 
 class Iqscore
 
   include Mongoid::Document
 
-  field :kid, :type => String
-  field :iq,  :type => Integer
+  field :kid, :type =&gt; String
+  field :iq,  :type =&gt; Integer
 
-  validates :kid, :presence => true, :uniqueness => true
-  validates :iq, :numericality => true
+  validates :kid, :presence =&gt; true, :uniqueness =&gt; true
+  validates :iq, :numericality =&gt; true
 
 end
-
+</code></pre>
 
 <p>Mongoid provides a <code>valid?</code> method on Iqscore objects.  Valid? tells us whether or not the criteria in the <code>validates</code> declarations are met.</p>
 
+<pre><code>1.9.3p385 :008 &gt; x = Iqscore.new({kid: &quot;George&quot;, iq: 70})
+ =&gt; #&lt;Iqscore _id: 512c72d5352420234d000003, kid: &quot;George&quot;, iq: 70&gt;
+1.9.3p385 :009 &gt; x.valid?
+ =&gt; true
+</code></pre>
 
-1.9.3p385 :008 > x = Iqscore.new({kid: "George", iq: 70})
- => #<Iqscore _id: 512c72d5352420234d000003, kid: "George", iq: 70>
-1.9.3p385 :009 > x.valid?
- => true
-
-
-
-1.9.3p385 :010 > y = Iqscore.new({kid: "Bill", iq: "unknown"})
- => #<Iqscore _id: 512c736e352420234d000004, kid: "Bill", iq: 0>
-1.9.3p385 :011 > y.valid?
- => false
-
+<pre><code>1.9.3p385 :010 &gt; y = Iqscore.new({kid: &quot;Bill&quot;, iq: &quot;unknown&quot;})
+ =&gt; #&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;
+1.9.3p385 :011 &gt; y.valid?
+ =&gt; false
+</code></pre>
 
 <p>If it doesn&rsquo;t validate, we can see what&rsquo;s wrong by looking at the <code>errors</code> property.  In this case it tells us that <code>iq</code> is not a number (and it should be).  Note that the message &ldquo;is not a number&rdquo; is in an array, as it&rsquo;s possible for there to be multiple messages for a single field.</p>
 
-
-1.9.3p385 :012 > y.errors
- => #<ActiveModel::Errors:0x98a31cc @base=#<Iqscore _id: 512c736e352420234d000004, kid: "Bill", iq: 0>, @messages={:iq=>["is not a number"]}>
-
+<pre><code>1.9.3p385 :012 &gt; y.errors
+ =&gt; #&lt;ActiveModel::Errors:0x98a31cc @base=#&lt;Iqscore _id: 512c736e352420234d000004, kid: &quot;Bill&quot;, iq: 0&gt;, @messages={:iq=&gt;[&quot;is not a number&quot;]}&gt;
+</code></pre>
 
 <p>The <code>valid?</code> method is called automatically before any save operation (e.g. <code>save</code> or <code>create</code>), and if it returns false, then the save is not done.  Both <code>save</code> and <code>create</code> return true or false to indicate whether the save was done or not.</p>
 
-
-1.9.3p385 :013 > x.save
- => true
-1.9.3p385 :014 > y.save
- => false
-
+<pre><code>1.9.3p385 :013 &gt; x.save
+ =&gt; true
+1.9.3p385 :014 &gt; y.save
+ =&gt; false
+</code></pre>
 
 <p>At this point George is in our database, but Bill isn&rsquo;t.</p>
 

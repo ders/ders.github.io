@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.16" />
+    <meta name="generator" content="Hugo 0.18.1" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="More Data Mapper &middot; awm&#39;s blog">
@@ -93,47 +93,43 @@ Also, I&rsquo;d like to avoid <code>#dirty_attributes</code> as it&rsquo;s not p
 
 <p>There is a possible workaround, suggested by some.  Override the setter for the attribute and save the old value for later use.</p>
 
-
-def thing=(newthing)
+<pre><code>def thing=(newthing)
   @oldthing ||= @thing
   @thing = newthing
 end
-
+</code></pre>
 
 <p>I&rsquo;m not going to link to the people who suggested this, though, because it&rsquo;s a terrible suggestion.  Since we&rsquo;ve overridden Data Mapper&rsquo;s setter for attribute <code>thing</code>, Data Mapper no longer knows that we&rsquo;ve changed its value.</p>
 
-
-1.9.3-p392 :001 > record = Record.get(1)
- => ...
-1.9.3-p392 :002 > record.thing
- => "teamaker"
-1.9.3-p392 :003 > record.thing = "coffeemaker"
- => "coffeemaker"
-1.9.3-p392 :004 > record.attribute_dirty?(:thing)
- => false
-
+<pre><code>1.9.3-p392 :001 &gt; record = Record.get(1)
+ =&gt; ...
+1.9.3-p392 :002 &gt; record.thing
+ =&gt; &quot;teamaker&quot;
+1.9.3-p392 :003 &gt; record.thing = &quot;coffeemaker&quot;
+ =&gt; &quot;coffeemaker&quot;
+1.9.3-p392 :004 &gt; record.attribute_dirty?(:thing)
+ =&gt; false
+</code></pre>
 
 <p>Imagine the insidious bugs that could creep in here.</p>
 
-
-1.9.3-p392 :005 > record.save
- => true
-1.9.3-p392 :006 > record = Record.get(1)
- => ...
-1.9.3-p392 :003 > record.thing
- => "teamaker"
-
+<pre><code>1.9.3-p392 :005 &gt; record.save
+ =&gt; true
+1.9.3-p392 :006 &gt; record = Record.get(1)
+ =&gt; ...
+1.9.3-p392 :003 &gt; record.thing
+ =&gt; &quot;teamaker&quot;
+</code></pre>
 
 <p>Simply put, our changes are silently ignored because we&rsquo;ve stupidly disabled what is arguably Data Mapper&rsquo;s most important function.</p>
 
 <p>Fortunately, there is a correct way to do this.  Instead of setting the attributes directly, we set them using Data Mapper&rsquo;s <a href="http://rubydoc.info/github/datamapper/dm-core/master/DataMapper/Resource#attribute_set-instance_method"><code>#attribute_set</code></a>.</p>
 
-
-def thing=(newthing)
+<pre><code>def thing=(newthing)
   @oldthing ||= @thing
   attribute_set(:thing, newthing)
 end
-
+</code></pre>
 
 <p>Method <code>#attribute_set</code> keeps track of the changes.  It&rsquo;s what <code>thing=</code> pointed to before we overrode it.</p>
 

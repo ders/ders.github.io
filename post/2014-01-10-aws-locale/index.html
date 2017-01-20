@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.16" />
+    <meta name="generator" content="Hugo 0.18.1" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="AWS Locale &middot; awm&#39;s blog">
@@ -84,8 +84,7 @@
                         <p>Every time I start a new EC2 Ubuntu instance, I&rsquo;m confronted with the following
 warning when I ssh in:</p>
 
-
-_____________________________________________________________________
+<pre><code>_____________________________________________________________________
 WARNING! Your environment specifies an invalid locale.
  This can affect your user experience significantly, including the
  ability to manage packages. You may install the locales by running:
@@ -95,11 +94,11 @@ WARNING! Your environment specifies an invalid locale.
    sudo locale-gen UTF-8
 
 To see all available language packs, run:
-   apt-cache search "^language-pack-[a-z][a-z]$"
+   apt-cache search &quot;^language-pack-[a-z][a-z]$&quot;
 To disable this message for all users, run:
    sudo touch /var/lib/cloud/instance/locale-check.skip
 _____________________________________________________________________
-
+</code></pre>
 
 <p>Furthermore, a variety of package installations fail with some complaint
 related to the locale, the default language, or both.
@@ -118,27 +117,25 @@ case of a new EC2 instance, these variables are not set at all.</p>
 <code>/etc/default/locale</code> so that these variables always get set. I&rsquo;ve found
 that the default installation only sets <code>LANG</code>.</p>
 
-<p>/etc/default/locale
+<p>/etc/default/locale</p>
 
-LANG=en_US.UTF-8
+<pre><code>LANG=en_US.UTF-8
 LANGUAGE=en_US
 LC_CTYPE=en_US.UTF-8
 LC_ALL=en_US.UTF-8
-</p>
+</code></pre>
 
 <p>As always, it&rsquo;s also a good idea to make sure you have the latest and
 greatest packages:</p>
 
-
-$ sudo apt-get update
+<pre><code>$ sudo apt-get update
 $ sudo apt-get upgrade
-
+</code></pre>
 
 <p>And finally, while we&rsquo;re at it, why not set the timezone?</p>
 
-
-$ sudo dpkg-reconfigure tzdata
-
+<pre><code>$ sudo dpkg-reconfigure tzdata
+</code></pre>
 
 <p>Next time I need to set up a new EC2 instance,
 I&rsquo;ll come read my own blog and know exactly what to do.</p>

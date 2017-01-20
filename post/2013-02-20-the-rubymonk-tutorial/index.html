@@ -7,7 +7,7 @@
 
     <meta name="description" content="">
 
-    <meta name="generator" content="Hugo 0.16" />
+    <meta name="generator" content="Hugo 0.18.1" />
     <meta name="twitter:card" content="summary">
     
     <meta name="twitter:title" content="The RubyMonk Tutorial &middot; awm&#39;s blog">
@@ -86,28 +86,25 @@ They are very well written and do an excellent job of guiding the user through p
 
 <p>Today I found a couple of careless coding errors in the <a href="http://rubymonk.com/learning/books/4/chapters/44-collections/lessons/98-iterate-filtrate-and-transform">section on using Array#inject</a> (subscription required).  The first is an illustration of inject to do a simple sum of array elements.</p>
 
-
-[4, 8, 15, 16, 23, 42].inject(0) do |accumulator, iterated|
+<pre><code>[4, 8, 15, 16, 23, 42].inject(0) do |accumulator, iterated|
   accumulator += iterated
   accumulator
 end
-
+</code></pre>
 
 <p>In fact, the assignment statement here is superfluous, as the inject
 function assigns the return value of the block to the accumulator automatically.
 It would suffice to do:</p>
 
-
-[4, 8, 15, 16, 23, 42].inject(0) do |accumulator, iterated|
+<pre><code>[4, 8, 15, 16, 23, 42].inject(0) do |accumulator, iterated|
   accumulator + iterated
 end
-
+</code></pre>
 
 <p>The second error is in an illustration of the behavior of inject.
 The function below is supposed to mimic the behavior of the one above.</p>
 
-
-def custom_inject(array, default = nil)
+<pre><code>def custom_inject(array, default = nil)
   accumulator = default || array[0]
 
   array.each do |element|
@@ -118,7 +115,7 @@ def custom_inject(array, default = nil)
 end
 
 p custom_inject([4, 8, 15, 16, 23, 42], 0)
-
+</code></pre>
 
 <p>The <code>custom_inject</code> function, however, fails for the case where the default value is not given.  It fails by counting the first array element twice.</p>
 
