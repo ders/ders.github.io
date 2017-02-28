@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BigQuery &middot; awm&#39;s blog</title>
+
+    <meta name="description" content="">
+
+    <meta name="generator" content="Hugo 0.18.1" />
+    <meta name="twitter:card" content="summary">
+    
+    <meta name="twitter:title" content="BigQuery &middot; awm&#39;s blog">
+    <meta name="twitter:description" content="">
+
+    <meta property="og:type" content="article">
+    <meta property="og:title" content="BigQuery &middot; awm&#39;s blog">
+    <meta property="og:description" content="">
+
+    <link href='//fonts.googleapis.com/css?family=Source+Sans+Pro:400,700|Oxygen:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/pure-min.css">
+    <!--[if lte IE 8]>
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-old-ie-min.css">
+    <![endif]-->
+    <!--[if gt IE 8]><!-->
+        <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/pure/0.6.0/grids-responsive-min.css">
+    <!--<![endif]-->
+
+    <link rel="stylesheet" href="https://ders.github.io/css/all.min.css">
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://ders.github.io/css/vim.css">
+
+    <link rel="alternate" type="application/rss+xml" title="awm&#39;s blog" href="https://ders.github.io/index.xml" />
+</head>
+<body>
+
+
+<div id="layout" class="pure-g">
+    <div class="sidebar pure-u-1 pure-u-md-1-4">
+    <div class="header">
+        <hgroup>
+            <h1 class="brand-title"><a href="https://ders.github.io">awm&#39;s blog</a></h1>
+            <h2 class="brand-tagline"> What did I do today? </h2>
+        </hgroup>
+
+        <nav class="nav">
+            <ul class="nav-list">
+                
+                
+                <li class="nav-item">
+                    <a class="pure-button" href="https://ders.github.io/index.xml"><i class="fa fa-rss"></i> rss</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+
+    <div class="content pure-u-1 pure-u-md-3-4">
+        <div>
+            
+            <div class="posts">
+                <h1 class="content-subhead">28 Feb 2017, 15:51</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2017-02-28-big-query/" class="post-title">BigQuery</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-share">
+                        <div class="post-share-links">
+                            <h4 style="">Share</h4>
+                            <a href="#" data-type="facebook" data-url="https://ders.github.io/post/2017-02-28-big-query/" data-title="BigQuery" data-description="" data-media="" class="prettySocial fa fa-facebook"></a>
+                            <a href="#" data-type="googleplus" data-url="https://ders.github.io/post/2017-02-28-big-query/" data-description="" class="prettySocial fa fa-google-plus"></a>
+                            
+                            
+                        </div>
+                    </div>
+                    <div class="post-description">
+                        
+
+<p>A recent project involves a script to do a regular data slurp, process it, and write the results to Google BigQuery.  The script runs once an hour via cron.</p>
+
+<p>The data slurp is such that my script always requests a specific range of data.  Thus if processing fails at any point, I can easily re-slurp the same data and process it again.</p>
+
+<p>On the BigQuery side, however, I need to ensure data integrity.  I need to ensure that no data are lost, nor are any data inserted twice.  This must be accomplished without ever querying the BigQuery tables, as queries are expensive.</p>
+
+<p>The strategy then is to fail hard during the data slurp and processing phases, so that if something goes wrong, nothing goes into BigQuery, and we try again in an hour.  This works well for recovering from the occasional communication errors encountered during the data slurp.</p>
+
+<p>On the other hand, an error during the BigQuery insert phase must not fail hard, as that would leave us in an indeterminate state of having some of our data written.  Instead, BigQuery inserts that fail should be retried and retried again until they succeed.  (Of course I need to make sure that the failures we&rsquo;re retrying are transient, but that&rsquo;s a separate topic.)</p>
+
+<h2 id="the-incident">The Incident</h2>
+
+<p>Today in the log I found an &ldquo;unknown error&rdquo; entry, which means that something raised an exception in an unexpected place.</p>
+
+<p>Inspecting the log file, I saw that one of the BigQuery insert calls had encountered a 500 (service temporarily unavailable) response.  This was supposed to trigger an automatic retry, but the retry failed on account of one line of errant logging code.  The script failed hard and marked the job as not done, even though several thousand rows had already made it into BigQuery.</p>
+
+<p>On the next run an hour later, the script dutifully played catch-up, reprocessing the data that had gone astray and inserting it, this time successfully, into BigQuery.</p>
+
+<p>So no data have been lost, but I&rsquo;ve failed at preventing duplication.</p>
+
+<p>Fortunately, we have have a timestamp on every insert, so it should be a relatively simple matter to manually delete everything that was inserted at that particular hour.</p>
+
+<p>So imagine my surprise and confusion when I discovered that there were exactly zero records timstamped in that range.  The logger clearly showed several batches of 500 inserts successfully completed before the crash; where had all the records gone?</p>
+
+<p>As it turns out, it&rsquo;s the <a href="https://cloud.google.com/bigquery/streaming-data-into-bigquery#dataconsistency">insert ID</a> that saved us.  Each data point is sent with a unique insert ID which is generated as a function of the data itself.  When BigQuery received insert IDs that it had seen before, it silently deduped the data for us.</p>
+
+<p>Two observations to note:</p>
+
+<ul>
+<li>The documentation states that BigQuery will remember the insert IDs for &ldquo;at least one minute.&rdquo;  In our case, the duplicate data showed up an hour later and was still detected.</li>
+<li>The deduping resulted in the earlier inserts being discarded and the later inserts being kept.</li>
+</ul>
+
+<p>I&rsquo;ve fixed the errant logging code, by the way.</p>
+
+                    </div>
+                    
+                </section>
+            </div>
+            <div class="footer">
+    <div class="pure-menu pure-menu-horizontal pure-menu-open">
+        <ul>
+            <li>Powered by <a class="hugo" href="http://hugo.spf13.com/" target="_blank">hugo</a></li>
+        </ul>
+    </div>
+</div>
+<script src="https://ders.github.io/js/all.min.js"></script>
+        </div>
+    </div>
+</div>
+
+
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', '', 'auto');
+ga('send', 'pageview');
+
+</script>
+
+</body>
+</html>

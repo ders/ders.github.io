@@ -60,6 +60,24 @@
             
             <div class="posts">
                 
+                <h1 class="content-subhead">02 Jul 2015, 11:14</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2015-07-02-new-blog-engine/" class="post-title">New blog engine</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        <p>Trying out <a href="http://gohugo.io/">Hugo</a> as a new blog engine.  If you&rsquo;re reading this, then I&rsquo;ve succeeded.</p>
+
+                    </div>
+                </section>
+                
                 <h1 class="content-subhead">27 Jan 2014, 10:07</h1>
                 <section class="post">
                     <header class="post-header">
@@ -644,48 +662,6 @@ end
 </code></pre>
 
 <p>At this point George is in our database, but Bill isn&rsquo;t.</p>
-
-                    </div>
-                </section>
-                
-                <h1 class="content-subhead">22 Feb 2013, 18:20</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2013-02-22-power/" class="post-title">Power</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        <p>Finished a user athentication system today using <a href="http://bcrypt-ruby.rubyforge.org/classes/BCrypt/Password.html">BCrypt::Password</a>.</p>
-
-<p>There was an Aha! moment when I realized that they&rsquo;ve defined the <code>==</code> operator to return true when the password matches, not when the strings are equal (as a novice like me might expect).</p>
-
-<pre><code>1.9.3p385 :002 &gt; secret = BCrypt::Password.create(&quot;password&quot;)
- =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
-</code></pre>
-
-<p>The hashed secret is saved in the database.&nbsp; It&rsquo;s later retrieved and checked against the user input using <code>==</code>.</p>
-
-<pre><code>1.9.3p385 :005 &gt; secret
- =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
-1.9.3p385 :006 &gt; q = BCrypt::Password.new(secret)
- =&gt; &quot;$2a$10$50UZDPv124TYHe4xwQLoBeuryd0lzcCkjVdepHQD41K9svNE7lXGe&quot;
-1.9.3p385 :007 &gt; q == &quot;password&quot;
- =&gt; true
-</code></pre>
-
-<p>This also has the interesting side effect that <code>==</code> is not commutative.</p>
-
-<pre><code>1.9.3p385 :008 &gt; &quot;password&quot; == q
- =&gt; false
-</code></pre>
-
-<p>My junior high math teacher would be disturbed by this.&nbsp; Such is the power of Ruby.</p>
 
                     </div>
                 </section>

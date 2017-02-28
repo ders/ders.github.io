@@ -60,6 +60,59 @@
             
             <div class="posts">
                 
+                <h1 class="content-subhead">28 Feb 2017, 15:51</h1>
+                <section class="post">
+                    <header class="post-header">
+
+                        <a href="https://ders.github.io/post/2017-02-28-big-query/" class="post-title">BigQuery</a>
+
+                        <p class="post-meta">
+                            
+                            
+                        </p>
+                    </header>
+
+                    <div class="post-description">
+                        
+
+<p>A recent project involves a script to do a regular data slurp, process it, and write the results to Google BigQuery.  The script runs once an hour via cron.</p>
+
+<p>The data slurp is such that my script always requests a specific range of data.  Thus if processing fails at any point, I can easily re-slurp the same data and process it again.</p>
+
+<p>On the BigQuery side, however, I need to ensure data integrity.  I need to ensure that no data are lost, nor are any data inserted twice.  This must be accomplished without ever querying the BigQuery tables, as queries are expensive.</p>
+
+<p>The strategy then is to fail hard during the data slurp and processing phases, so that if something goes wrong, nothing goes into BigQuery, and we try again in an hour.  This works well for recovering from the occasional communication errors encountered during the data slurp.</p>
+
+<p>On the other hand, an error during the BigQuery insert phase must not fail hard, as that would leave us in an indeterminate state of having some of our data written.  Instead, BigQuery inserts that fail should be retried and retried again until they succeed.  (Of course I need to make sure that the failures we&rsquo;re retrying are transient, but that&rsquo;s a separate topic.)</p>
+
+<h2 id="the-incident">The Incident</h2>
+
+<p>Today in the log I found an &ldquo;unknown error&rdquo; entry, which means that something raised an exception in an unexpected place.</p>
+
+<p>Inspecting the log file, I saw that one of the BigQuery insert calls had encountered a 500 (service temporarily unavailable) response.  This was supposed to trigger an automatic retry, but the retry failed on account of one line of errant logging code.  The script failed hard and marked the job as not done, even though several thousand rows had already made it into BigQuery.</p>
+
+<p>On the next run an hour later, the script dutifully played catch-up, reprocessing the data that had gone astray and inserting it, this time successfully, into BigQuery.</p>
+
+<p>So no data have been lost, but I&rsquo;ve failed at preventing duplication.</p>
+
+<p>Fortunately, we have have a timestamp on every insert, so it should be a relatively simple matter to manually delete everything that was inserted at that particular hour.</p>
+
+<p>So imagine my surprise and confusion when I discovered that there were exactly zero records timstamped in that range.  The logger clearly showed several batches of 500 inserts successfully completed before the crash; where had all the records gone?</p>
+
+<p>As it turns out, it&rsquo;s the <a href="https://cloud.google.com/bigquery/streaming-data-into-bigquery#dataconsistency">insert ID</a> that saved us.  Each data point is sent with a unique insert ID which is generated as a function of the data itself.  When BigQuery received insert IDs that it had seen before, it silently deduped the data for us.</p>
+
+<p>Two observations to note:</p>
+
+<ul>
+<li>The documentation states that BigQuery will remember the insert IDs for &ldquo;at least one minute.&rdquo;  In our case, the duplicate data showed up an hour later and was still detected.</li>
+<li>The deduping resulted in the earlier inserts being discarded and the later inserts being kept.</li>
+</ul>
+
+<p>I&rsquo;ve fixed the errant logging code, by the way.</p>
+
+                    </div>
+                </section>
+                
                 <h1 class="content-subhead">23 Dec 2016, 14:49</h1>
                 <section class="post">
                     <header class="post-header">
@@ -1197,24 +1250,6 @@ neatly in <a href="http://widgetsandshit.com/teddziuba/2010/10/taco-bell-program
 In a nutshell, there are a lot of big data systems that are far
 larger and more complicated than they need to be for the data that
 they are designed to process.</p>
-
-                    </div>
-                </section>
-                
-                <h1 class="content-subhead">02 Jul 2015, 11:14</h1>
-                <section class="post">
-                    <header class="post-header">
-
-                        <a href="https://ders.github.io/post/2015-07-02-new-blog-engine/" class="post-title">New blog engine</a>
-
-                        <p class="post-meta">
-                            
-                            
-                        </p>
-                    </header>
-
-                    <div class="post-description">
-                        <p>Trying out <a href="http://gohugo.io/">Hugo</a> as a new blog engine.  If you&rsquo;re reading this, then I&rsquo;ve succeeded.</p>
 
                     </div>
                 </section>

@@ -6,8 +6,53 @@
     <description>Recent content in Posts on awm&#39;s blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 23 Dec 2016 14:49:00 +0900</lastBuildDate>
+    <lastBuildDate>Tue, 28 Feb 2017 15:51:00 +0900</lastBuildDate>
     <atom:link href="https://ders.github.io/post/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>BigQuery</title>
+      <link>https://ders.github.io/post/2017-02-28-big-query/</link>
+      <pubDate>Tue, 28 Feb 2017 15:51:00 +0900</pubDate>
+      
+      <guid>https://ders.github.io/post/2017-02-28-big-query/</guid>
+      <description>
+
+&lt;p&gt;A recent project involves a script to do a regular data slurp, process it, and write the results to Google BigQuery.  The script runs once an hour via cron.&lt;/p&gt;
+
+&lt;p&gt;The data slurp is such that my script always requests a specific range of data.  Thus if processing fails at any point, I can easily re-slurp the same data and process it again.&lt;/p&gt;
+
+&lt;p&gt;On the BigQuery side, however, I need to ensure data integrity.  I need to ensure that no data are lost, nor are any data inserted twice.  This must be accomplished without ever querying the BigQuery tables, as queries are expensive.&lt;/p&gt;
+
+&lt;p&gt;The strategy then is to fail hard during the data slurp and processing phases, so that if something goes wrong, nothing goes into BigQuery, and we try again in an hour.  This works well for recovering from the occasional communication errors encountered during the data slurp.&lt;/p&gt;
+
+&lt;p&gt;On the other hand, an error during the BigQuery insert phase must not fail hard, as that would leave us in an indeterminate state of having some of our data written.  Instead, BigQuery inserts that fail should be retried and retried again until they succeed.  (Of course I need to make sure that the failures we&amp;rsquo;re retrying are transient, but that&amp;rsquo;s a separate topic.)&lt;/p&gt;
+
+&lt;h2 id=&#34;the-incident&#34;&gt;The Incident&lt;/h2&gt;
+
+&lt;p&gt;Today in the log I found an &amp;ldquo;unknown error&amp;rdquo; entry, which means that something raised an exception in an unexpected place.&lt;/p&gt;
+
+&lt;p&gt;Inspecting the log file, I saw that one of the BigQuery insert calls had encountered a 500 (service temporarily unavailable) response.  This was supposed to trigger an automatic retry, but the retry failed on account of one line of errant logging code.  The script failed hard and marked the job as not done, even though several thousand rows had already made it into BigQuery.&lt;/p&gt;
+
+&lt;p&gt;On the next run an hour later, the script dutifully played catch-up, reprocessing the data that had gone astray and inserting it, this time successfully, into BigQuery.&lt;/p&gt;
+
+&lt;p&gt;So no data have been lost, but I&amp;rsquo;ve failed at preventing duplication.&lt;/p&gt;
+
+&lt;p&gt;Fortunately, we have have a timestamp on every insert, so it should be a relatively simple matter to manually delete everything that was inserted at that particular hour.&lt;/p&gt;
+
+&lt;p&gt;So imagine my surprise and confusion when I discovered that there were exactly zero records timstamped in that range.  The logger clearly showed several batches of 500 inserts successfully completed before the crash; where had all the records gone?&lt;/p&gt;
+
+&lt;p&gt;As it turns out, it&amp;rsquo;s the &lt;a href=&#34;https://cloud.google.com/bigquery/streaming-data-into-bigquery#dataconsistency&#34;&gt;insert ID&lt;/a&gt; that saved us.  Each data point is sent with a unique insert ID which is generated as a function of the data itself.  When BigQuery received insert IDs that it had seen before, it silently deduped the data for us.&lt;/p&gt;
+
+&lt;p&gt;Two observations to note:&lt;/p&gt;
+
+&lt;ul&gt;
+&lt;li&gt;The documentation states that BigQuery will remember the insert IDs for &amp;ldquo;at least one minute.&amp;rdquo;  In our case, the duplicate data showed up an hour later and was still detected.&lt;/li&gt;
+&lt;li&gt;The deduping resulted in the earlier inserts being discarded and the later inserts being kept.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;I&amp;rsquo;ve fixed the errant logging code, by the way.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>A lean, clean Golang machine</title>
@@ -1355,42 +1400,6 @@ So far I&amp;rsquo;ve learned to use S3 buckets and create EC2 instances.&lt;/p&
 &lt;li&gt;how to deploy stuff (why is this so hard, anyway?)&lt;/li&gt;
 &lt;li&gt;Haskell&lt;/li&gt;
 &lt;/ul&gt;
-</description>
-    </item>
-    
-    <item>
-      <title>Which train is that?</title>
-      <link>https://ders.github.io/post/2013-05-02-which-train-is-that/</link>
-      <pubDate>Thu, 02 May 2013 10:03:00 +0900</pubDate>
-      
-      <guid>https://ders.github.io/post/2013-05-02-which-train-is-that/</guid>
-      <description>&lt;p&gt;Straight out of college, I went on a summer backpacking trip to Europe.
-Well, it wasn&amp;rsquo;t exactly a backpacking trip, as (1) my bag wasn&amp;rsquo;t a backpack, and (2) I actually spent two months in one place attending a language program, but that&amp;rsquo;s another story.&lt;/p&gt;
-
-&lt;p&gt;My ticket back home was out of London&amp;rsquo;s Heathrow airport, and since I was in Bavaria at the time, I had a major train + ferry + train journey just to get my flight.
-I had the journey carefully researched and perfectly timed so that I&amp;rsquo;d be on the ferry just as my rail pass expired.
-The journey, though long, was largely without incident, but something that happened on the tube from Liverpool Street to Heathrow left a lasting impression.&lt;/p&gt;
-
-&lt;p&gt;I had figured out in advance which train I needed to catch. I&amp;rsquo;ll guess now that it was the Circle Line to South Kensingon, changing to the Piccadilly Line.
-I followed all the signs carefully and got myself to the correct platform.
-I noticed that there were other lines operating on the same track, so I had to make sure that I got on the correct train.&lt;/p&gt;
-
-&lt;p&gt;Within a couple of minutes, a train arrived.  I looked to see whether or not it was a Circle Line train, but wait.
-There was no marking whatsoever.  No Circle Line, no Metropolitan Line, nothing.
-And yet, busy Londoners were getting on and off, some were waiting for a different train, and they all obviously knew something about this mystery train that I didn&amp;rsquo;t &amp;ndash;
-namely what line it was running.&lt;/p&gt;
-
-&lt;p&gt;I finally asked a woman who was standing nearby if she could tell me what train this was.  Predictably, she looked at me as if I were an idiot.
-She was silent for a few seconds, and then without moving her head she glanced slightly upward and answered me.  &amp;ldquo;Metropolitan.&amp;rdquo;  End of conversation.&lt;/p&gt;
-
-&lt;p&gt;You see, in New York, the line number/letter and destination are clearly visible on the outside of every subway car.
-In fact, everywhere I&amp;rsquo;d travelled, every bus, subway, and tram  was labeled in this fasion.
-In New York at the time, looking at the train itself was the &lt;em&gt;only&lt;/em&gt; way to know if it was the train you wanted; fancy platform displays were as of yet a thing of the future.  It had simply never occurred to me that there was another way.&lt;/p&gt;
-
-&lt;p&gt;The train information signs in the London tube station were large enough to read easily but also small enough to miss completely if you didn&amp;rsquo;t know they were there.
-Had I gone to London with this one simple bit of information &amp;ndash; that there is train information displayed above the platform &amp;ndash; I could have saved myself this small embarrassment and the possibility of getting on the wrong train.&lt;/p&gt;
-
-&lt;p&gt;This, my friends, is an exact parallel of what&amp;rsquo;s happening in my workplace nowadays.&lt;/p&gt;
 </description>
     </item>
     
